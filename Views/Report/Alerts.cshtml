@@ -1,0 +1,28 @@
+@model IEnumerable<FEENALOoFINALE.Models.Alert>
+@{
+    ViewData["Title"] = "Alerts Report";
+}
+<h1>Alerts Report</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Created Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var alert in Model)
+        {
+            <tr>
+                <td>@alert.Title</td>
+                <td>@alert.Description</td>
+                <td>@alert.Priority</td>
+                <td>@alert.Status</td>
+                <td>@alert.CreatedDate.ToShortDateString()</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,26 @@
+@model IEnumerable<FEENALOoFINALE.Models.MaintenanceLog>
+@{
+    ViewData["Title"] = "Maintenance Logs Report";
+}
+<h1>Maintenance Logs Report</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Equipment</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var log in Model)
+        {
+            <tr>
+                <td>@log.Equipment?.Name</td>
+                <td>@log.LogDate.ToShortDateString()</td>
+                <td>@log.MaintenanceType</td>
+                <td>@log.Description</td>
+            </tr>
+        }
+    </tbody>
+</table>
