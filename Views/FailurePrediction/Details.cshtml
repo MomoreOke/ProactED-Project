@@ -1,0 +1,45 @@
+@model FEENALOoFINALE.Models.FailurePrediction
+
+@{
+    ViewData["Title"] = "Prediction Details";
+}
+
+<h1>Prediction Details</h1>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Failure Prediction for @Model.Equipment?.Name</h5>
+        <dl class="row">
+            <dt class="col-sm-3">Equipment</dt>
+            <dd class="col-sm-9">@Model.Equipment?.Name</dd>
+
+            <dt class="col-sm-3">Predicted Failure Date</dt>
+            <dd class="col-sm-9">@Model.PredictedFailureDate.ToShortDateString()</dd>
+
+            <dt class="col-sm-3">Confidence Level</dt>
+            <dd class="col-sm-9">@Model.ConfidenceLevel%</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Model.Status</dd>
+
+            <dt class="col-sm-3">Analysis Notes</dt>
+            <dd class="col-sm-9">@Model.AnalysisNotes</dd>
+
+            <dt class="col-sm-3">Created Date</dt>
+            <dd class="col-sm-9">@Model.CreatedDate.ToShortDateString()</dd>
+        </dl>
+
+        <h6 class="mt-4">Contributing Factors</h6>
+        <ul class="list-group">
+            @foreach (var factor in Model.ContributingFactors)
+            {
+                <li class="list-group-item">@factor</li>
+            }
+        </ul>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.PredictionId" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>

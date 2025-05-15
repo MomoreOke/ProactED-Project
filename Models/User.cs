@@ -1,26 +1,47 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace FEENALOoFINALE.Models
 {
     public class User
     {
         [Key]
-        public int UserId { get; set; }
-        public string Username { get; set; }
-        public string PasswordHash { get; set; }
+        public required string UserId { get; set; }
+        
+        [Required]
+        public required string Username { get; set; }
+        
+        [Required]
+        [EmailAddress]
+        public string? Email { get; set; }
+        
+        [Required]
+        public string? FullName { get; set; }
+        
+        [Required]
+        public string? Department { get; set; }
+        
+        [Required]
+        [Phone]
+        public string? ContactNumber { get; set; }
+        
+        [Required]
         public UserRole Role { get; set; }
-        public string FullName { get; set; }
-        public string Email { get; set; }
+        
         public DateTime LastLogin { get; set; }
 
         // Navigation property
-        public ICollection<Alert> AssignedAlerts { get; set; }
+        public required ICollection<Alert> AssignedAlerts { get; set; }
+        
+        // Add this navigation property
+        public ICollection<MaintenanceTask> MaintenanceTasks { get; set; } = new List<MaintenanceTask>();
     }
 
     public enum UserRole
     {
-        Admin,
+        Administrator,
         Technician,
-        Viewer
+        Operator,
+        Supervisor
     }
 }

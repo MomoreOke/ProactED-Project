@@ -18,6 +18,7 @@ namespace FEENALOoFINALE.Data
         public DbSet<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; }
         public new DbSet<User> Users { get; set; }
         public DbSet<Alert> Alerts { get; set; }
+        public DbSet<MaintenanceTask> MaintenanceTasks { get; set; } 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,6 +81,14 @@ namespace FEENALOoFINALE.Data
                 .HasOne(a => a.AssignedTo)
                 .WithMany(u => u.AssignedAlerts)
                 .HasForeignKey(a => a.AssignedToUserId);
+
+            modelBuilder.Entity<MaintenanceTask>()
+                .HasKey(m => m.TaskId);  // Use lambda expression instead of string
+
+            modelBuilder.Entity<MaintenanceTask>()
+                .HasOne(m => m.AssignedTo)
+                .WithMany(u => u.MaintenanceTasks)  // Now correctly references the new property
+                .HasForeignKey(m => m.AssignedToUserId);
         }
     }
 }

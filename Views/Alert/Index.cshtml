@@ -1,0 +1,46 @@
+@model IEnumerable<FEENALOoFINALE.Models.Alert>
+
+@{
+    ViewData["Title"] = "Alerts";
+}
+
+<h1>Alerts</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Alert</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Equipment</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Created Date</th>
+            <th>Assigned To</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            var priorityClass = item.Priority == AlertPriority.High ? "text-danger" :
+                              item.Priority == AlertPriority.Medium ? "text-warning" : "";
+            
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.Equipment?.Name</td>
+                <td class="@priorityClass">@item.Priority</td>
+                <td>@item.Status</td>
+                <td>@item.CreatedDate.ToShortDateString()</td>
+                <td>@(item.AssignedTo?.FullName ?? "Unassigned")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.AlertId" class="btn btn-info btn-sm">Details</a>
+                    <a asp-action="Edit" asp-route-id="@item.AlertId" class="btn btn-warning btn-sm">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.AlertId" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,41 @@
+@model IEnumerable<FEENALOoFINALE.Models.MaintenanceLog>
+
+@{
+    ViewData["Title"] = "Maintenance Logs";
+}
+
+<h1>Maintenance Logs</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Log</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Equipment</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Technician</th>
+            <th>Downtime (hrs)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Equipment?.Name</td>
+                <td>@item.LogDate.ToShortDateString()</td>
+                <td>@item.MaintenanceType</td>
+                <td>@item.Technician</td>
+                <td>@item.DowntimeDuration</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.LogId" class="btn btn-info btn-sm">Details</a>
+                    <a asp-action="Edit" asp-route-id="@item.LogId" class="btn btn-warning btn-sm">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.LogId" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

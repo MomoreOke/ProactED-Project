@@ -1,0 +1,42 @@
+@model IEnumerable<FEENALOoFINALE.Models.FailurePrediction>
+
+@{
+    ViewData["Title"] = "Failure Predictions";
+}
+
+<h1>Failure Predictions</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Prediction</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Equipment</th>
+            <th>Predicted Date</th>
+            <th>Confidence Level</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            var statusClass = item.Status == PredictionStatus.High ? "text-danger" : 
+                            item.Status == PredictionStatus.Medium ? "text-warning" : "text-success";
+            
+            <tr>
+                <td>@item.Equipment?.Name</td>
+                <td>@item.PredictedFailureDate.ToShortDateString()</td>
+                <td>@item.ConfidenceLevel%</td>
+                <td class="@statusClass">@item.Status</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.PredictionId" class="btn btn-info btn-sm">Details</a>
+                    <a asp-action="Edit" asp-route-id="@item.PredictionId" class="btn btn-warning btn-sm">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.PredictionId" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

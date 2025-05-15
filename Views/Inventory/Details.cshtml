@@ -1,0 +1,79 @@
+@model FEENALOoFINALE.Models.InventoryItem
+
+@{
+    ViewData["Title"] = "Inventory Item Details";
+}
+
+<h1>Inventory Item Details</h1>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Name</h5>
+        <dl class="row">
+            <dt class="col-sm-3">Category</dt>
+            <dd class="col-sm-9">@Model.Category</dd>
+
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@Model.Description</dd>
+
+            <dt class="col-sm-3">Minimum Stock Level</dt>
+            <dd class="col-sm-9">@Model.MinimumStockLevel</dd>
+
+            <dt class="col-sm-3">Unit of Measure</dt>
+            <dd class="col-sm-9">@Model.UnitOfMeasure</dd>
+        </dl>
+
+        <h6 class="mt-4">Stock History</h6>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date Received</th>
+                    <th>Quantity</th>
+                    <th>Unit Cost</th>
+                    <th>Batch Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var stock in Model.InventoryStocks.OrderByDescending(s => s.DateReceived))
+                {
+                    <tr>
+                        <td>@stock.DateReceived.ToShortDateString()</td>
+                        <td>@stock.Quantity</td>
+                        <td>@stock.UnitCost.ToString("C")</td>
+                        <td>@stock.BatchNumber</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.MaintenanceInventoryLinks?.Any() == true)
+        {
+            <h6 class="mt-4">Usage History</h6>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Equipment</th>
+                        <th>Quantity Used</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var usage in Model.MaintenanceInventoryLinks.OrderByDescending(m => m.MaintenanceLog.LogDate))
+                    {
+                        <tr>
+                            <td>@usage.MaintenanceLog.LogDate.ToShortDateString()</td>
+                            <td>@usage.MaintenanceLog.Equipment?.Name</td>
+                            <td>@usage.QuantityUsed</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.ItemId" class="btn btn-warning">Edit</a>
+    <a asp-action="AddStock" asp-route-id="@Model.ItemId" class="btn btn-success">Add Stock</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>

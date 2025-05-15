@@ -11,7 +11,7 @@ namespace FEENALOoFINALE.Models
         public int QuantityUsed { get; set; }
 
         // Navigation properties
-        public MaintenanceLog MaintenanceLog { get; set; }
-        public InventoryItem InventoryItem { get; set; }
+        public MaintenanceLog? MaintenanceLog { get; set; }
+        public InventoryItem? InventoryItem { get; set; }
     }
 }

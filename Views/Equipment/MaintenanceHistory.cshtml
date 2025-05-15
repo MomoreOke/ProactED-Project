@@ -1,0 +1,53 @@
+@model FEENALOoFINALE.Models.Equipment
+
+@{
+    ViewData["Title"] = "Maintenance History";
+}
+
+<h1>Maintenance History - @Model.Name</h1>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Equipment Details</h5>
+        <dl class="row">
+            <dt class="col-sm-3">Model</dt>
+            <dd class="col-sm-9">@Model.Model</dd>
+            <dt class="col-sm-3">Location</dt>
+            <dd class="col-sm-9">@Model.Location</dd>
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Model.Status</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Technician</th>
+                <th>Cost</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in Model.MaintenanceLogs.OrderByDescending(m => m.MaintenanceDate))
+            {
+                <tr>
+                    <td>@log.MaintenanceDate.ToShortDateString()</td>
+                    <td>@log.MaintenanceType</td>
+                    <td>@log.Description</td>
+                    <td>@log.Technician</td>
+                    <td>@log.Cost.ToString("C")</td>
+                    <td>@log.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Back to Equipment List</a>
+</div>

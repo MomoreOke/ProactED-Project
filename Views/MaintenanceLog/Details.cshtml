@@ -1,0 +1,56 @@
+@model FEENALOoFINALE.Models.MaintenanceLog
+
+@{
+    ViewData["Title"] = "Maintenance Log Details";
+}
+
+<h1>Maintenance Log Details</h1>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Equipment?.Name</h5>
+        <dl class="row">
+            <dt class="col-sm-3">Date</dt>
+            <dd class="col-sm-9">@Model.LogDate.ToShortDateString()</dd>
+
+            <dt class="col-sm-3">Type</dt>
+            <dd class="col-sm-9">@Model.MaintenanceType</dd>
+
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@Model.Description</dd>
+
+            <dt class="col-sm-3">Technician</dt>
+            <dd class="col-sm-9">@Model.Technician</dd>
+
+            <dt class="col-sm-3">Downtime</dt>
+            <dd class="col-sm-9">@Model.DowntimeDuration hours</dd>
+        </dl>
+
+        @if (Model.MaintenanceInventoryLinks?.Any() == true)
+        {
+            <h6 class="mt-4">Parts Used</h6>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var link in Model.MaintenanceInventoryLinks)
+                    {
+                        <tr>
+                            <td>@link.InventoryItem?.Name</td>
+                            <td>@link.QuantityUsed</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.LogId" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>
