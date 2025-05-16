@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using FEENALOoFINALE.Models;
 using System.Linq;
+using FEENALOoFINALE.Data;
 
 namespace FEENALOoFINALE.Controllers
 {
@@ -8,10 +9,12 @@ namespace FEENALOoFINALE.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+        // Add proper constructor injection
         public ReportController(ApplicationDbContext context)
         {
             _context = context;
         }
+
 
         // Inventory Report
         public IActionResult Inventory()

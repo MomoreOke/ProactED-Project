@@ -20,12 +20,13 @@ namespace FEENALOoFINALE.Models
         [Required]
         public MaintenanceStatus Status { get; set; }
 
-        public string Description { get; set; }
+        [Required]
+        public string Description { get; set; } = string.Empty; // Initialize or make nullable
 
         public string? AssignedToUserId { get; set; }
 
         [ForeignKey("AssignedToUserId")]
-        public User AssignedTo { get; set; }
+        public User? AssignedTo { get; set; } // Make nullable if it can be null
     }
 
     public enum MaintenanceStatus
@@ -34,5 +35,6 @@ namespace FEENALOoFINALE.Models
         InProgress,
         Completed,
         Cancelled
+        // Add other statuses if needed
     }
 }

@@ -25,7 +25,7 @@ namespace FEENALOoFINALE.Controllers
                     .Where(t => t.Status != MaintenanceStatus.Completed) // Accessing t.Status
                     .CountAsync(),
                 LowStockItems = await _context.InventoryItems
-                    .Where(i => i.InventoryStocks.Sum(s => s.Quantity) <= i.MinStockLevel) 
+                    .Where(i => i.InventoryStocks != null && i.InventoryStocks.Sum(s => s.Quantity) <= i.MinStockLevel)
                     .CountAsync(),
                 RecentAlerts = await _context.Alerts
                     .Include(a => a.Equipment) 
@@ -55,8 +55,8 @@ namespace FEENALOoFINALE.Controllers
         public int TotalEquipment { get; set; }
         public int ActiveMaintenanceTasks { get; set; }
         public int LowStockItems { get; set; }
-        public List<Alert> RecentAlerts { get; set; }
-        public List<FEENALOoFINALE.Models.MaintenanceTask> UpcomingMaintenances { get; set; }
-        public List<EquipmentStatusCount> EquipmentStatus { get; set; }
+        public List<Alert> RecentAlerts { get; set; } = new List<Alert>();
+        public List<MaintenanceTask> UpcomingMaintenances { get; set; } = new List<MaintenanceTask>();
+        public List<EquipmentStatusCount> EquipmentStatus { get; set; } = new List<EquipmentStatusCount>();
     }
 }

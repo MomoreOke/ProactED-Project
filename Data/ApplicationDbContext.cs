@@ -89,6 +89,15 @@ namespace FEENALOoFINALE.Data
                 .HasOne(m => m.AssignedTo)
                 .WithMany(u => u.MaintenanceTasks)  // Now correctly references the new property
                 .HasForeignKey(m => m.AssignedToUserId);
+
+            // Configure InventoryStock decimal properties
+            modelBuilder.Entity<InventoryStock>()
+                .Property(s => s.Quantity)
+                .HasColumnType("decimal(18,2)");
+            
+            modelBuilder.Entity<InventoryStock>()
+                .Property(s => s.UnitCost)
+                .HasColumnType("decimal(18,2)");
         }
     }
 }

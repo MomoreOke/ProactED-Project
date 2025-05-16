@@ -33,14 +33,14 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var log in Model.MaintenanceLogs.OrderByDescending(m => m.MaintenanceDate))
+            @foreach (var log in (Model.MaintenanceLogs ?? Enumerable.Empty<MaintenanceLog>()).OrderByDescending(m => m.MaintenanceDate))
             {
                 <tr>
                     <td>@log.MaintenanceDate.ToShortDateString()</td>
                     <td>@log.MaintenanceType</td>
                     <td>@log.Description</td>
                     <td>@log.Technician</td>
-                    <td>@log.Cost.ToString("C")</td>
+                    <td>@(log.Cost.ToString("C"))</td>
                     <td>@log.Status</td>
                 </tr>
             }

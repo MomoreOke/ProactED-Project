@@ -15,8 +15,7 @@
         <h5 class="card-title">@Model.Title</h5>
         <dl class="row">
             <dt class="col-sm-3">Equipment</dt>
-            <dd class="col-sm-9">@Model.Equipment?.EquipmentName</dd>
-
+            <dd class="col-sm-9">@Html.DisplayFor(model => Model.Equipment.Name)</dd>  // Changed from item to Model and td to dd
             <dt class="col-sm-3">Description</dt>
             <dd class="col-sm-9">@Model.Description</dd>
 
@@ -31,6 +30,12 @@
 
             <dt class="col-sm-3">Assigned To</dt>
             <dd class="col-sm-9">@(Model.AssignedTo?.FullName ?? "Unassigned")</dd>
+            <dt class = "col-sm-2">
+                @Html.DisplayNameFor(model => model.Equipment)
+            </dt>
+            <dd class = "col-sm-10">
+                @Html.DisplayFor(model => model.Equipment.Name)
+            </dd>
         </dl>
 
         <form asp-action="Delete">

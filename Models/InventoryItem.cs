@@ -3,13 +3,18 @@
 namespace FEENALOoFINALE.Models
 {
     public class InventoryItem
-    {   
-        [Key]
+    {
         public int ItemId { get; set; }
         public required string Name { get; set; }
+        public string? Description { get; set; }
+        
+        [Range(0, int.MaxValue)]
+        public int MinimumStockLevel { get; set; }  // Add this property
         public ItemCategory Category { get; set; }
         public int MinStockLevel { get; set; }
-        public string? Description { get; set; }
+        public int MaxStockLevel { get; set; }
+        public int ReorderPoint { get; set; }
+        public int ReorderQuantity { get; set; }
         public string? UnitOfMeasure { get; set; }
         public string? CompatibleModels { get; set; } // Stored as JSON
 

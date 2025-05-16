@@ -30,14 +30,15 @@ namespace FEENALOoFINALE.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlertId"));
 
-                    b.Property<DateTime>("AlertDate")
+                    b.Property<string>("AssignedToUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("AlertType")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("AssignedToUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("EquipmentId")
                         .HasColumnType("int");
@@ -50,6 +51,9 @@ namespace FEENALOoFINALE.Data.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("AlertId");
 
@@ -89,7 +93,6 @@ namespace FEENALOoFINALE.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Notes")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
@@ -108,23 +111,22 @@ namespace FEENALOoFINALE.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PredictionId"));
 
-                    b.Property<decimal>("ConfidenceScore")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<string>("AnalysisNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ConfidenceLevel")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContributingFactors")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("EquipmentId")
                         .HasColumnType("int");
 
-                    b.Property<string>("PredictedFailureType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("PredictedFailureWindowEnd")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("PredictedFailureWindowStart")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("PredictionDate")
+                    b.Property<DateTime>("PredictedFailureDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
@@ -149,14 +151,31 @@ namespace FEENALOoFINALE.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("CompatibleModels")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MaxStockLevel")
+                        .HasColumnType("int");
 
                     b.Property<int>("MinStockLevel")
                         .HasColumnType("int");
 
+                    b.Property<int>("MinimumStockLevel")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ReorderPoint")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReorderQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UnitOfMeasure")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ItemId");
@@ -172,18 +191,22 @@ namespace FEENALOoFINALE.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockId"));
 
-                    b.Property<int>("CurrentQuantity")
-                        .HasColumnType("int");
+                    b.Property<string>("BatchNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("DateReceived")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("ItemId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("LastRestockDate")
-                        .HasColumnType("datetime2");
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("StockId");
 
@@ -226,12 +249,14 @@ namespace FEENALOoFINALE.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogId"));
 
+                    b.Property<decimal>("Cost")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("DowntimeDuration")
-                        .HasColumnType("int");
+                    b.Property<TimeSpan?>("DowntimeDuration")
+                        .HasColumnType("time");
 
                     b.Property<int>("EquipmentId")
                         .HasColumnType("int");
@@ -239,7 +264,13 @@ namespace FEENALOoFINALE.Data.Migrations
                     b.Property<DateTime>("LogDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime>("MaintenanceDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("MaintenanceType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<string>("Technician")
@@ -253,13 +284,51 @@ namespace FEENALOoFINALE.Data.Migrations
                     b.ToTable("MaintenanceLogs");
                 });
 
-            modelBuilder.Entity("FEENALOoFINALE.Models.User", b =>
+            modelBuilder.Entity("FEENALOoFINALE.Models.MaintenanceTask", b =>
                 {
-                    b.Property<int>("UserId")
+                    b.Property<int>("TaskId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TaskId"));
+
+                    b.Property<string>("AssignedToUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EquipmentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ScheduledDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("TaskId");
+
+                    b.HasIndex("AssignedToUserId");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.ToTable("MaintenanceTasks");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.User", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ContactNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -271,10 +340,6 @@ namespace FEENALOoFINALE.Data.Migrations
 
                     b.Property<DateTime>("LastLogin")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
@@ -563,6 +628,23 @@ namespace FEENALOoFINALE.Data.Migrations
                     b.Navigation("Equipment");
                 });
 
+            modelBuilder.Entity("FEENALOoFINALE.Models.MaintenanceTask", b =>
+                {
+                    b.HasOne("FEENALOoFINALE.Models.User", "AssignedTo")
+                        .WithMany("MaintenanceTasks")
+                        .HasForeignKey("AssignedToUserId");
+
+                    b.HasOne("FEENALOoFINALE.Models.Equipment", "Equipment")
+                        .WithMany()
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AssignedTo");
+
+                    b.Navigation("Equipment");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -640,6 +722,8 @@ namespace FEENALOoFINALE.Data.Migrations
             modelBuilder.Entity("FEENALOoFINALE.Models.User", b =>
                 {
                     b.Navigation("AssignedAlerts");
+
+                    b.Navigation("MaintenanceTasks");
                 });
 #pragma warning restore 612, 618
         }

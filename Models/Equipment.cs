@@ -6,8 +6,10 @@ namespace FEENALOoFINALE.Models
     {
         [Key]
         public int EquipmentId { get; set; }
-        public required string EquipmentName { get; set; }
-        public string? Model { get; set; }
+        
+        [Required]
+        public required string Name { get; set; }
+        public required string Model { get; set; }
         public required string Location { get; set; }
         public DateTime InstallationDate { get; set; }
         public int ExpectedLifespanMonths { get; set; }

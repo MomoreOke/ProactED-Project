@@ -14,8 +14,12 @@
     <div class="card-body">
         <h5 class="card-title">Failure Prediction for @Model.Equipment?.Name</h5>
         <dl class="row">
-            <dt class="col-sm-3">Equipment</dt>
-            <dd class="col-sm-9">@Model.Equipment?.EquipmentName</dd>
+            <dt class="col-sm-2">
+                Equipment
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Equipment.Name) @* Changed from EquipmentName to Name *@
+            </dd>
 
             <dt class="col-sm-3">Predicted Failure Date</dt>
             <dd class="col-sm-9">@Model.PredictedFailureDate.ToShortDateString()</dd>
