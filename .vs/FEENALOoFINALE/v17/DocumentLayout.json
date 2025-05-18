@@ -68,9 +68,10 @@
               "RelativeDocumentMoniker": "Models\\User.cs",
               "ToolTip": "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\Models\\User.cs",
               "RelativeToolTip": "Models\\User.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAnAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T14:59:53.633Z"
+              "WhenOpened": "2025-04-29T14:59:53.633Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -82,7 +83,8 @@
               "RelativeToolTip": "Models\\Alert.cs",
               "ViewState": "AgIAAAUAAAAAAAAAAAAAwAUAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T15:00:47.991Z"
+              "WhenOpened": "2025-04-29T15:00:47.991Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -94,7 +96,8 @@
               "RelativeToolTip": "Models\\Equipment.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T14:50:21.655Z"
+              "WhenOpened": "2025-04-29T14:50:21.655Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -104,7 +107,7 @@
               "RelativeDocumentMoniker": "Data\\ApplicationDbContext.cs",
               "ToolTip": "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\Data\\ApplicationDbContext.cs",
               "RelativeToolTip": "Data\\ApplicationDbContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAIAAAAAAAAAA==",
+              "ViewState": "AgIAAFsAAAAAAAAAAAAcwAIAAAAcAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-29T15:06:03.348Z",
               "EditorCaption": ""
@@ -119,7 +122,8 @@
               "RelativeToolTip": "appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-04-29T15:21:34.513Z"
+              "WhenOpened": "2025-04-29T15:21:34.513Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -129,9 +133,10 @@
               "RelativeDocumentMoniker": "Models\\MaintenanceLog.cs",
               "ToolTip": "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\Models\\MaintenanceLog.cs",
               "RelativeToolTip": "Models\\MaintenanceLog.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAMAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T14:53:08.785Z"
+              "WhenOpened": "2025-04-29T14:53:08.785Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -143,7 +148,8 @@
               "RelativeToolTip": "Models\\MaintenanceInventoryLink.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T14:58:24.91Z"
+              "WhenOpened": "2025-04-29T14:58:24.91Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -155,7 +161,8 @@
               "RelativeToolTip": "Models\\InventoryStock.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T15:18:05.245Z"
+              "WhenOpened": "2025-04-29T15:18:05.245Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -165,9 +172,10 @@
               "RelativeDocumentMoniker": "Models\\InventoryItem.cs",
               "ToolTip": "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\Models\\InventoryItem.cs",
               "RelativeToolTip": "Models\\InventoryItem.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAIAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T14:55:40.02Z"
+              "WhenOpened": "2025-04-29T14:55:40.02Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -177,9 +185,10 @@
               "RelativeDocumentMoniker": "Models\\FailurePrediction.cs",
               "ToolTip": "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\Models\\FailurePrediction.cs",
               "RelativeToolTip": "Models\\FailurePrediction.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAANAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-29T14:54:53.254Z"
+              "WhenOpened": "2025-04-29T14:54:53.254Z",
+              "EditorCaption": ""
             }
           ]
         }

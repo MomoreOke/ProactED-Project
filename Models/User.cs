@@ -1,27 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
 
 namespace FEENALOoFINALE.Models
 {
-    public class User
+    public class User : IdentityUser
     {
-        [Key]
-        public required string UserId { get; set; }
+        [Required]
+        public string FullName { get; set; } = string.Empty;
         
         [Required]
-        public required string Username { get; set; }
+        public string Department { get; set; } = string.Empty;
         
-        [Required]
-        [EmailAddress]
-        public string? Email { get; set; }
-        
-        [Required]
-        public string? FullName { get; set; }
-        
-        [Required]
-        public string? Department { get; set; }
-        
-        [Required]
         [Phone]
         public string? ContactNumber { get; set; }
         
@@ -29,12 +18,10 @@ namespace FEENALOoFINALE.Models
         public UserRole Role { get; set; }
         
         public DateTime LastLogin { get; set; }
-
-        // Navigation property
-        public required ICollection<Alert> AssignedAlerts { get; set; }
-        
-        // Add this navigation property
-        public ICollection<MaintenanceTask> MaintenanceTasks { get; set; } = new List<MaintenanceTask>();
+    
+        // Add these navigation properties with initialization
+        public virtual ICollection<Alert> AssignedAlerts { get; set; } = [];
+        public virtual ICollection<MaintenanceTask> MaintenanceTasks { get; set; } = [];
     }
 
     public enum UserRole

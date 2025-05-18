@@ -28,13 +28,13 @@
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\FEENALOoFINALE.1iust29kvz.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"1iust29kvz"},{"Name":"integrity","Value":"sha256-l2GfDvCS5X773zoi5yWcozo2UYvgpso0W4dVz2Z1NeY="},{"Name":"label","Value":"_content/FEENALOoFINALE/FEENALOoFINALE.bundle.scp.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"1132"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022l2GfDvCS5X773zoi5yWcozo2UYvgpso0W4dVz2Z1NeY=\u0022"},{"Name":"Last-Modified","Value":"Fri, 16 May 2025 22:18:10 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"1132"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022l2GfDvCS5X773zoi5yWcozo2UYvgpso0W4dVz2Z1NeY=\u0022"},{"Name":"Last-Modified","Value":"Sun, 18 May 2025 18:26:42 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/FEENALOoFINALE/FEENALOoFINALE.bundle.scp.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\FEENALOoFINALE.1iust29kvz.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-l2GfDvCS5X773zoi5yWcozo2UYvgpso0W4dVz2Z1NeY="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"1132"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022l2GfDvCS5X773zoi5yWcozo2UYvgpso0W4dVz2Z1NeY=\u0022"},{"Name":"Last-Modified","Value":"Fri, 16 May 2025 22:18:10 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"1132"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022l2GfDvCS5X773zoi5yWcozo2UYvgpso0W4dVz2Z1NeY=\u0022"},{"Name":"Last-Modified","Value":"Sun, 18 May 2025 18:26:42 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/FEENALOoFINALE/js/site.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\site.js'))</AssetFile>

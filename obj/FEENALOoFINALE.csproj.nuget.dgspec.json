@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\FEENALOoFINALE.csproj": {}
+    "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\FEENALOoFINALE.csproj": {}
   },
   "projects": {
-    "c:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\FEENALOoFINALE.csproj": {
+    "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\FEENALOoFINALE.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\FEENALOoFINALE.csproj",
+        "projectUniqueName": "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\FEENALOoFINALE.csproj",
         "projectName": "FEENALOoFINALE",
-        "projectPath": "c:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\FEENALOoFINALE.csproj",
+        "projectPath": "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\FEENALOoFINALE.csproj",
         "packagesPath": "C:\\Users\\Oke Monsuru\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\obj\\",
+        "outputPath": "C:\\Users\\Oke Monsuru\\source\\repos\\FEENALOoFINALE\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

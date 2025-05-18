@@ -4,7 +4,7 @@ using FEENALOoFINALE.Models;
 
 namespace FEENALOoFINALE.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<User> // Changed base class
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -16,13 +16,14 @@ namespace FEENALOoFINALE.Data
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<InventoryStock> InventoryStocks { get; set; }
         public DbSet<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; }
-        public new DbSet<User> Users { get; set; }
+        // Remove this line:
+        // public new DbSet<User> Users { get; set; }
         public DbSet<Alert> Alerts { get; set; }
         public DbSet<MaintenanceTask> MaintenanceTasks { get; set; } 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(modelBuilder); // This is CRUCIAL for Identity
 
             // Configure primary keys
             modelBuilder.Entity<Equipment>()

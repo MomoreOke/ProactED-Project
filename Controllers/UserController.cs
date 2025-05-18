@@ -7,14 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 namespace FEENALOoFINALE.Controllers
 {
     [Authorize]
-    public class UserController : Controller
+    public class UserController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public UserController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         // GET: User
         public async Task<IActionResult> Index()
@@ -34,9 +29,7 @@ namespace FEENALOoFINALE.Controllers
             }
 
             var user = await _context.Users
-                .Include(u => u.AssignedAlerts)
-                .FirstOrDefaultAsync(m => m.UserId == id);
-
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (user == null)
             {
                 return NotFound();
@@ -58,7 +51,7 @@ namespace FEENALOoFINALE.Controllers
         {
             if (ModelState.IsValid)
             {
-                user.UserId = Guid.NewGuid().ToString();
+                user.Id = Guid.NewGuid().ToString();
                 _context.Add(user);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -85,9 +78,9 @@ namespace FEENALOoFINALE.Controllers
         // POST: User/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("UserId,Username,Email,FullName,Department,ContactNumber,Role")] User user)
+        public async Task<IActionResult> Edit(string id, [Bind("Id,UserName,Email,FullName,Department,ContactNumber,Role")] User user)
         {
-            if (id != user.UserId)
+            if (id != user.Id)
             {
                 return NotFound();
             }
@@ -101,7 +94,7 @@ namespace FEENALOoFINALE.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!UserExists(user.UserId))
+                    if (!UserExists(user.Id))
                     {
                         return NotFound();
                     }
@@ -124,7 +117,7 @@ namespace FEENALOoFINALE.Controllers
             }
 
             var user = await _context.Users
-                .FirstOrDefaultAsync(m => m.UserId == id);
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (user == null)
             {
                 return NotFound();
@@ -149,7 +142,7 @@ namespace FEENALOoFINALE.Controllers
 
         private bool UserExists(string id)
         {
-            return _context.Users.Any(e => e.UserId == id);
+            return _context.Users.Any(e => e.Id == id);
         }
     }
 }
