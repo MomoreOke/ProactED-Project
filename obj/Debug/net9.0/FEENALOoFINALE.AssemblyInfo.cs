@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FEENALOoFINALE")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a3b76b1cf1feb919cc55243a6d0a59b017cc8be5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7a2a1050bcaaac881066d12a0b8d48ad157c199b")]
 [assembly: System.Reflection.AssemblyProductAttribute("FEENALOoFINALE")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FEENALOoFINALE")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
