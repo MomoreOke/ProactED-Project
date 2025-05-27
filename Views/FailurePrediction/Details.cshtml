@@ -31,9 +31,16 @@
 
         <h6 class="mt-4">Contributing Factors</h6>
         <ul class="list-group">
-            @foreach (var factor in Model.ContributingFactors)
+            @if (Model.ContributingFactors != null)
             {
-                <li class="list-group-item">@factor</li>
+                foreach (var factor in Model.ContributingFactors)
+                {
+                    <li class="list-group-item">@factor</li>
+                }
+            }
+            else
+            {
+                <li class="list-group-item">No contributing factors listed.</li>
             }
         </ul>
     </div>

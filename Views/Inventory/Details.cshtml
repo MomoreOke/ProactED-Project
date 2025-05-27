@@ -24,29 +24,36 @@
         </dl>
 
         <h6 class="mt-4">Stock History</h6>
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>Date Received</th>
-                    <th>Quantity</th>
-                    <th>Unit Cost</th>
-                    <th>Batch Number</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var stock in Model.InventoryStocks.OrderByDescending(s => s.DateReceived))
-                {
+        @if (Model.InventoryStocks != null && Model.InventoryStocks.Any())
+        {
+            <table class="table table-sm">
+                <thead>
                     <tr>
-                        <td>@stock.DateReceived.ToShortDateString()</td>
-                        <td>@stock.Quantity</td>
-                        <td>@stock.UnitCost.ToString("C")</td>
-                        <td>@stock.BatchNumber</td>
+                        <th>Date Received</th>
+                        <th>Quantity</th>
+                        <th>Unit Cost</th>
+                        <th>Batch Number</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var stock in Model.InventoryStocks.OrderByDescending(s => s.DateReceived))
+                    {
+                        <tr>
+                            <td>@stock.DateReceived.ToShortDateString()</td>
+                            <td>@stock.Quantity</td>
+                            <td>@stock.UnitCost.ToString("C")</td>
+                            <td>@stock.BatchNumber</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p>No stock history available.</p>
+        }
 
-        @if (Model.MaintenanceInventoryLinks?.Any() == true)
+        @if (Model.MaintenanceInventoryLinks != null && Model.MaintenanceInventoryLinks.Any())
         {
             <h6 class="mt-4">Usage History</h6>
             <table class="table table-sm">
@@ -58,16 +65,23 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var usage in Model.MaintenanceInventoryLinks.OrderByDescending(m => m.MaintenanceLog.LogDate))
+                    @foreach (var usage in Model.MaintenanceInventoryLinks)
                     {
-                        <tr>
-                            <td>@usage.MaintenanceLog.LogDate.ToShortDateString()</td>
-                            <td>@usage.MaintenanceLog.Equipment?.Name</td>
-                            <td>@usage.QuantityUsed</td>
-                        </tr>
+                        if (usage.MaintenanceLog != null) // Check if MaintenanceLog is not null
+                        {
+                            <tr>
+                                <td>@usage.MaintenanceLog.LogDate.ToShortDateString()</td>
+                                <td>@(usage.MaintenanceLog.Equipment?.Name ?? "N/A")</td> <!-- Null-conditional operator for Equipment and coalescing for Name -->
+                                <td>@usage.QuantityUsed</td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
+        }
+        else
+        {
+            <p>No usage history available.</p>
         }
     </div>
 </div>
