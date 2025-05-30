@@ -1,3 +1,4 @@
+@using FEENALOoFINALE.Models
 @model IEnumerable<FEENALOoFINALE.Models.Alert>
 
 @{
@@ -30,7 +31,7 @@
             
             <tr>
                 <td>@item.Title</td>
-                <td>@item.Equipment?.Name</td>
+                <td>@item.Equipment?.EquipmentType?.EquipmentTypeName</td>
                 <td class="@priorityClass">@item.Priority</td>
                 <td>@item.Status</td>
                 <td>@item.CreatedDate.ToShortDateString()</td>

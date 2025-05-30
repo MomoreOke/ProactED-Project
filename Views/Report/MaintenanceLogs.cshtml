@@ -16,7 +16,7 @@
         @foreach (var log in Model)
         {
             <tr>
-                <td>@log.Equipment?.Name</td>
+                <td>@log.Equipment?.EquipmentType?.EquipmentTypeName</td>
                 <td>@log.LogDate.ToShortDateString()</td>
                 <td>@log.MaintenanceType</td>
                 <td>@log.Description</td>

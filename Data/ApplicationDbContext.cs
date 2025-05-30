@@ -4,30 +4,45 @@ using FEENALOoFINALE.Models;
 
 namespace FEENALOoFINALE.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<User> // Changed base class
+    public class ApplicationDbContext : IdentityDbContext<User>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
+
         public DbSet<Equipment> Equipment { get; set; }
         public DbSet<MaintenanceLog> MaintenanceLogs { get; set; }
         public DbSet<FailurePrediction> FailurePredictions { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<InventoryStock> InventoryStocks { get; set; }
         public DbSet<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; }
-        // Remove this line:
-        // public new DbSet<User> Users { get; set; }
         public DbSet<Alert> Alerts { get; set; }
-        public DbSet<MaintenanceTask> MaintenanceTasks { get; set; } 
+        public DbSet<MaintenanceTask> MaintenanceTasks { get; set; }
+
+        public DbSet<EquipmentType> EquipmentTypes { get; set; }
+        public DbSet<EquipmentModel> EquipmentModels { get; set; }
+        public DbSet<Building> Buildings { get; set; }
+        public DbSet<Room> Rooms { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder); // This is CRUCIAL for Identity
+            base.OnModelCreating(modelBuilder);
 
-            // Configure primary keys
             modelBuilder.Entity<Equipment>()
                 .HasKey(e => e.EquipmentId);
+
+            modelBuilder.Entity<EquipmentType>()
+                .HasKey(et => et.EquipmentTypeId);
+
+            modelBuilder.Entity<EquipmentModel>()
+                .HasKey(em => em.EquipmentModelId);
+
+            modelBuilder.Entity<Building>()
+                .HasKey(b => b.BuildingId);
+
+            modelBuilder.Entity<Room>()
+                .HasKey(r => r.RoomId);
 
             modelBuilder.Entity<MaintenanceLog>()
                 .HasKey(ml => ml.LogId);
@@ -47,7 +62,6 @@ namespace FEENALOoFINALE.Data
             modelBuilder.Entity<Alert>()
                 .HasKey(a => a.AlertId);
 
-            // Configure relationships
             modelBuilder.Entity<MaintenanceLog>()
                 .HasOne(ml => ml.Equipment)
                 .WithMany(e => e.MaintenanceLogs)
@@ -84,14 +98,13 @@ namespace FEENALOoFINALE.Data
                 .HasForeignKey(a => a.AssignedToUserId);
 
             modelBuilder.Entity<MaintenanceTask>()
-                .HasKey(m => m.TaskId);  // Use lambda expression instead of string
+                .HasKey(m => m.TaskId);
 
             modelBuilder.Entity<MaintenanceTask>()
                 .HasOne(m => m.AssignedTo)
-                .WithMany(u => u.MaintenanceTasks)  // Now correctly references the new property
+                .WithMany(u => u.MaintenanceTasks)
                 .HasForeignKey(m => m.AssignedToUserId);
 
-            // Configure InventoryStock decimal properties
             modelBuilder.Entity<InventoryStock>()
                 .Property(s => s.Quantity)
                 .HasColumnType("decimal(18,2)");
@@ -99,6 +112,40 @@ namespace FEENALOoFINALE.Data
             modelBuilder.Entity<InventoryStock>()
                 .Property(s => s.UnitCost)
                 .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Equipment>(entity =>
+            {
+                entity.HasOne(d => d.EquipmentType)
+                    .WithMany(p => p.Equipments)
+                    .HasForeignKey(d => d.EquipmentTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.EquipmentModel)
+                    .WithMany(p => p.Equipments)
+                    .HasForeignKey(d => d.EquipmentModelId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(d => d.Building)
+                    .WithMany(b => b.Equipments)
+                    .HasForeignKey(d => d.BuildingId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Room)
+                    .WithMany(r => r.Equipments)
+                    .HasForeignKey(d => d.RoomId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<EquipmentModel>()
+                .HasOne(em => em.EquipmentType)
+                .WithMany(et => et.EquipmentModels)
+                .HasForeignKey(em => em.EquipmentTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Room>()
+                .HasOne(r => r.Building)
+                .WithMany(b => b.Rooms)
+                .HasForeignKey(r => r.BuildingId);
         }
     }
 }

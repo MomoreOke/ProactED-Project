@@ -12,6 +12,7 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="EquipmentId" />
             
+            @* Remove the following three form-groups *@@* 
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
                 <input asp-for="Name" class="form-control" />
@@ -28,6 +29,35 @@
                 <label asp-for="Location" class="control-label"></label>
                 <input asp-for="Location" class="form-control" />
                 <span asp-validation-for="Location" class="text-danger"></span>
+            </div>
+            *@
+
+            <div class="form-group">
+                <label asp-for="EquipmentTypeId" class="control-label">Equipment Type</label>
+                <select asp-for="EquipmentTypeId" class="form-control" asp-items="ViewBag.EquipmentTypeId"></select>
+                <span asp-validation-for="EquipmentTypeId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="EquipmentModelId" class="control-label"></label>
+                <select asp-for="EquipmentModelId" class="form-control" asp-items="ViewBag.EquipmentModelId">
+                    <option value="">-- Select Equipment Model --</option>
+                </select>
+                <span asp-validation-for="EquipmentModelId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="BuildingId" class="control-label"></label>
+                <select asp-for="BuildingId" class="form-control" asp-items="ViewBag.BuildingId"></select>
+                <span asp-validation-for="BuildingId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="RoomId" class="control-label"></label>
+                <select asp-for="RoomId" class="form-control" asp-items="ViewBag.RoomId">
+                    <option value="">-- Select Room --</option>
+                </select>
+                <span asp-validation-for="RoomId" class="text-danger"></span>
             </div>
 
             <div class="form-group">
@@ -58,15 +88,94 @@
                 <textarea asp-for="Notes" class="form-control"></textarea>
                 <span asp-validation-for="Notes" class="text-danger"></span>
             </div>
-
             <div class="form-group mt-3">
                 <input type="submit" value="Save" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
             </div>
         </form>
     </div>
 </div>
 
+<div>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Function to load Equipment Models based on Equipment Type
+            function loadEquipmentModels(equipmentTypeId, selectedModelId) {
+                if (equipmentTypeId) {
+                    $.ajax({
+                        url: '@Url.Action("GetEquipmentModels", "Equipment")',
+                        type: "GET",
+                        data: { equipmentTypeId: equipmentTypeId },
+                        success: function (data) {
+                            $('#EquipmentModelId').empty();
+                            $('#EquipmentModelId').append('<option value="">-- Select Equipment Model --</option>');
+                            $.each(data, function (index, model) {
+                                $('#EquipmentModelId').append('<option value="' + model.equipmentModelId + '"' + (model.equipmentModelId == selectedModelId ? ' selected' : '') + '>' + model.name + '</option>');
+                            });
+                        },
+                        error: function () {
+                            console.log("Error loading equipment models.");
+                        }
+                    });
+                } else {
+                    $('#EquipmentModelId').empty();
+                    $('#EquipmentModelId').append('<option value="">-- Select Equipment Model --</option>');
+                }
+            }
+
+            // Function to load Rooms based on Building
+            function loadRooms(buildingId, selectedRoomId) {
+                if (buildingId) {
+                    $.ajax({
+                        url: '@Url.Action("GetRooms", "Equipment")',
+                        type: "GET",
+                        data: { buildingId: buildingId },
+                        success: function (data) {
+                            $('#RoomId').empty();
+                            $('#RoomId').append('<option value="">-- Select Room --</option>');
+                            $.each(data, function (index, room) {
+                                $('#RoomId').append('<option value="' + room.roomId + '"' + (room.roomId == selectedRoomId ? ' selected' : '') + '>' + room.name + '</option>');
+                            });
+                        },
+                        error: function () {
+                            console.log("Error loading rooms.");
+                        }
+                    });
+                } else {
+                    $('#RoomId').empty();
+                    $('#RoomId').append('<option value="">-- Select Room --</option>');
+                }
+            }
+
+            // Initial load for Edit page
+            var initialEquipmentTypeId = $('#EquipmentTypeId').val();
+            var initialEquipmentModelId = '@Model.EquipmentModelId';
+            var initialBuildingId = $('#BuildingId').val();
+            var initialRoomId = '@Model.RoomId';
+
+            if (initialEquipmentTypeId) {
+                loadEquipmentModels(initialEquipmentTypeId, initialEquipmentModelId);
+            }
+            if (initialBuildingId) {
+                loadRooms(initialBuildingId, initialRoomId);
+            }
+
+            // Event listener for Equipment Type dropdown change
+            $('#EquipmentTypeId').change(function () {
+                var selectedEquipmentTypeId = $(this).val();
+                loadEquipmentModels(selectedEquipmentTypeId, null); // Pass null for selectedModelId on change
+            });
+
+            // Event listener for Building dropdown change
+            $('#BuildingId').change(function () {
+                var selectedBuildingId = $(this).val();
+                loadRooms(selectedBuildingId, null); // Pass null for selectedRoomId on change
+            });
+        });
+    </script>
 }

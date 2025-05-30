@@ -7,10 +7,27 @@ namespace FEENALOoFINALE.Models
         [Key]
         public int EquipmentId { get; set; }
         
-        [Required]
-        public required string Name { get; set; }
-        public required string Model { get; set; }
-        public required string Location { get; set; }
+        // Remove Name and Model properties
+        // public required string Name { get; set; }
+        // public required string Model { get; set; }
+        
+        // New foreign keys and navigation properties
+        public int EquipmentTypeId { get; set; }
+        public required EquipmentType EquipmentType { get; set; }
+
+        public int EquipmentModelId { get; set; }
+        public required EquipmentModel EquipmentModel { get; set; }
+        
+        // Remove Location property
+        // public required string Location { get; set; }
+        
+        // New foreign keys and navigation properties for location
+        public int BuildingId { get; set; }
+        public required Building Building { get; set; }
+
+        public int RoomId { get; set; }
+        public required Room Room { get; set; }
+
         public DateTime InstallationDate { get; set; }
         public int ExpectedLifespanMonths { get; set; }
         public EquipmentStatus Status { get; set; }

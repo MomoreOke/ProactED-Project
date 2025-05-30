@@ -1,3 +1,4 @@
+
 @model FEENALOoFINALE.Models.Equipment
 
 @{
@@ -12,13 +13,13 @@
 
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title">@Model.Name</h5>
+        <h5 class="card-title">@Model.EquipmentType?.EquipmentTypeName</h5>
         <dl class="row">
-            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Model)</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.Model)</dd>
+            <dt class="col-sm-3">Model</dt>
+            <dd class="col-sm-9">@Model.EquipmentModel?.ModelName</dd>
 
-            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Location)</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.Location)</dd>
+            <dt class="col-sm-3">Location</dt>
+            <dd class="col-sm-9">@Model.Building?.BuildingName - @Model.Room?.RoomName</dd>
 
             <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Status)</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.Status)</dd>

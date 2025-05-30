@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FEENALOoFINALE.Controllers
 {
@@ -15,6 +16,10 @@ namespace FEENALOoFINALE.Controllers
         public async Task<IActionResult> Index()
         {
             return View(await _context.Equipment
+                .Include(e => e.EquipmentType)      // Add this line
+                .Include(e => e.EquipmentModel)     // Add this line
+                .Include(e => e.Building)           // Add this line
+                .Include(e => e.Room)               // Add this line
                 .Include(e => e.MaintenanceLogs)
                 .Include(e => e.FailurePredictions)
                 .Include(e => e.Alerts)
@@ -44,15 +49,17 @@ namespace FEENALOoFINALE.Controllers
         }
 
         // GET: Equipment/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "Name");
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "Name");
             return View();
         }
 
         // POST: Equipment/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Model,Location,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
+        public async Task<IActionResult> Create([Bind("EquipmentTypeId,EquipmentModelId,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
         {
             if (ModelState.IsValid)
             {
@@ -60,6 +67,9 @@ namespace FEENALOoFINALE.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "Name", equipment.EquipmentTypeId);
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "Name", equipment.BuildingId);
+            // You will need to populate EquipmentModelId and RoomId SelectLists based on selected EquipmentTypeId and BuildingId via AJAX in the view
             return View(equipment);
         }
 
@@ -76,13 +86,17 @@ namespace FEENALOoFINALE.Controllers
             {
                 return NotFound();
             }
+            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "Name", equipment.EquipmentTypeId);
+            ViewData["EquipmentModelId"] = new SelectList(await _context.EquipmentModels.Where(em => em.EquipmentTypeId == equipment.EquipmentTypeId).ToListAsync(), "EquipmentModelId", "Name", equipment.EquipmentModelId);
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "Name", equipment.BuildingId);
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "Name", equipment.RoomId);
             return View(equipment);
         }
 
         // POST: Equipment/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EquipmentId,Name,Model,Location,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
+        public async Task<IActionResult> Edit(int id, [Bind("EquipmentId,EquipmentTypeId,EquipmentModelId,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
         {
             if (id != equipment.EquipmentId)
             {
@@ -98,7 +112,7 @@ namespace FEENALOoFINALE.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!EquipmentExists(equipment.EquipmentId))
+                    if (!_context.Equipment.Any(e => e.EquipmentId == equipment.EquipmentId))
                     {
                         return NotFound();
                     }
@@ -109,6 +123,10 @@ namespace FEENALOoFINALE.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "Name", equipment.EquipmentTypeId);
+            ViewData["EquipmentModelId"] = new SelectList(await _context.EquipmentModels.Where(em => em.EquipmentTypeId == equipment.EquipmentTypeId).ToListAsync(), "EquipmentModelId", "Name", equipment.EquipmentModelId);
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "Name", equipment.BuildingId);
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "Name", equipment.RoomId);
             return View(equipment);
         }
 
@@ -187,6 +205,26 @@ namespace FEENALOoFINALE.Controllers
         private bool EquipmentExists(int id)
         {
             return _context.Equipment.Any(e => e.EquipmentId == id);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetEquipmentModels(int equipmentTypeId)
+        {
+            var equipmentModels = await _context.EquipmentModels
+                .Where(em => em.EquipmentTypeId == equipmentTypeId)
+                .Select(em => new { em.EquipmentModelId, em.ModelName })
+                .ToListAsync();
+            return Json(equipmentModels);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetRooms(int buildingId)
+        {
+            var rooms = await _context.Rooms
+                .Where(r => r.BuildingId == buildingId)
+                .Select(r => new { r.RoomId, r.RoomName })
+                .ToListAsync();
+            return Json(rooms);
         }
     }
 }

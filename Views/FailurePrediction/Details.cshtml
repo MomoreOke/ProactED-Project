@@ -8,10 +8,10 @@
 
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title">Failure Prediction for @Model.Equipment?.Name</h5>
+        <h5 class="card-title">Failure Prediction for @Model.Equipment?.EquipmentType?.EquipmentTypeName</h5>
         <dl class="row">
             <dt class="col-sm-3">Equipment</dt>
-            <dd class="col-sm-9">@Model.Equipment?.Name</dd>
+            <dd class="col-sm-9">@Model.Equipment?.EquipmentType?.EquipmentTypeName</dd>
 
             <dt class="col-sm-3">Predicted Failure Date</dt>
             <dd class="col-sm-9">@Model.PredictedFailureDate.ToShortDateString()</dd>

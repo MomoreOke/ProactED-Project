@@ -8,8 +8,20 @@
 
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title">@Model.Equipment?.Name</h5>
+        <h5 class="card-title">@Model.Equipment?.EquipmentType?.EquipmentTypeName - @Model.Equipment?.EquipmentModel?.ModelName</h5>
         <dl class="row">
+            <dt class="col-sm-3">Equipment Type</dt>
+            <dd class="col-sm-9">@Model.Equipment?.EquipmentType?.EquipmentTypeName</dd>
+
+            <dt class="col-sm-3">Equipment Model</dt>
+            <dd class="col-sm-9">@Model.Equipment?.EquipmentModel?.ModelName</dd>
+
+            <dt class="col-sm-3">Building</dt>
+            <dd class="col-sm-9">@Model.Equipment?.Building?.BuildingName</dd>
+
+            <dt class="col-sm-3">Room</dt>
+            <dd class="col-sm-9">@Model.Equipment?.Room?.RoomName</dd>
+
             <dt class="col-sm-3">Date</dt>
             <dd class="col-sm-9">@Model.LogDate.ToShortDateString()</dd>
 

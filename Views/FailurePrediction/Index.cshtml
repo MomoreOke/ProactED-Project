@@ -1,3 +1,4 @@
+@using FEENALOoFINALE.Models
 @model IEnumerable<FEENALOoFINALE.Models.FailurePrediction>
 
 @{
@@ -27,7 +28,7 @@
                             item.Status == PredictionStatus.Medium ? "text-warning" : "text-success";
             
             <tr>
-                <td>@item.Equipment?.Name</td>
+                <td>@item.Equipment?.EquipmentType?.EquipmentTypeName</td>
                 <td>@item.PredictedFailureDate.ToShortDateString()</td>
                 <td>@item.ConfidenceLevel%</td>
                 <td class="@statusClass">@item.Status</td>

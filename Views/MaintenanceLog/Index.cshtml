@@ -1,4 +1,4 @@
-9999@model IEnumerable<FEENALOoFINALE.Models.MaintenanceLog>
+@model IEnumerable<FEENALOoFINALE.Models.MaintenanceLog>
 
 @{
     ViewData["Title"] = "Maintenance Logs";
@@ -25,7 +25,7 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@item.Equipment?.Name</td>
+                <td>@item.Equipment?.EquipmentType?.EquipmentTypeName</td>
                 <td>@item.LogDate.ToShortDateString()</td>
                 <td>@item.MaintenanceType</td>
                 <td>@item.Technician</td>

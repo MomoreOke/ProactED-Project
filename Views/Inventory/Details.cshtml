@@ -71,7 +71,7 @@
                         {
                             <tr>
                                 <td>@usage.MaintenanceLog.LogDate.ToShortDateString()</td>
-                                <td>@(usage.MaintenanceLog.Equipment?.Name ?? "N/A")</td> <!-- Null-conditional operator for Equipment and coalescing for Name -->
+                                <td>@(usage.MaintenanceLog.Equipment?.EquipmentType?.EquipmentTypeName ?? "N/A")</td> <!-- Null-conditional operator for Equipment and coalescing for Name -->
                                 <td>@usage.QuantityUsed</td>
                             </tr>
                         }

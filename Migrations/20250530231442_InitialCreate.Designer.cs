@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FEENALOoFINALE.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250518183607_FixedUserModel")]
-    partial class FixedUserModel
+    [Migration("20250530231442_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -69,6 +69,24 @@ namespace FEENALOoFINALE.Migrations
                     b.ToTable("Alerts");
                 });
 
+            modelBuilder.Entity("FEENALOoFINALE.Models.Building", b =>
+                {
+                    b.Property<int>("BuildingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BuildingId"));
+
+                    b.Property<string>("BuildingName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("BuildingId");
+
+                    b.ToTable("Buildings");
+                });
+
             modelBuilder.Entity("FEENALOoFINALE.Models.Equipment", b =>
                 {
                     b.Property<int>("EquipmentId")
@@ -77,33 +95,81 @@ namespace FEENALOoFINALE.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EquipmentId"));
 
+                    b.Property<int>("BuildingId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EquipmentModelId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EquipmentTypeId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ExpectedLifespanMonths")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("InstallationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("EquipmentId");
 
+                    b.HasIndex("BuildingId");
+
+                    b.HasIndex("EquipmentModelId");
+
+                    b.HasIndex("EquipmentTypeId");
+
+                    b.HasIndex("RoomId");
+
                     b.ToTable("Equipment");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentModel", b =>
+                {
+                    b.Property<int>("EquipmentModelId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EquipmentModelId"));
+
+                    b.Property<int>("EquipmentTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModelName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("EquipmentModelId");
+
+                    b.HasIndex("EquipmentTypeId");
+
+                    b.ToTable("EquipmentModels");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentType", b =>
+                {
+                    b.Property<int>("EquipmentTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EquipmentTypeId"));
+
+                    b.Property<string>("EquipmentTypeName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("EquipmentTypeId");
+
+                    b.ToTable("EquipmentTypes");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.FailurePrediction", b =>
@@ -318,6 +384,29 @@ namespace FEENALOoFINALE.Migrations
                     b.HasIndex("EquipmentId");
 
                     b.ToTable("MaintenanceTasks");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.Room", b =>
+                {
+                    b.Property<int>("RoomId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RoomId"));
+
+                    b.Property<int>("BuildingId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("RoomId");
+
+                    b.HasIndex("BuildingId");
+
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.User", b =>
@@ -560,6 +649,52 @@ namespace FEENALOoFINALE.Migrations
                     b.Navigation("InventoryItem");
                 });
 
+            modelBuilder.Entity("FEENALOoFINALE.Models.Equipment", b =>
+                {
+                    b.HasOne("FEENALOoFINALE.Models.Building", "Building")
+                        .WithMany("Equipments")
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FEENALOoFINALE.Models.EquipmentModel", "EquipmentModel")
+                        .WithMany("Equipments")
+                        .HasForeignKey("EquipmentModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FEENALOoFINALE.Models.EquipmentType", "EquipmentType")
+                        .WithMany("Equipments")
+                        .HasForeignKey("EquipmentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FEENALOoFINALE.Models.Room", "Room")
+                        .WithMany("Equipments")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
+
+                    b.Navigation("EquipmentModel");
+
+                    b.Navigation("EquipmentType");
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentModel", b =>
+                {
+                    b.HasOne("FEENALOoFINALE.Models.EquipmentType", "EquipmentType")
+                        .WithMany("EquipmentModels")
+                        .HasForeignKey("EquipmentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("EquipmentType");
+                });
+
             modelBuilder.Entity("FEENALOoFINALE.Models.FailurePrediction", b =>
                 {
                     b.HasOne("FEENALOoFINALE.Models.Equipment", "Equipment")
@@ -629,6 +764,17 @@ namespace FEENALOoFINALE.Migrations
                     b.Navigation("Equipment");
                 });
 
+            modelBuilder.Entity("FEENALOoFINALE.Models.Room", b =>
+                {
+                    b.HasOne("FEENALOoFINALE.Models.Building", "Building")
+                        .WithMany("Rooms")
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Building");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -680,6 +826,13 @@ namespace FEENALOoFINALE.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("FEENALOoFINALE.Models.Building", b =>
+                {
+                    b.Navigation("Equipments");
+
+                    b.Navigation("Rooms");
+                });
+
             modelBuilder.Entity("FEENALOoFINALE.Models.Equipment", b =>
                 {
                     b.Navigation("Alerts");
@@ -687,6 +840,18 @@ namespace FEENALOoFINALE.Migrations
                     b.Navigation("FailurePredictions");
 
                     b.Navigation("MaintenanceLogs");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentModel", b =>
+                {
+                    b.Navigation("Equipments");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentType", b =>
+                {
+                    b.Navigation("EquipmentModels");
+
+                    b.Navigation("Equipments");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.InventoryItem", b =>
@@ -701,6 +866,11 @@ namespace FEENALOoFINALE.Migrations
             modelBuilder.Entity("FEENALOoFINALE.Models.MaintenanceLog", b =>
                 {
                     b.Navigation("MaintenanceInventoryLinks");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.Room", b =>
+                {
+                    b.Navigation("Equipments");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.User", b =>

@@ -15,7 +15,7 @@
         <h5 class="card-title">@Model.Title</h5>
         <dl class="row">
             <dt class="col-sm-3">Equipment</dt>
-            <dd class="col-sm-9">@(Model.Equipment?.Name ?? "N/A")</dd>  // Changed from Html.DisplayFor to direct output with null check
+            <dd class="col-sm-9">@(Model.Equipment?.EquipmentType?.EquipmentTypeName)</dd>
             <dt class="col-sm-3">Description</dt>
             <dd class="col-sm-9">@Model.Description</dd>
 
@@ -30,12 +30,6 @@
 
             <dt class="col-sm-3">Assigned To</dt>
             <dd class="col-sm-9">@(Model.AssignedTo?.FullName ?? "Unassigned")</dd>
-            <dt class = "col-sm-2">
-                @Html.DisplayNameFor(model => model.Equipment)
-            </dt>
-            <dd class = "col-sm-10">
-                @(Model.Equipment?.Name ?? "N/A")
-            </dd>
         </dl>
 
         <form asp-action="Delete">
