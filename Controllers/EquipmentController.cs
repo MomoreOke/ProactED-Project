@@ -16,10 +16,10 @@ namespace FEENALOoFINALE.Controllers
         public async Task<IActionResult> Index()
         {
             return View(await _context.Equipment
-                .Include(e => e.EquipmentType)      // Add this line
-                .Include(e => e.EquipmentModel)     // Add this line
-                .Include(e => e.Building)           // Add this line
-                .Include(e => e.Room)               // Add this line
+                .Include(e => e.EquipmentType)
+                .Include(e => e.EquipmentModel)
+                .Include(e => e.Building)
+                .Include(e => e.Room)
                 .Include(e => e.MaintenanceLogs)
                 .Include(e => e.FailurePredictions)
                 .Include(e => e.Alerts)
@@ -51,15 +51,16 @@ namespace FEENALOoFINALE.Controllers
         // GET: Equipment/Create
         public async Task<IActionResult> Create()
         {
-            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "Name");
-            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "Name");
+            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName");
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName");
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName");
             return View();
         }
 
         // POST: Equipment/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentTypeId,EquipmentModelId,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
+        public async Task<IActionResult> Create([Bind("EquipmentId,EquipmentTypeId,EquipmentModelId,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
         {
             if (ModelState.IsValid)
             {
@@ -67,9 +68,9 @@ namespace FEENALOoFINALE.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "Name", equipment.EquipmentTypeId);
-            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "Name", equipment.BuildingId);
-            // You will need to populate EquipmentModelId and RoomId SelectLists based on selected EquipmentTypeId and BuildingId via AJAX in the view
+            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
             return View(equipment);
         }
 
@@ -86,10 +87,9 @@ namespace FEENALOoFINALE.Controllers
             {
                 return NotFound();
             }
-            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "Name", equipment.EquipmentTypeId);
-            ViewData["EquipmentModelId"] = new SelectList(await _context.EquipmentModels.Where(em => em.EquipmentTypeId == equipment.EquipmentTypeId).ToListAsync(), "EquipmentModelId", "Name", equipment.EquipmentModelId);
-            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "Name", equipment.BuildingId);
-            ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "Name", equipment.RoomId);
+            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
             return View(equipment);
         }
 
@@ -112,7 +112,7 @@ namespace FEENALOoFINALE.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_context.Equipment.Any(e => e.EquipmentId == equipment.EquipmentId))
+                    if (!EquipmentExists(equipment.EquipmentId))
                     {
                         return NotFound();
                     }
@@ -123,10 +123,9 @@ namespace FEENALOoFINALE.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "Name", equipment.EquipmentTypeId);
-            ViewData["EquipmentModelId"] = new SelectList(await _context.EquipmentModels.Where(em => em.EquipmentTypeId == equipment.EquipmentTypeId).ToListAsync(), "EquipmentModelId", "Name", equipment.EquipmentModelId);
-            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "Name", equipment.BuildingId);
-            ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "Name", equipment.RoomId);
+            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
             return View(equipment);
         }
 
@@ -222,6 +221,119 @@ namespace FEENALOoFINALE.Controllers
         {
             var rooms = await _context.Rooms
                 .Where(r => r.BuildingId == buildingId)
+                .Select(r => new { r.RoomId, r.RoomName })
+                .ToListAsync();
+            return Json(rooms);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetRoomsByBuilding(int buildingId)
+        {
+            var rooms = await _context.Rooms
+                .Where(r => r.BuildingId == buildingId)
+                .Select(r => new { r.RoomId, r.RoomName })
+                .ToListAsync();
+            return Json(rooms);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddEquipmentType(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return Json(new { success = false });
+            }
+
+            var newEquipmentType = new EquipmentType { EquipmentTypeName = name };
+            _context.EquipmentTypes.Add(newEquipmentType);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, newId = newEquipmentType.EquipmentTypeId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddEquipmentModel(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return Json(new { success = false });
+            }
+
+            var newEquipmentModel = new EquipmentModel { ModelName = name, EquipmentType = new EquipmentType { EquipmentTypeName = "DefaultType" } };
+            _context.EquipmentModels.Add(newEquipmentModel);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, newId = newEquipmentModel.EquipmentModelId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddBuilding(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return Json(new { success = false });
+            }
+
+            var newBuilding = new Building { BuildingName = name };
+            _context.Buildings.Add(newBuilding);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, newId = newBuilding.BuildingId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddRoom(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return Json(new { success = false });
+            }
+
+            var building = await _context.Buildings.FirstOrDefaultAsync(b => b.BuildingId == 1) 
+                           ?? new Building { BuildingName = "Default Building" };
+            if (building.BuildingId == 0)
+            {
+                _context.Buildings.Add(building);
+                await _context.SaveChangesAsync();
+            }
+
+            var newRoom = new Room { RoomName = name, Building = building }; // Ensure Building is set properly
+            _context.Rooms.Add(newRoom);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, newId = newRoom.RoomId });
+        }
+        [HttpGet]
+        public async Task<JsonResult> GetEquipmentTypes()
+        {
+            var equipmentTypes = await _context.EquipmentTypes
+                .Select(et => new { et.EquipmentTypeId, et.EquipmentTypeName })
+                .ToListAsync();
+            return Json(equipmentTypes);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetEquipmentModels()
+        {
+            var equipmentModels = await _context.EquipmentModels
+                .Select(em => new { em.EquipmentModelId, em.ModelName })
+                .ToListAsync();
+            return Json(equipmentModels);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetBuildings()
+        {
+            var buildings = await _context.Buildings
+                .Select(b => new { b.BuildingId, b.BuildingName })
+                .ToListAsync();
+            return Json(buildings);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetRooms()
+        {
+            var rooms = await _context.Rooms
                 .Select(r => new { r.RoomId, r.RoomName })
                 .ToListAsync();
             return Json(rooms);

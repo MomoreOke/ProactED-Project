@@ -113,6 +113,12 @@ namespace FEENALOoFINALE.Data
                 .Property(s => s.UnitCost)
                 .HasColumnType("decimal(18,2)");
 
+            modelBuilder.Entity<Room>()
+                .HasOne(r => r.Building)
+                .WithMany(b => b.Rooms)
+                .HasForeignKey(r => r.BuildingId)
+                .IsRequired();
+
             modelBuilder.Entity<Equipment>(entity =>
             {
                 entity.HasOne(d => d.EquipmentType)
@@ -145,7 +151,37 @@ namespace FEENALOoFINALE.Data
             modelBuilder.Entity<Room>()
                 .HasOne(r => r.Building)
                 .WithMany(b => b.Rooms)
-                .HasForeignKey(r => r.BuildingId);
+                .HasForeignKey(r => r.BuildingId)
+                .IsRequired();
+
+            // Seed Equipment Types
+            modelBuilder.Entity<EquipmentType>().HasData(
+                new EquipmentType { EquipmentTypeId = 1, EquipmentTypeName = "Projectors" },
+                new EquipmentType { EquipmentTypeId = 2, EquipmentTypeName = "Air Conditioners" },
+                new EquipmentType { EquipmentTypeId = 3, EquipmentTypeName = "Podiums" }
+            );
+
+            // Seed Buildings
+            modelBuilder.Entity<Building>().HasData(
+                new Building { BuildingId = 1, BuildingName = "Petroleum Building" },
+                new Building { BuildingId = 2, BuildingName = "New Engineering Building" }
+            );
+
+            // Seed Rooms
+            modelBuilder.Entity<Room>().HasData(
+                new Room { RoomId = 1, BuildingId = 1, RoomName = "PB001" },
+                new Room { RoomId = 2, BuildingId = 1, RoomName = "PB012" },
+                new Room { RoomId = 3, BuildingId = 1, RoomName = "PB014" },
+                new Room { RoomId = 4, BuildingId = 1, RoomName = "PB020" },
+                new Room { RoomId = 5, BuildingId = 1, RoomName = "PB201" },
+                new Room { RoomId = 6, BuildingId = 1, RoomName = "PB208" },
+                new Room { RoomId = 7, BuildingId = 1, RoomName = "PB214" },
+                new Room { RoomId = 8, BuildingId = 2, RoomName = "NEB-GF" },
+                new Room { RoomId = 9, BuildingId = 2, RoomName = "NEB-FF1" },
+                new Room { RoomId = 10, BuildingId = 2, RoomName = "NEB-FF2" },
+                new Room { RoomId = 11, BuildingId = 2, RoomName = "NEB-SF" },
+                new Room { RoomId = 12, BuildingId = 2, RoomName = "NEB-TF" }
+            );
         }
     }
 }

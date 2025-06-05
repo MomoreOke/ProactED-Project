@@ -4,6 +4,7 @@ using FEENALOoFINALE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FEENALOoFINALE.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250604000609_UpdateRoomBuildingRelationship")]
+    partial class UpdateRoomBuildingRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,18 +85,6 @@ namespace FEENALOoFINALE.Migrations
                     b.HasKey("BuildingId");
 
                     b.ToTable("Buildings");
-
-                    b.HasData(
-                        new
-                        {
-                            BuildingId = 1,
-                            BuildingName = "Petroleum Building"
-                        },
-                        new
-                        {
-                            BuildingId = 2,
-                            BuildingName = "New Engineering Building"
-                        });
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.Equipment", b =>
@@ -179,23 +170,6 @@ namespace FEENALOoFINALE.Migrations
                     b.HasKey("EquipmentTypeId");
 
                     b.ToTable("EquipmentTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            EquipmentTypeId = 1,
-                            EquipmentTypeName = "Projectors"
-                        },
-                        new
-                        {
-                            EquipmentTypeId = 2,
-                            EquipmentTypeName = "Air Conditioners"
-                        },
-                        new
-                        {
-                            EquipmentTypeId = 3,
-                            EquipmentTypeName = "Podiums"
-                        });
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.FailurePrediction", b =>
@@ -425,87 +399,14 @@ namespace FEENALOoFINALE.Migrations
 
                     b.Property<string>("RoomName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("RoomId");
 
                     b.HasIndex("BuildingId");
 
                     b.ToTable("Rooms");
-
-                    b.HasData(
-                        new
-                        {
-                            RoomId = 1,
-                            BuildingId = 1,
-                            RoomName = "PB001"
-                        },
-                        new
-                        {
-                            RoomId = 2,
-                            BuildingId = 1,
-                            RoomName = "PB012"
-                        },
-                        new
-                        {
-                            RoomId = 3,
-                            BuildingId = 1,
-                            RoomName = "PB014"
-                        },
-                        new
-                        {
-                            RoomId = 4,
-                            BuildingId = 1,
-                            RoomName = "PB020"
-                        },
-                        new
-                        {
-                            RoomId = 5,
-                            BuildingId = 1,
-                            RoomName = "PB201"
-                        },
-                        new
-                        {
-                            RoomId = 6,
-                            BuildingId = 1,
-                            RoomName = "PB208"
-                        },
-                        new
-                        {
-                            RoomId = 7,
-                            BuildingId = 1,
-                            RoomName = "PB214"
-                        },
-                        new
-                        {
-                            RoomId = 8,
-                            BuildingId = 2,
-                            RoomName = "NEB-GF"
-                        },
-                        new
-                        {
-                            RoomId = 9,
-                            BuildingId = 2,
-                            RoomName = "NEB-FF1"
-                        },
-                        new
-                        {
-                            RoomId = 10,
-                            BuildingId = 2,
-                            RoomName = "NEB-FF2"
-                        },
-                        new
-                        {
-                            RoomId = 11,
-                            BuildingId = 2,
-                            RoomName = "NEB-SF"
-                        },
-                        new
-                        {
-                            RoomId = 12,
-                            BuildingId = 2,
-                            RoomName = "NEB-TF"
-                        });
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.User", b =>

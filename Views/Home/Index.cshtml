@@ -1,5 +1,11 @@
-﻿@{
+﻿@using FEENALOoFINALE.Models
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<User> UserManager
+@inject FEENALOoFINALE.Data.ApplicationDbContext _context
+
+@{
     ViewData["Title"] = "Home Page";
+    var currentUser = await UserManager.GetUserAsync(User);
 }
 
 <style>
@@ -30,6 +36,40 @@
 <div class="hero-section text-center">
     <h1 class="display-4">Welcome to KNUST Maintenance</h1>
 </div>
+
+@if(currentUser != null)
+{
+    <p>Hello, @currentUser.FirstName!</p>
+    <h3>Your Maintenance Logs</h3>
+    @{
+        // Assuming you’re storing Technician as username or similarly.
+        var userLogs = _context.MaintenanceLogs
+            .Where(l => l.Technician == User.Identity.Name)
+            .OrderByDescending(l => l.LogDate)
+            .ToList();
+    }
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Equipment</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in userLogs)
+            {
+                <tr>
+                    <td>@log.EquipmentId</td>
+                    <td>@log.LogDate.ToShortDateString()</td>
+                    <td>@log.MaintenanceType</td>
+                    <td>@log.Description</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 <div id="quick-actions" class="container">
     <h2 class="text-center mb-4">Quick Actions</h2>

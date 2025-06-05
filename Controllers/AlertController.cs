@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FEENALOoFINALE.Controllers
 {
@@ -44,84 +45,6 @@ namespace FEENALOoFINALE.Controllers
                 return NotFound();
             }
 
-            return View(alert);
-        }
-
-        // GET: Alert/Create
-        public IActionResult Create()
-        {
-            ViewBag.Equipment = _context.Equipment.ToList();
-            ViewBag.Users = _context.Users.ToList();
-            return View();
-        }
-
-        // POST: Alert/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentId,Title,Description,Priority,Status,AssignedToUserId")] Alert alert)
-        {
-            if (ModelState.IsValid)
-            {
-                alert.CreatedDate = DateTime.Now;
-                _context.Add(alert);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewBag.Equipment = _context.Equipment.ToList();
-            ViewBag.Users = _context.Users.ToList();
-            return View(alert);
-        }
-
-        // GET: Alert/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var alert = await _context.Alerts.FindAsync(id);
-            if (alert == null)
-            {
-                return NotFound();
-            }
-            ViewBag.Equipment = _context.Equipment.ToList();
-            ViewBag.Users = _context.Users.ToList();
-            return View(alert);
-        }
-
-        // POST: Alert/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("AlertId,EquipmentId,Title,Description,Priority,Status,AssignedToUserId,CreatedDate")] Alert alert)
-        {
-            if (id != alert.AlertId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(alert);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!AlertExists(alert.AlertId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewBag.Equipment = _context.Equipment.ToList();
-            ViewBag.Users = _context.Users.ToList();
             return View(alert);
         }
 

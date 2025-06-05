@@ -1,3 +1,4 @@
+@using FEENALOoFINALE.Models
 @model FEENALOoFINALE.Models.Equipment
 
 @{
@@ -17,14 +18,6 @@
                     <option value="">-- Select Equipment Type --</option>
                 </select>
                 <span asp-validation-for="EquipmentTypeId" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="EquipmentModelId" class="control-label"></label>
-                <select asp-for="EquipmentModelId" class="form-control" asp-items="ViewBag.EquipmentModelId">
-                    <option value="">-- Select Equipment Model --</option>
-                </select>
-                <span asp-validation-for="EquipmentModelId" class="text-danger"></span>
             </div>
 
             <div class="form-group">
@@ -80,11 +73,172 @@
     </div>
 </div>
 
+<!-- Modals -->
+<div class="modal fade" id="addEquipmentTypeModal" tabindex="-1" aria-labelledby="addEquipmentTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEquipmentTypeModalLabel">Add New Equipment Type</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newEquipmentTypeName" class="form-label">Equipment Type Name</label>
+                    <input type="text" class="form-control" id="newEquipmentTypeName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveNewEquipmentType">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addEquipmentModelModal" tabindex="-1" aria-labelledby="addEquipmentModelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEquipmentModelModalLabel">Add New Equipment Model</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newEquipmentModelName" class="form-label">Equipment Model Name</label>
+                    <input type="text" class="form-control" id="newEquipmentModelName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveNewEquipmentModel">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addBuildingModal" tabindex="-1" aria-labelledby="addBuildingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBuildingModalLabel">Add New Building</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newBuildingName" class="form-label">Building Name</label>
+                    <input type="text" class="form-control" id="newBuildingName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveNewBuilding">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addRoomModal" tabindex="-1" aria-labelledby="addRoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRoomModalLabel">Add New Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newRoomName" class="form-label">Room Name</label>
+                    <input type="text" class="form-control" id="newRoomName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveNewRoom">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script>
         $(document).ready(function () {
+            // Function to refresh select list options
+            function refreshSelectList(selectElement, url, valueField, textField, selectedValue) {
+                $.get(url, function (data) {
+                    selectElement.empty().append('<option value="">-- Select --</option>');
+                    $.each(data, function (i, item) {
+                        selectElement.append($('<option>', {
+                            value: item[valueField],
+                            text: item[textField],
+                            selected: item[valueField] == selectedValue
+                        }));
+                    });
+                });
+            }
+
+            // Equipment Type
+            $('#saveNewEquipmentType').click(function () {
+                var name = $('#newEquipmentTypeName').val();
+                $.post('@Url.Action("AddEquipmentType", "Equipment")', { name: name }, function (data) {
+                    if (data.success) {
+                        $('#addEquipmentTypeModal').modal('hide');
+                        $('#newEquipmentTypeName').val('');
+                        refreshSelectList($('#EquipmentTypeId'), '@Url.Action("GetEquipmentTypes", "Equipment")', 'equipmentTypeId', 'equipmentTypeName', data.newId);
+                    } else {
+                        alert('Error adding equipment type.');
+                    }
+                });
+            });
+
+            // Equipment Model
+            $('#saveNewEquipmentModel').click(function () {
+                var name = $('#newEquipmentModelName').val();
+                $.post('@Url.Action("AddEquipmentModel", "Equipment")', { name: name }, function (data) {
+                    if (data.success) {
+                        $('#addEquipmentModelModal').modal('hide');
+                        $('#newEquipmentModelName').val('');
+                        refreshSelectList($('#EquipmentModelId'), '@Url.Action("GetEquipmentModels", "Equipment")', 'equipmentModelId', 'modelName', data.newId);
+                    } else {
+                        alert('Error adding equipment model.');
+                    }
+                });
+            });
+
+            // Building
+            $('#saveNewBuilding').click(function () {
+                var name = $('#newBuildingName').val();
+                $.post('@Url.Action("AddBuilding", "Equipment")', { name: name }, function (data) {
+                    if (data.success) {
+                        $('#addBuildingModal').modal('hide');
+                        $('#newBuildingName').val('');
+                        refreshSelectList($('#BuildingId'), '@Url.Action("GetBuildings", "Equipment")', 'buildingId', 'buildingName', data.newId);
+                    } else {
+                        alert('Error adding building.');
+                    }
+                });
+            });
+
+            // Room
+            $('#saveNewRoom').click(function () {
+                var name = $('#newRoomName').val();
+                $.post('@Url.Action("AddRoom", "Equipment")', { name: name }, function (data) {
+                    if (data.success) {
+                        $('#addRoomModal').modal('hide');
+                        $('#newRoomName').val('');
+                        refreshSelectList($('#RoomId'), '@Url.Action("GetRooms", "Equipment")', 'roomId', 'roomName', data.newId);
+                    } else {
+                        alert('Error adding room.');
+                    }
+                });
+            });
+
+            // Initial Load
+            refreshSelectList($('#EquipmentTypeId'), '@Url.Action("GetEquipmentTypes", "Equipment")', 'equipmentTypeId', 'equipmentTypeName');
+            refreshSelectList($('#EquipmentModelId'), '@Url.Action("GetEquipmentModels", "Equipment")', 'equipmentModelId', 'modelName');
+            refreshSelectList($('#BuildingId'), '@Url.Action("GetBuildings", "Equipment")', 'buildingId', 'buildingName');
+            refreshSelectList($('#RoomId'), '@Url.Action("GetRooms", "Equipment")', 'roomId', 'roomName');
+
             $('#EquipmentTypeId').change(function () {
                 var equipmentTypeId = $(this).val();
                 $('#EquipmentModelId').empty();
@@ -96,7 +250,7 @@
                         data: { equipmentTypeId: equipmentTypeId },
                         success: function (data) {
                             $.each(data, function (index, model) {
-                                $('#EquipmentModelId').append('<option value="' + model.equipmentModelId + '">' + model.name + '</option>');
+                                $('#EquipmentModelId').append('<option value="' + model.equipmentModelId + '">' + model.modelName + '</option>');
                             });
                         }
                     });
@@ -109,12 +263,12 @@
                 $('#RoomId').append('<option value="">-- Select Room --</option>');
                 if (buildingId) {
                     $.ajax({
-                        url: '@Url.Action("GetRooms", "Equipment")',
-                        type: 'GET',
+                        url: '@Url.Action("GetRoomsByBuilding", "Equipment")',
+                        type: "GET",
                         data: { buildingId: buildingId },
                         success: function (data) {
                             $.each(data, function (index, room) {
-                                $('#RoomId').append('<option value="' + room.roomId + '">' + room.name + '</option>');
+                                $('#RoomId').append('<option value="' + room.roomId + '">' + room.roomName + '</option>');
                             });
                         }
                     });

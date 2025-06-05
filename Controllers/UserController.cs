@@ -15,8 +15,7 @@ namespace FEENALOoFINALE.Controllers
         public async Task<IActionResult> Index()
         {
             return View(await _context.Users
-                .OrderBy(u => u.Department)
-                .ThenBy(u => u.FullName)
+                .OrderBy(u => u.FullName)
                 .ToListAsync());
         }
 
@@ -47,7 +46,7 @@ namespace FEENALOoFINALE.Controllers
         // POST: User/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Username,Email,FullName,Department,ContactNumber,Role")] User user)
+        public async Task<IActionResult> Create([Bind("Username,Email,FullName,ContactNumber")] User user)
         {
             if (ModelState.IsValid)
             {
@@ -78,7 +77,7 @@ namespace FEENALOoFINALE.Controllers
         // POST: User/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("Id,UserName,Email,FullName,Department,ContactNumber,Role")] User user)
+        public async Task<IActionResult> Edit(string id, [Bind("Id,UserName,Email,FullName,ContactNumber")] User user)
         {
             if (id != user.Id)
             {

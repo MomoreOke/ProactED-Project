@@ -53,10 +53,14 @@ namespace FEENALOoFINALE.Controllers
         // POST: MaintenanceLog/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeDuration")] MaintenanceLog maintenanceLog)
+        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,DowntimeDuration")] MaintenanceLog maintenanceLog)
         {
             if (ModelState.IsValid)
             {
+                // Set Technician to the signed-in user's full name (or just store the user Id in a new property)
+                maintenanceLog.Technician = User.Identity.Name; 
+                // Alternatively, if you have access to UserManager<User>, retrieve the current user and use currentUser.FullName.
+                
                 _context.Add(maintenanceLog);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
