@@ -4,6 +4,7 @@ using FEENALOoFINALE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FEENALOoFINALE.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250605224941_PendingChanges")]
+    partial class PendingChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -154,51 +157,14 @@ namespace FEENALOoFINALE.Migrations
 
                     b.Property<string>("ModelName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("EquipmentModelId");
 
                     b.HasIndex("EquipmentTypeId");
 
                     b.ToTable("EquipmentModels");
-
-                    b.HasData(
-                        new
-                        {
-                            EquipmentModelId = 1,
-                            EquipmentTypeId = 1,
-                            ModelName = "Projector Model A"
-                        },
-                        new
-                        {
-                            EquipmentModelId = 2,
-                            EquipmentTypeId = 1,
-                            ModelName = "Projector Model B"
-                        },
-                        new
-                        {
-                            EquipmentModelId = 3,
-                            EquipmentTypeId = 2,
-                            ModelName = "Air Conditioner Model A"
-                        },
-                        new
-                        {
-                            EquipmentModelId = 4,
-                            EquipmentTypeId = 2,
-                            ModelName = "Air Conditioner Model B"
-                        },
-                        new
-                        {
-                            EquipmentModelId = 5,
-                            EquipmentTypeId = 3,
-                            ModelName = "Podium Model A"
-                        },
-                        new
-                        {
-                            EquipmentModelId = 6,
-                            EquipmentTypeId = 3,
-                            ModelName = "Podium Model B"
-                        });
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentType", b =>

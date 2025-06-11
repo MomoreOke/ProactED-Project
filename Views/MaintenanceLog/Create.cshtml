@@ -10,6 +10,14 @@
     <div class="col-md-8">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @if (ViewBag.AlertId != null)
+            {
+                <input type="hidden" name="AlertId" value="@ViewBag.AlertId" />
+                <div class="alert alert-info">
+                    This maintenance log will resolve Alert #@ViewBag.AlertId.
+                </div>
+            }
             
             <div class="form-group">
                 <label asp-for="EquipmentId" class="control-label">Equipment</label>

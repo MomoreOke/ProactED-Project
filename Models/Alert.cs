@@ -32,6 +32,7 @@ namespace FEENALOoFINALE.Models
     {
         Open,
         InProgress,
+        Resolved,   // <-- Add this line
         Closed
     }
 }

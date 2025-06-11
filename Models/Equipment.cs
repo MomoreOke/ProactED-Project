@@ -13,20 +13,21 @@ namespace FEENALOoFINALE.Models
         
         // New foreign keys and navigation properties
         public int EquipmentTypeId { get; set; }
-        public required EquipmentType EquipmentType { get; set; }
+        public EquipmentType? EquipmentType { get; set; }
 
+        [Required]
         public int EquipmentModelId { get; set; }
-        public required EquipmentModel EquipmentModel { get; set; }
+        public EquipmentModel? EquipmentModel { get; set; }
         
         // Remove Location property
         // public required string Location { get; set; }
         
         // New foreign keys and navigation properties for location
         public int BuildingId { get; set; }
-        public required Building Building { get; set; }
+        public Building? Building { get; set; }
 
         public int RoomId { get; set; }
-        public required Room Room { get; set; }
+        public Room? Room { get; set; }
 
         public DateTime InstallationDate { get; set; }
         public int ExpectedLifespanMonths { get; set; }

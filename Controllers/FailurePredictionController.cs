@@ -65,9 +65,9 @@ namespace FEENALOoFINALE.Controllers
         }
 
         // POST: FailurePrediction/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var prediction = await _context.FailurePredictions.FindAsync(id);
             if (prediction != null)

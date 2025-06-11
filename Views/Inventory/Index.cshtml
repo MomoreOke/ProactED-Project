@@ -25,14 +25,33 @@
         @foreach (var item in Model)
         {
             var currentStock = item.InventoryStocks?.Sum(s => s.Quantity) ?? 0;
-            var stockStatus = currentStock <= item.MinimumStockLevel ? "text-danger" : "";
-            
+            string stockStatus;
+            if (currentStock == 0)
+            {
+                stockStatus = "empty";
+            }
+            else if (currentStock < item.MinimumStockLevel)
+            {
+                stockStatus = "low";
+            }
+            else if (currentStock >= item.MinimumStockLevel + 10)
+            {
+                stockStatus = "sufficient";
+            }
+            else
+            {
+                stockStatus = "low";
+            }
             <tr>
                 <td>@item.Name</td>
                 <td>@item.Category</td>
-                <td class="@stockStatus">@currentStock</td>
+                <td>
+                    @currentStock
+                    <span class="badge @(stockStatus == "sufficient" ? "bg-success" : stockStatus == "low" ? "bg-warning text-dark" : "bg-danger")">
+                        @stockStatus.ToUpperInvariant()
+                    </span>
+                </td>
                 <td>@item.MinimumStockLevel</td>
-                <td>@item.UnitOfMeasure</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.ItemId" class="btn btn-info btn-sm">Details</a>
                     <a asp-action="Edit" asp-route-id="@item.ItemId" class="btn btn-warning btn-sm">Edit</a>

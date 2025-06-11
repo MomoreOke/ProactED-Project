@@ -82,6 +82,31 @@ namespace FEENALOoFINALE.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        public IActionResult Resolve(int id)
+        {
+            // Optionally, you can check if the alert exists and is unresolved
+            var alert = _context.Alerts.Find(id);
+            if (alert == null)
+            {
+                return NotFound();
+            }
+            // Redirect to MaintenanceLog/Create, passing the EquipmentId (or AlertId if you want)
+            return RedirectToAction("Create", "MaintenanceLog", new { equipmentId = alert.EquipmentId, alertId = id });
+        }
+
+        public async Task<IActionResult> MarkInProgress(int id)
+        {
+            var alert = await _context.Alerts.FindAsync(id);
+            if (alert == null)
+                return NotFound();
+
+            alert.Status = AlertStatus.InProgress;
+            _context.Update(alert);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
         private bool AlertExists(int id)
         {
             return _context.Alerts.Any(e => e.AlertId == id);

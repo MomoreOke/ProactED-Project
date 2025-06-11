@@ -182,6 +182,26 @@ namespace FEENALOoFINALE.Data
                 new Room { RoomId = 11, BuildingId = 2, RoomName = "NEB-SF" },
                 new Room { RoomId = 12, BuildingId = 2, RoomName = "NEB-TF" }
             );
+
+            // Seed Equipment Models
+            modelBuilder.Entity<EquipmentModel>().HasData(
+                new EquipmentModel { EquipmentModelId = 1, EquipmentTypeId = 1, ModelName = "Projector Model A" },
+                new EquipmentModel { EquipmentModelId = 2, EquipmentTypeId = 1, ModelName = "Projector Model B" },
+                new EquipmentModel { EquipmentModelId = 3, EquipmentTypeId = 2, ModelName = "Air Conditioner Model A" },
+                new EquipmentModel { EquipmentModelId = 4, EquipmentTypeId = 2, ModelName = "Air Conditioner Model B" },
+                new EquipmentModel { EquipmentModelId = 5, EquipmentTypeId = 3, ModelName = "Podium Model A" },
+                new EquipmentModel { EquipmentModelId = 6, EquipmentTypeId = 3, ModelName = "Podium Model B" }
+            );
+        }
+
+        public async Task<List<Equipment>> GetEquipmentWithDetailsAsync()
+        {
+            return await Equipment
+                .Include(e => e.MaintenanceLogs)
+                .Include(e => e.FailurePredictions)
+                .Include(e => e.Alerts)
+                .AsSplitQuery()
+                .ToListAsync();
         }
     }
 }

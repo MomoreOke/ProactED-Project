@@ -8,9 +8,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace FEENALOoFINALE.Controllers
 {
     [Authorize]
-    public class EquipmentController(ApplicationDbContext context) : Controller
+    public class EquipmentController : Controller
     {
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
+        public EquipmentController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
         // GET: Equipment
         public async Task<IActionResult> Index()
@@ -54,6 +58,8 @@ namespace FEENALOoFINALE.Controllers
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName");
             ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName");
             ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName");
+            // Add this line to initialize EquipmentModelId with an empty SelectList
+            ViewData["EquipmentModelId"] = new SelectList(new List<EquipmentModel>(), "EquipmentModelId", "ModelName");
             return View();
         }
 
@@ -64,13 +70,57 @@ namespace FEENALOoFINALE.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(equipment);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                // Example: Check if IDs are valid
+                var equipmentTypeExists = await _context.EquipmentTypes.AnyAsync(e => e.EquipmentTypeId == equipment.EquipmentTypeId);
+                var equipmentModelExists = await _context.EquipmentModels.AnyAsync(e => e.EquipmentModelId == equipment.EquipmentModelId);
+                var buildingExists = await _context.Buildings.AnyAsync(b => b.BuildingId == equipment.BuildingId);
+                var roomExists = await _context.Rooms.AnyAsync(r => r.RoomId == equipment.RoomId);
+
+                if (!equipmentTypeExists || !equipmentModelExists || !buildingExists || !roomExists)
+                {
+                    ModelState.AddModelError("", "One or more selected values are invalid.");
+                    // Repopulate dropdowns and return the view as before
+                    ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
+
+                    // Repopulate EquipmentModelId based on selected EquipmentTypeId
+                    var equipmentModels = await _context.EquipmentModels
+                        .Where(m => m.EquipmentTypeId == equipment.EquipmentTypeId)
+                        .ToListAsync();
+                    ViewData["EquipmentModelId"] = new SelectList(equipmentModels, "EquipmentModelId", "ModelName", equipment.EquipmentModelId);
+
+                    ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
+                    ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
+
+                    return View(equipment);
+                }
+
+                try
+                {
+                    _context.Add(equipment);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    // Log ex.Message and ex.InnerException?.Message
+                    ModelState.AddModelError("", "Error saving equipment: " + ex.Message);
+                }
             }
+
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            // Set a breakpoint here or log 'errors' to see what is failing
+
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
+
+            // Repopulate EquipmentModelId based on selected EquipmentTypeId
+            var models = await _context.EquipmentModels
+                .Where(m => m.EquipmentTypeId == equipment.EquipmentTypeId)
+                .ToListAsync();
+            ViewData["EquipmentModelId"] = new SelectList(models, "EquipmentModelId", "ModelName", equipment.EquipmentModelId);
+
             ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
-            ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
+
             return View(equipment);
         }
 
@@ -88,8 +138,14 @@ namespace FEENALOoFINALE.Controllers
                 return NotFound();
             }
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
+
+            var models = await _context.EquipmentModels
+                .Where(m => m.EquipmentTypeId == equipment.EquipmentTypeId)
+                .ToListAsync();
+            ViewData["EquipmentModelId"] = new SelectList(models, "EquipmentModelId", "ModelName", equipment.EquipmentModelId);
+
             ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
-            ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
             return View(equipment);
         }
 
@@ -124,8 +180,14 @@ namespace FEENALOoFINALE.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
+
+            var models = await _context.EquipmentModels
+                .Where(m => m.EquipmentTypeId == equipment.EquipmentTypeId)
+                .ToListAsync();
+            ViewData["EquipmentModelId"] = new SelectList(models, "EquipmentModelId", "ModelName", equipment.EquipmentModelId);
+
             ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
-            ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
+            ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
             return View(equipment);
         }
 
@@ -209,11 +271,16 @@ namespace FEENALOoFINALE.Controllers
         [HttpGet]
         public async Task<JsonResult> GetEquipmentModels(int equipmentTypeId)
         {
-            var equipmentModels = await _context.EquipmentModels
+            var models = await _context.EquipmentModels
                 .Where(em => em.EquipmentTypeId == equipmentTypeId)
-                .Select(em => new { em.EquipmentModelId, em.ModelName })
+                .Select(em => new 
+                { 
+                    equipmentModelId = em.EquipmentModelId, 
+                    modelName = em.ModelName 
+                })
                 .ToListAsync();
-            return Json(equipmentModels);
+
+            return Json(models);
         }
 
         [HttpGet]
@@ -252,14 +319,29 @@ namespace FEENALOoFINALE.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddEquipmentModel(string name)
+        public async Task<IActionResult> AddEquipmentModel(int equipmentTypeId, string name)
         {
             if (string.IsNullOrEmpty(name))
             {
                 return Json(new { success = false });
             }
 
-            var newEquipmentModel = new EquipmentModel { ModelName = name, EquipmentType = new EquipmentType { EquipmentTypeName = "DefaultType" } };
+            // Look up the equipment type by id
+            var equipmentType = await _context.EquipmentTypes
+                .FirstOrDefaultAsync(et => et.EquipmentTypeId == equipmentTypeId);
+
+            if (equipmentType == null)
+            {
+                return Json(new { success = false, error = "Invalid equipment type." });
+            }
+
+            var newEquipmentModel = new EquipmentModel 
+            { 
+                ModelName = name, 
+                EquipmentTypeId = equipmentTypeId,
+                EquipmentType = equipmentType // Set the required EquipmentType property
+            };
+            
             _context.EquipmentModels.Add(newEquipmentModel);
             await _context.SaveChangesAsync();
 
@@ -313,30 +395,12 @@ namespace FEENALOoFINALE.Controllers
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetEquipmentModels()
-        {
-            var equipmentModels = await _context.EquipmentModels
-                .Select(em => new { em.EquipmentModelId, em.ModelName })
-                .ToListAsync();
-            return Json(equipmentModels);
-        }
-
-        [HttpGet]
         public async Task<JsonResult> GetBuildings()
         {
             var buildings = await _context.Buildings
                 .Select(b => new { b.BuildingId, b.BuildingName })
                 .ToListAsync();
             return Json(buildings);
-        }
-
-        [HttpGet]
-        public async Task<JsonResult> GetRooms()
-        {
-            var rooms = await _context.Rooms
-                .Select(r => new { r.RoomId, r.RoomName })
-                .ToListAsync();
-            return Json(rooms);
-        }
+        }    
     }
 }

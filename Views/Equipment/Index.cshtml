@@ -16,8 +16,8 @@
         <tr>
             <th>@(Model.Any() && Model.First().EquipmentType != null ? Html.DisplayNameFor(model => model.First().EquipmentType.EquipmentTypeName) : "Equipment Type")</th>
             <th>@(Model.Any() && Model.First().EquipmentModel != null ? Html.DisplayNameFor(model => model.First().EquipmentModel.ModelName) : "Model")</th> 
-            <th>@(Model.Any() && Model.First().Building != null ? Html.DisplayNameFor(model => model.First().Building!.BuildingName) : "Building")</th>
-            <th>@(Model.Any() && Model.First().Room != null ? Html.DisplayNameFor(model => model.First().Room!.RoomName) : "Room")</th>
+            <th>@(Model.Any() && Model.First().Building != null ? Html.DisplayNameFor(model => model.First().Building.BuildingName) : "Building")</th>
+            <th>@(Model.Any() && Model.First().Room != null ? Html.DisplayNameFor(model => model.First().Room.RoomName) : "Room")</th>
             <th>@(Model.Any() ? Html.DisplayNameFor(model => model.First().Status) : "Status")</th>
             <th>Actions</th>
         </tr>

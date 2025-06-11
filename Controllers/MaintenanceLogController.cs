@@ -43,9 +43,10 @@ namespace FEENALOoFINALE.Controllers
         }
 
         // GET: MaintenanceLog/Create
-        public IActionResult Create(int? equipmentId)
+        public IActionResult Create(int? equipmentId, int? alertId = null)
         {
             ViewBag.EquipmentId = equipmentId;
+            ViewBag.AlertId = alertId;
             ViewBag.Equipment = _context.Equipment.ToList();
             return View();
         }
@@ -53,16 +54,34 @@ namespace FEENALOoFINALE.Controllers
         // POST: MaintenanceLog/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,DowntimeDuration")] MaintenanceLog maintenanceLog)
+        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,DowntimeDuration,AlertId")] MaintenanceLog maintenanceLog)
         {
             if (ModelState.IsValid)
             {
-                // Set Technician to the signed-in user's full name (or just store the user Id in a new property)
-                maintenanceLog.Technician = User.Identity.Name; 
-                // Alternatively, if you have access to UserManager<User>, retrieve the current user and use currentUser.FullName.
-                
+                if (User != null && User.Identity != null)
+                {
+                    maintenanceLog.Technician = User?.Identity?.Name ?? "Unknown";
+                }
+                else
+                {
+                    maintenanceLog.Technician = "Unknown";
+                }
+
                 _context.Add(maintenanceLog);
                 await _context.SaveChangesAsync();
+
+                // Mark alert as resolved if AlertId is present
+                if (maintenanceLog.AlertId.HasValue)
+                {
+                    var alert = await _context.Alerts.FindAsync(maintenanceLog.AlertId.Value);
+                    if (alert != null)
+                    {
+                        alert.Status = AlertStatus.Resolved; // Use your enum or string as appropriate
+                        _context.Update(alert);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
                 return RedirectToAction(nameof(Index));
             }
             ViewBag.Equipment = _context.Equipment.ToList();

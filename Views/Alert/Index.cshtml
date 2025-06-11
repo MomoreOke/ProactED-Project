@@ -29,13 +29,32 @@
                 <td>@item.Title</td>
                 <td>@item.Equipment?.EquipmentType?.EquipmentTypeName</td>
                 <td class="@priorityClass">@item.Priority</td>
-                <td>@item.Status</td>
+                <td>
+                    @if (item.Status == AlertStatus.InProgress)
+                    {
+                        <span class="badge bg-warning text-dark">In Progress</span>
+                    }
+                    else if (item.Status == AlertStatus.Resolved)
+                    {
+                        <span class="badge bg-success">Resolved</span>
+                    }
+                    else if (item.Status == AlertStatus.Closed)
+                    {
+                        <span class="badge bg-secondary">Closed</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Open</span>
+                    }
+                </td>
                 <td>@item.CreatedDate.ToShortDateString()</td>
                 <td>@(item.AssignedTo?.FullName ?? "Unassigned")</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.AlertId" class="btn btn-info btn-sm">Details</a>
                     <a asp-action="Edit" asp-route-id="@item.AlertId" class="btn btn-warning btn-sm">Edit</a>
                     <a asp-action="Delete" asp-route-id="@item.AlertId" class="btn btn-danger btn-sm">Delete</a>
+                    <a asp-action="Resolve" asp-route-id="@item.AlertId" class="btn btn-success btn-sm">Resolve</a>
+                    <a asp-action="MarkInProgress" asp-route-id="@item.AlertId" class="btn btn-primary btn-sm">Start</a>
                 </td>
             </tr>
         }

@@ -10,14 +10,13 @@ namespace FEENALOoFINALE.Models
         public int EquipmentModelId { get; set; }
 
         [Required]
-        [StringLength(100)]
-        public required string ModelName { get; set; }
-
-        // Foreign key for EquipmentType
         public int EquipmentTypeId { get; set; }
 
-        // Navigation property to EquipmentType
-        public required EquipmentType EquipmentType { get; set; }
+        [Required]
+        public string ModelName { get; set; } = string.Empty;
+
+        // Navigation property
+        public virtual EquipmentType? EquipmentType { get; set; }
 
         public virtual ICollection<Equipment> Equipments { get; set; } = new List<Equipment>();
     }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
@@ -28,13 +29,12 @@ namespace FEENALOoFINALE.Controllers
                 return NotFound();
             }
 
-#pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
             var inventoryItem = await _context.InventoryItems
                 .Include(i => i.InventoryStocks)
                 .Include(i => i.MaintenanceInventoryLinks)
                     .ThenInclude(mil => mil.MaintenanceLog)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(i => i.ItemId == id);
-#pragma warning restore CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
 
             if (inventoryItem == null)
             {
@@ -47,21 +47,51 @@ namespace FEENALOoFINALE.Controllers
         // GET: Inventory/Create
         public IActionResult Create()
         {
-            return View();
+            return View(new InventoryViewModel());
         }
 
         // POST: Inventory/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Description,Category,MinimumStockLevel,UnitOfMeasure")] InventoryItem inventoryItem)
+        public async Task<IActionResult> Create(InventoryViewModel model)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(inventoryItem);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    var item = new InventoryItem
+                    {
+                        Name = model.Name,
+                        Description = model.Description,
+                        Category = model.Category,
+                        MinimumStockLevel = 10
+                    };
+
+                    _context.InventoryItems.Add(item);
+                    await _context.SaveChangesAsync();
+
+                    if (model.InitialStock > 0)
+                    {
+                        var stock = new InventoryStock
+                        {
+                            ItemId = item.ItemId,
+                            Quantity = model.InitialStock,
+                            UnitCost = 0,
+                            DateReceived = DateTime.Now,
+                            BatchNumber = Guid.NewGuid().ToString()
+                        };
+                        _context.InventoryStocks.Add(stock);
+                        await _context.SaveChangesAsync();
+                    }
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "An error occurred while saving: " + ex.Message);
+                }
             }
-            return View(inventoryItem);
+            await PopulateInventoryDropdownsAsync();
+            return View(model);
         }
 
         // GET: Inventory/Edit/5
@@ -83,7 +113,7 @@ namespace FEENALOoFINALE.Controllers
         // POST: Inventory/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ItemId,Name,Description,Category,MinimumStockLevel,UnitOfMeasure")] InventoryItem inventoryItem)
+        public async Task<IActionResult> Edit(int id, [Bind("ItemId,Name,Description,Category,MinimumStockLevel")] InventoryItem inventoryItem)
         {
             if (id != inventoryItem.ItemId)
             {
@@ -176,6 +206,16 @@ namespace FEENALOoFINALE.Controllers
             }
             ViewBag.InventoryItem = await _context.InventoryItems.FindAsync(stock.ItemId);
             return View(stock);
+        }
+
+        private async Task PopulateInventoryDropdownsAsync(InventoryItem? item = null)
+        {
+            ViewData["Categories"] = new SelectList(Enum.GetValues(typeof(ItemCategory)));
+            if (item != null)
+            {
+                ViewData["SelectedCategory"] = item.Category;
+            }
+            await Task.CompletedTask;
         }
 
         private bool InventoryItemExists(int id)

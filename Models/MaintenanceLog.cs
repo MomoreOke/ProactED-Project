@@ -21,6 +21,9 @@ namespace FEENALOoFINALE.Models
 
         public MaintenanceStatus Status { get; set; } // Assuming you have a MaintenanceStatus enum
 
+        public int? AlertId { get; set; }
+        public Alert? Alert { get; set; }
+
         // Navigation properties
         public Equipment Equipment { get; set; } = null!; // Changed from 'public required Equipment Equipment'
         public ICollection<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; } = new List<MaintenanceInventoryLink>();
