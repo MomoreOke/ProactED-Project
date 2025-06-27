@@ -47,7 +47,7 @@ namespace FEENALOoFINALE.Controllers
         {
             ViewBag.EquipmentId = equipmentId;
             ViewBag.AlertId = alertId;
-            ViewBag.Equipment = _context.Equipment.ToList();
+            ViewBag.Equipment = _context.Equipment.ToList(); // Ensure this is always a non-null list
             return View();
         }
 
@@ -84,7 +84,7 @@ namespace FEENALOoFINALE.Controllers
 
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.Equipment = _context.Equipment.ToList();
+            ViewBag.Equipment = _context.Equipment.ToList(); // Ensure this is always set on error
             return View(maintenanceLog);
         }
 

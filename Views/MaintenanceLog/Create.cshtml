@@ -22,7 +22,7 @@
             <div class="form-group">
                 <label asp-for="EquipmentId" class="control-label">Equipment</label>
                 <select asp-for="EquipmentId" class="form-control" 
-                        asp-items="@(new SelectList(ViewBag.Equipment, "EquipmentId", "Name"))">
+                        asp-items="@(new SelectList(ViewBag.Equipment, "EquipmentId", "EquipmentModel.ModelName"))">
                     <option value="">-- Select Equipment --</option>
                 </select>
                 <span asp-validation-for="EquipmentId" class="text-danger"></span>
