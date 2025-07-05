@@ -207,3 +207,4 @@ For questions or support, please contact the development team or create an issue
 ---
 
 **Built with ❤️ for modern industrial maintenance management**
+# predictive-maintenance-system
