@@ -64,7 +64,8 @@ namespace FEENALOoFINALE.Controllers
                         Name = model.Name,
                         Description = model.Description,
                         Category = model.Category,
-                        MinimumStockLevel = 10
+                        MinimumStockLevel = 10,
+                        MaintenanceInventoryLinks = new List<MaintenanceInventoryLink>()
                     };
 
                     _context.InventoryItems.Add(item);

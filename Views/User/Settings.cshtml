@@ -1,0 +1,657 @@
+@model FEENALOoFINALE.Models.User
+@{
+    ViewData["Title"] = "Account Settings";
+}
+
+<style>
+    .settings-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .settings-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .settings-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 25px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        max-width: 900px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 10;
+        animation: slideUp 0.8s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .settings-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 25px 25px 0 0;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .settings-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+
+    @@keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .settings-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        position: relative;
+        z-index: 2;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .settings-icon i {
+        font-size: 2.5rem;
+        color: white;
+    }
+
+    .settings-title {
+        color: white;
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .settings-subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .settings-body {
+        padding: 2.5rem;
+    }
+
+    .settings-nav {
+        border-bottom: 2px solid rgba(108, 117, 125, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        background: none;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s ease;
+        border-radius: 0;
+    }
+
+    .nav-tabs .nav-link.active {
+        background: none;
+        color: #667eea;
+        border-bottom-color: #667eea;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #667eea;
+        border-bottom-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .settings-section {
+        margin-bottom: 2.5rem;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title i {
+        margin-right: 0.5rem;
+        color: #667eea;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-control-modern {
+        background: rgba(248, 249, 250, 0.8);
+        border: 2px solid rgba(108, 117, 125, 0.2);
+        border-radius: 15px;
+        padding: 1rem 1rem 1rem 3rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 70%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 1.1rem;
+        transition: color 0.3s ease;
+        z-index: 5;
+    }
+
+    .form-control-modern:focus + .input-icon {
+        color: #667eea;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .password-section {
+        background: rgba(248, 249, 250, 0.5);
+        border: 2px solid rgba(108, 117, 125, 0.1);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 15px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        color: white;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-save::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-save:hover::before {
+        left: 100%;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-cancel {
+        background: linear-gradient(135deg, #6c757d, #495057);
+        border: none;
+        border-radius: 15px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        color: white;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 1rem;
+    }
+
+    .btn-cancel:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .alert-modern {
+        background: rgba(25, 135, 84, 0.1);
+        border: 1px solid rgba(25, 135, 84, 0.2);
+        border-radius: 15px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        color: #198754;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .alert-modern.alert-danger {
+        background: rgba(220, 53, 69, 0.1);
+        border-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+
+    .alert-modern i {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .floating-shapes {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .shape {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: float-shapes 15s ease-in-out infinite;
+    }
+
+    .shape:nth-child(1) {
+        width: 100px;
+        height: 100px;
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .shape:nth-child(2) {
+        width: 60px;
+        height: 60px;
+        top: 60%;
+        right: 15%;
+        animation-delay: -5s;
+    }
+
+    .shape:nth-child(3) {
+        width: 80px;
+        height: 80px;
+        bottom: 30%;
+        left: 20%;
+        animation-delay: -10s;
+    }
+
+    @@keyframes float-shapes {
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+            opacity: 0.3;
+        }
+        50% {
+            transform: translateY(-30px) rotate(180deg);
+            opacity: 0.8;
+        }
+    }
+
+    .password-help {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .settings-card {
+            margin: 1rem;
+            border-radius: 20px;
+        }
+        
+        .settings-header {
+            padding: 2rem 1.5rem;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .settings-body {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-cancel {
+            margin-left: 0;
+            margin-top: 1rem;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .btn-save {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="settings-container">
+    <!-- Floating shapes for decoration -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="container">
+        <div class="settings-card">
+            <!-- Settings Header -->
+            <div class="settings-header">
+                <div class="settings-icon">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+                <h1 class="settings-title">Account Settings</h1>
+                <p class="settings-subtitle">Manage your account preferences and security settings</p>
+            </div>
+
+            <!-- Settings Body -->
+            <div class="settings-body">
+                <!-- Success/Error Messages -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert-modern">
+                        <i class="bi bi-check-circle"></i>
+                        @TempData["SuccessMessage"]
+                    </div>
+                }
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert-modern alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <div>
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Settings Navigation -->
+                <ul class="nav nav-tabs settings-nav" id="settingsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+                            <i class="bi bi-person me-2"></i>Profile Information
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                            <i class="bi bi-shield-lock me-2"></i>Security
+                        </button>
+                    </li>
+                </ul>
+
+                <form asp-action="Settings" method="post" id="settingsForm">
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.Id)
+                    @Html.HiddenFor(m => m.UserName)
+
+                    <div class="tab-content" id="settingsTabContent">
+                        <!-- Profile Information Tab -->
+                        <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                            <div class="settings-section">
+                                <h3 class="section-title">
+                                    <i class="bi bi-person-badge"></i>
+                                    Personal Information
+                                </h3>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label asp-for="FirstName" class="form-label">First Name</label>
+                                        <div class="position-relative">
+                                            <input asp-for="FirstName" class="form-control-modern" placeholder="Enter your first name" required />
+                                            <i class="bi bi-person input-icon"></i>
+                                        </div>
+                                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label asp-for="LastName" class="form-label">Last Name</label>
+                                        <div class="position-relative">
+                                            <input asp-for="LastName" class="form-control-modern" placeholder="Enter your last name" required />
+                                            <i class="bi bi-person input-icon"></i>
+                                        </div>
+                                        <span asp-validation-for="LastName" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="Email" class="form-label">Email Address</label>
+                                    <div class="position-relative">
+                                        <input asp-for="Email" type="email" class="form-control-modern" placeholder="Enter your email address" required />
+                                        <i class="bi bi-envelope input-icon"></i>
+                                    </div>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label asp-for="WorkerId" class="form-label">Worker ID</label>
+                                        <div class="position-relative">
+                                            <input asp-for="WorkerId" class="form-control-modern" placeholder="Enter your worker ID" required />
+                                            <i class="bi bi-badge-vo input-icon"></i>
+                                        </div>
+                                        <span asp-validation-for="WorkerId" class="text-danger"></span>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                                        <div class="position-relative">
+                                            <input asp-for="PhoneNumber" type="tel" class="form-control-modern" placeholder="Enter your phone number" />
+                                            <i class="bi bi-telephone input-icon"></i>
+                                        </div>
+                                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="ContactNumber" class="form-label">Alternative Contact Number</label>
+                                    <div class="position-relative">
+                                        <input asp-for="ContactNumber" type="tel" class="form-control-modern" placeholder="Enter alternative contact number" />
+                                        <i class="bi bi-telephone-plus input-icon"></i>
+                                    </div>
+                                    <span asp-validation-for="ContactNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Tab -->
+                        <div class="tab-pane fade" id="security" role="tabpanel">
+                            <div class="settings-section">
+                                <h3 class="section-title">
+                                    <i class="bi bi-shield-lock"></i>
+                                    Change Password
+                                </h3>
+                                
+                                <div class="password-section">
+                                    <div class="form-group">
+                                        <label for="currentPassword" class="form-label">Current Password</label>
+                                        <div class="position-relative">
+                                            <input type="password" name="currentPassword" id="currentPassword" class="form-control-modern" placeholder="Enter your current password" />
+                                            <i class="bi bi-lock input-icon"></i>
+                                        </div>
+                                        <div class="password-help">Required only if you want to change your password</div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="newPassword" class="form-label">New Password</label>
+                                            <div class="position-relative">
+                                                <input type="password" name="newPassword" id="newPassword" class="form-control-modern" placeholder="Enter new password" />
+                                                <i class="bi bi-key input-icon"></i>
+                                            </div>
+                                            <div class="password-help">Password must be at least 6 characters long</div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                                            <div class="position-relative">
+                                                <input type="password" name="confirmPassword" id="confirmPassword" class="form-control-modern" placeholder="Confirm new password" />
+                                                <i class="bi bi-shield-check input-icon"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap justify-content-end mt-4">
+                        <button type="submit" class="btn-save" id="saveBtn">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Save Changes
+                        </button>
+                        <a asp-controller="User" asp-action="Profile" class="btn-cancel">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add loading animation on form submit
+    document.getElementById('settingsForm').addEventListener('submit', function() {
+        const btn = document.getElementById('saveBtn');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+        btn.disabled = true;
+    });
+
+    // Client-side password confirmation validation
+    document.getElementById('confirmPassword').addEventListener('input', function() {
+        var newPassword = document.getElementById('newPassword').value;
+        var confirmPassword = this.value;
+        
+        if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+            this.setCustomValidity('Passwords do not match');
+            this.style.borderColor = '#dc3545';
+        } else {
+            this.setCustomValidity('');
+            this.style.borderColor = '';
+        }
+    });
+
+    // Password change validation
+    document.getElementById('newPassword').addEventListener('input', function() {
+        var newPassword = this.value;
+        var currentPassword = document.getElementById('currentPassword');
+        
+        if (newPassword && !currentPassword.value) {
+            currentPassword.style.borderColor = '#dc3545';
+            currentPassword.placeholder = 'Current password required for password change';
+        } else {
+            currentPassword.style.borderColor = '';
+            currentPassword.placeholder = 'Enter your current password';
+        }
+    });
+
+    // Add focus effects for better UX
+    document.querySelectorAll('.form-control-modern').forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+
+    // Remember active tab
+    document.addEventListener('DOMContentLoaded', function() {
+        var activeTab = localStorage.getItem('activeSettingsTab');
+        if (activeTab) {
+            var tabElement = document.querySelector('button[data-bs-target="' + activeTab + '"]');
+            if (tabElement) {
+                var tab = new bootstrap.Tab(tabElement);
+                tab.show();
+            }
+        }
+    });
+
+    // Save active tab
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(tabElement) {
+        tabElement.addEventListener('shown.bs.tab', function(event) {
+            localStorage.setItem('activeSettingsTab', event.target.getAttribute('data-bs-target'));
+        });
+    });
+</script>

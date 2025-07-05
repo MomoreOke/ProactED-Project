@@ -3,7 +3,7 @@
 @using FEENALOoFINALE.Models
 @inject UserManager<User> UserManager
 @{
-    ViewData["Title"] = "Advanced Analytics Dashboard";
+    ViewData["Title"] = "Dashboard";
     var currentUser = await UserManager.GetUserAsync(User);
 }
 
@@ -494,128 +494,6 @@
         background-color: rgba(102, 126, 234, 0.05);
     }
 
-    /* KPI Indicators */
-    .kpi-indicator {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
-    }
-    
-    .kpi-indicator:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-    
-    .kpi-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        color: white;
-        margin-right: 1rem;
-        flex-shrink: 0;
-    }
-    
-    .kpi-content {
-        flex: 1;
-    }
-    
-    .kpi-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0;
-        color: #2c3e50;
-    }
-    
-    .kpi-label {
-        font-size: 0.9rem;
-        color: #6c757d;
-        margin: 0.25rem 0;
-    }
-    
-    .progress-sm {
-        height: 4px;
-        margin-top: 0.5rem;
-    }
-    
-    /* Insight Cards */
-    .insight-card {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        background: white;
-        border-radius: 12px;
-        border-left: 4px solid #007bff;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        margin-bottom: 1rem;
-    }
-    
-    .insight-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    }
-    
-    .insight-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        color: white;
-        margin-right: 1rem;
-        flex-shrink: 0;
-    }
-    
-    .insight-content {
-        flex: 1;
-    }
-    
-    .insight-title {
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0 0 0.5rem 0;
-        color: #2c3e50;
-    }
-    
-    .insight-description {
-        font-size: 0.9rem;
-        color: #6c757d;
-        margin: 0 0 0.5rem 0;
-    }
-    
-    .insight-confidence, .insight-timeline {
-        font-size: 0.8rem;
-        color: #495057;
-        margin-right: 1rem;
-    }
-    
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-    }
-    
-    .bg-gradient-success {
-        background: linear-gradient(135deg, #56ab2f, #a8e6cf);
-    }
-    
-    .bg-gradient-info {
-        background: linear-gradient(135deg, #3498db, #2980b9);
-    }
-    
-    .bg-gradient-warning {
-        background: linear-gradient(135deg, #f39c12, #e67e22);
-    }
-
     /*@@media (max-width: 768px) {
         .dashboard-title {
             font-size: 2rem;
@@ -862,6 +740,47 @@
                 </div>
             </div>
         </div>
+
+        <!-- Quick Actions Row -->
+        @if (Model.SuggestedActions?.Any() == true)
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="content-card">
+                        <div class="content-card-header">
+                            <h5 class="content-card-title">
+                                <i class="bi bi-lightning text-warning"></i>
+                                Suggested Actions
+                            </h5>
+                        </div>
+                        <div class="content-card-body">
+                            <div class="row g-3">
+                                @foreach (var action in Model.SuggestedActions)
+                                {
+                                    <div class="col-lg-3 col-md-4 col-sm-6">
+                                        <div class="quick-action-card @($"priority-{action.Priority}")">
+                                            <a asp-controller="@action.Controller" asp-action="@action.Action" asp-route-id="@action.RouteValue" class="quick-action-link">
+                                                <div class="quick-action-header">
+                                                    <i class="@action.Icon"></i>
+                                                    @if (!string.IsNullOrEmpty(action.BadgeText))
+                                                    {
+                                                        <span class="quick-action-badge">@action.BadgeText</span>
+                                                    }
+                                                </div>
+                                                <div class="quick-action-content">
+                                                    <h6 class="quick-action-title">@action.Title</h6>
+                                                    <p class="quick-action-description">@action.Description</p>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
 
         <!-- Charts Row -->
         <div class="row g-4 mb-4">
@@ -1117,7 +1036,7 @@
                         </a>
                     </div>
                     <div class="content-card-body">
-                        @if (Model.UpcomingMaintenanceTasks?.Any() == true)
+                        @if (Model.UpcomingMaintenances?.Any() == true)
                         {
                             <div class="table-responsive">
                                 <table class="table table-modern">
@@ -1131,7 +1050,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var task in Model.UpcomingMaintenanceTasks)
+                                        @foreach (var task in Model.UpcomingMaintenances)
                                         {
                                             var isOverdue = task.ScheduledDate < DateTime.Now;
                                             var isDueSoon = task.ScheduledDate < DateTime.Now.AddDays(7);
@@ -1272,205 +1191,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Advanced Filtering Panel -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="bi bi-funnel me-2"></i>
-                            Advanced Filters
-                        </h5>
-                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false" aria-controls="filterPanel">
-                            <i class="bi bi-chevron-down"></i>
-                            Toggle Filters
-                        </button>
-                    </div>
-                    <div class="collapse" id="filterPanel">
-                        <div class="card-body">
-                            <form id="dashboardFilterForm" method="get">
-                                @Html.AntiForgeryToken()
-                                <div class="row g-3">
-                                    <!-- Date Range -->
-                                    <div class="col-md-3">
-                                        <label for="dateFrom" class="form-label">Date From</label>
-                                        <input type="date" class="form-control" id="dateFrom" name="DateFrom" value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="dateTo" class="form-label">Date To</label>
-                                        <input type="date" class="form-control" id="dateTo" name="DateTo" value="@DateTime.Now.ToString("yyyy-MM-dd")">
-                                    </div>
-                                    
-                                    <!-- Equipment Status -->
-                                    <div class="col-md-3">
-                                        <label for="equipmentStatus" class="form-label">Equipment Status</label>
-                                        <select class="form-select" id="equipmentStatus" name="EquipmentStatuses" multiple>
-                                            <option value="Active">Active</option>
-                                            <option value="Inactive">Inactive</option>
-                                            <option value="Retired">Retired</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Search Term -->
-                                    <div class="col-md-3">
-                                        <label for="searchTerm" class="form-label">Search</label>
-                                        <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Search equipment, alerts...">
-                                    </div>
-                                    
-                                    <!-- Quick Filters -->
-                                    <div class="col-md-12">
-                                        <div class="d-flex gap-3 flex-wrap">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="showOnlyCritical" name="ShowOnlyCritical">
-                                                <label class="form-check-label" for="showOnlyCritical">
-                                                    Show Only Critical Items
-                                                </label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="includeCompleted" name="IncludeCompleted" checked>
-                                                <label class="form-check-label" for="includeCompleted">
-                                                    Include Completed Items
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Filter Actions -->
-                                    <div class="col-md-12">
-                                        <div class="d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="bi bi-search me-1"></i>
-                                                Apply Filters
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
-                                                <i class="bi bi-x-circle me-1"></i>
-                                                Clear All
-                                            </button>
-                                            <button type="button" class="btn btn-outline-info" onclick="saveCurrentView()">
-                                                <i class="bi bi-bookmark me-1"></i>
-                                                Save View
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced Analytics KPI Section -->
-        <div class="row g-4 mb-4">
-            <div class="col-12">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h5 class="content-card-title">
-                            <i class="bi bi-graph-up-arrow text-primary"></i>
-                            Advanced Performance Indicators
-                        </h5>
-                    </div>
-                    <div class="content-card-body">
-                        <div class="row">
-                            <div class="col-xl-3 col-md-6 mb-3">
-                                <div class="kpi-indicator">
-                                    <div class="kpi-icon bg-gradient-primary">
-                                        <i class="bi bi-heart-pulse"></i>
-                                    </div>
-                                    <div class="kpi-content">
-                                        <h4 class="kpi-value">@Model.OverallSystemHealth.ToString("F1")%</h4>
-                                        <p class="kpi-label">System Health Score</p>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar bg-primary" style="width: @Model.OverallSystemHealth%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-3 col-md-6 mb-3">
-                                <div class="kpi-indicator">
-                                    <div class="kpi-icon bg-gradient-success">
-                                        <i class="bi bi-gear-wide-connected"></i>
-                                    </div>
-                                    <div class="kpi-content">
-                                        <h4 class="kpi-value">@Model.MaintenanceEfficiency.ToString("F1")%</h4>
-                                        <p class="kpi-label">Maintenance Efficiency</p>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar bg-success" style="width: @Model.MaintenanceEfficiency%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-3 col-md-6 mb-3">
-                                <div class="kpi-indicator">
-                                    <div class="kpi-icon bg-gradient-info">
-                                        <i class="bi bi-currency-dollar"></i>
-                                    </div>
-                                    <div class="kpi-content">
-                                        <h4 class="kpi-value">@Model.CostEfficiency.ToString("F1")%</h4>
-                                        <p class="kpi-label">Cost Efficiency</p>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar bg-info" style="width: @Model.CostEfficiency%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-3 col-md-6 mb-3">
-                                <div class="kpi-indicator">
-                                    <div class="kpi-icon bg-gradient-warning">
-                                        <i class="bi bi-speedometer2"></i>
-                                    </div>
-                                    <div class="kpi-content">
-                                        <h4 class="kpi-value">@Model.EquipmentUtilization.ToString("F1")%</h4>
-                                        <p class="kpi-label">Equipment Utilization</p>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar bg-warning" style="width: @Model.EquipmentUtilization%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Predictive Analytics Section -->
-        @if (Model.PredictiveInsights != null && Model.PredictiveInsights.Any())
-        {
-            <div class="row g-4 mb-4">
-                <div class="col-12">
-                    <div class="content-card">
-                        <div class="content-card-header">
-                            <h5 class="content-card-title">
-                                <i class="bi bi-robot text-info"></i>
-                                Predictive Maintenance Insights
-                            </h5>
-                        </div>
-                        <div class="content-card-body">
-                            <div class="row">
-                                @foreach (var insight in Model.PredictiveInsights.Take(4))
-                                {
-                                    <div class="col-xl-6 col-lg-12 mb-3">
-                                        <div class="insight-card">
-                                            <div class="insight-icon @GetRiskLevelClass(insight.RiskLevel)">
-                                                <i class="bi bi-exclamation-triangle"></i>
-                                            </div>
-                                            <div class="insight-content">
-                                                <h6 class="insight-title">@insight.EquipmentName</h6>
-                                                <p class="insight-description">@insight.PredictedIssue</p>
-                                                <span class="insight-confidence">Probability: @insight.ProbabilityPercentage.ToString("F1")%</span>
-                                                <span class="insight-timeline">@insight.DaysUntilPredictedFailure days</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
 
         <!-- Advanced Filtering Panel -->
         <div class="row mb-4">
@@ -2673,17 +2393,4 @@
         }
     }
 </script>
-}
-
-@functions {
-    public string GetRiskLevelClass(string riskLevel)
-    {
-        return riskLevel.ToLower() switch
-        {
-            "high" => "bg-danger",
-            "medium" => "bg-warning",
-            "low" => "bg-success",
-            _ => "bg-info"
-        };
-    }
 }

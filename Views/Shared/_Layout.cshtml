@@ -13,94 +13,1115 @@
     <link rel="stylesheet" href="~/css/site.css" />
 
     @RenderSection("Styles", required: false)
+    
+    <style>
+        /* Global Theme Variables */
+        :root {
+            /* Light mode colors */
+            --bg-primary-light: #ffffff;
+            --bg-secondary-light: #f8f9fa;
+            --bg-gradient-light: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --text-primary-light: #2c3e50;
+            --text-secondary-light: #6c757d;
+            --text-muted-light: #7f8c8d;
+            --navbar-bg-light: linear-gradient(135deg, #0d47a1 0%, #1976d2 50%, #42a5f5 100%);
+            --card-bg-light: #ffffff;
+            --border-light: rgba(0,0,0,0.125);
+            --shadow-light: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            --input-bg-light: #ffffff;
+            --input-border-light: #ced4da;
+            
+            /* Dark mode colors */
+            --bg-primary-dark: #1a1a1a;
+            --bg-secondary-dark: #2d2d2d;
+            --bg-gradient-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --text-primary-dark: #ffffff;
+            --text-secondary-dark: #b0b0b0;
+            --text-muted-dark: #888888;
+            --navbar-bg-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --card-bg-dark: #2d2d2d;
+            --border-dark: rgba(255,255,255,0.125);
+            --shadow-dark: 0 0.125rem 0.25rem rgba(0,0,0,0.3);
+            --input-bg-dark: #3a3a3a;
+            --input-border-dark: #555555;
+        }
+
+        /* Global Dark Mode Styles */
+        body {
+            transition: all 0.3s ease;
+            background-color: var(--bg-primary-light);
+            color: var(--text-primary-light);
+        }
+
+        body.dark-mode {
+            background-color: var(--bg-primary-dark);
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .card {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .bg-light {
+            background-color: var(--bg-secondary-dark) !important;
+        }
+
+        body.dark-mode .text-dark {
+            color: var(--text-primary-dark) !important;
+        }
+
+        body.dark-mode .text-muted {
+            color: var(--text-muted-dark) !important;
+        }
+
+        body.dark-mode .form-control {
+            background-color: var(--input-bg-dark);
+            border-color: var(--input-border-dark);
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .form-control:focus {
+            background-color: var(--input-bg-dark);
+            border-color: #667eea;
+            color: var(--text-primary-dark);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        body.dark-mode .table {
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        body.dark-mode .dropdown-menu {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+        }
+
+        body.dark-mode .dropdown-item {
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .modal-content {
+            background-color: var(--card-bg-dark);
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .navbar {
+            background: var(--navbar-bg-dark) !important;
+        }
+
+        /* Additional Bootstrap Component Dark Mode Styles */
+        body.dark-mode .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        body.dark-mode .btn-primary:hover {
+            background-color: #5a6fd8;
+            border-color: #5a6fd8;
+        }
+
+        body.dark-mode .btn-outline-primary {
+            color: #667eea;
+            border-color: #667eea;
+        }
+
+        body.dark-mode .btn-outline-primary:hover {
+            background-color: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        body.dark-mode .alert {
+            background-color: var(--bg-secondary-dark);
+            border-color: var(--border-dark);
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .breadcrumb {
+            background-color: var(--bg-secondary-dark);
+        }
+
+        body.dark-mode .breadcrumb-item a {
+            color: #667eea;
+        }
+
+        body.dark-mode .breadcrumb-item.active {
+            color: var(--text-secondary-dark);
+        }
+
+        body.dark-mode .pagination .page-link {
+            background-color: var(--bg-secondary-dark);
+            border-color: var(--border-dark);
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .pagination .page-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-dark);
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .pagination .page-item.active .page-link {
+            background-color: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        body.dark-mode .list-group-item {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+            color: var(--text-primary-dark);
+        }
+
+        body.dark-mode .list-group-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        body.dark-mode .badge {
+            color: white;
+        }
+
+        body.dark-mode .text-dark {
+            color: var(--text-primary-dark) !important;
+        }
+
+        body.dark-mode .text-secondary {
+            color: var(--text-secondary-dark) !important;
+        }
+
+        body.dark-mode .bg-light {
+            background-color: var(--bg-secondary-dark) !important;
+        }
+
+        body.dark-mode .bg-white {
+            background-color: var(--card-bg-dark) !important;
+        }
+
+        body.dark-mode .border {
+            border-color: var(--border-dark) !important;
+        }
+
+        body.dark-mode .border-top {
+            border-top-color: var(--border-dark) !important;
+        }
+
+        body.dark-mode .border-bottom {
+            border-bottom-color: var(--border-dark) !important;
+        }
+
+        body.dark-mode .border-start {
+            border-left-color: var(--border-dark) !important;
+        }
+
+        body.dark-mode .border-end {
+            border-right-color: var(--border-dark) !important;
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            margin-left: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: rgba(40, 40, 55, 0.7);
+            border: 1px solid rgba(100, 100, 120, 0.4);
+        }
+
+        body.dark-mode .theme-toggle:hover {
+            background: rgba(60, 60, 80, 0.8);
+        }
+
+        .theme-toggle i {
+            font-size: 18px;
+            transition: all 0.3s ease;
+            position: absolute;
+        }
+
+        .theme-toggle .sun-icon {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+
+        .theme-toggle .moon-icon {
+            opacity: 0;
+            transform: rotate(180deg);
+        }
+
+        body.dark-mode .theme-toggle .sun-icon {
+            opacity: 0;
+            transform: rotate(180deg);
+        }
+
+        body.dark-mode .theme-toggle .moon-icon {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+
+        .theme-toggle i {
+            font-size: 1rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle .sun-icon {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+
+        .theme-toggle .moon-icon {
+            opacity: 0;
+            transform: rotate(180deg);
+            position: absolute;
+        }
+
+        body.dark-mode .theme-toggle .sun-icon {
+            opacity: 0;
+            transform: rotate(180deg);
+        }
+
+        body.dark-mode .theme-toggle .moon-icon {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+
+        /* Fixed Layout Styles */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* Enhanced Navbar Styles */
+        .navbar {
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1030;
+            background: linear-gradient(135deg, #0d47a1 0%, #1976d2 50%, #42a5f5 100%) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 0;
+        }
+        
+        .navbar-brand {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff !important;
+            text-decoration: none;
+        }
+        
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .brand-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+        }
+        
+        .brand-icon:hover {
+            transform: scale(1.05) rotate(5deg);
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.5);
+        }
+        
+        .brand-icon:hover::before {
+            opacity: 1;
+            animation: shimmer 0.6s ease-in-out;
+        }
+        
+        @@keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+        
+        .brand-icon i {
+            font-size: 22px;
+            color: white;
+        }
+        
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+        
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .brand-subtitle {
+            font-size: 0.75rem;
+            font-weight: 400;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+        
+        .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            font-weight: 500;
+            padding: 8px 16px !important;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            color: #fff !important;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+        }
+        
+        .navbar-nav .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            font-weight: 600;
+        }
+        
+        .navbar-nav .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+        }
+        
+        .navbar-nav .nav-link i {
+            font-size: 18px;
+        }
+        
+        /* Notification Badge */
+        .nav-item.has-notification {
+            position: relative;
+        }
+        
+        .nav-item.has-notification::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #ff4757;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        @@keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Enhanced Dropdown Styles */
+        .dropdown-menu {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            padding: 12px;
+            margin-top: 12px;
+            min-width: 280px;
+            animation: dropdownFadeIn 0.3s ease-out;
+        }
+        
+        @@keyframes dropdownFadeIn {
+            0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .dropdown-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            margin-bottom: 8px;
+        }
+        
+        .dropdown-header .user-info-dropdown {
+            display: flex;
+            align-items: center;
+        }
+        
+        .dropdown-header .user-avatar-small {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+            margin-right: 12px;
+        }
+        
+        .dropdown-header .user-details {
+            flex: 1;
+        }
+        
+        .dropdown-header .user-name-dropdown {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .dropdown-header .user-email-dropdown {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin: 0;
+        }
+        
+        .dropdown-item {
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .dropdown-item:hover {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            transform: translateX(4px);
+        }
+        
+        .dropdown-item.danger:hover {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+        
+        .dropdown-divider {
+            margin: 8px 0;
+            border-color: rgba(0,0,0,0.1);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            border: 3px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .user-avatar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+            border-color: rgba(255,255,255,0.4);
+        }
+        
+        .user-avatar:hover::before {
+            opacity: 1;
+            animation: shimmer 0.6s ease-in-out;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 12px;
+        }
+        
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            line-height: 1.2;
+            margin: 0;
+        }
+        
+        .user-email {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.2;
+            margin: 0;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .user-dropdown-toggle {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .user-dropdown-toggle:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .dropdown-arrow {
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+            font-size: 12px;
+        }
+        
+        .user-dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        /* Login Button Enhancement */
+        .btn-login {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+            color: white;
+        }
+        
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px 0;
+        }
+        
+        .app-footer {
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1020;
+        }
+        
+        /* Ensure proper spacing for content */
+        .content-wrapper {
+            min-height: 100%;
+            padding-bottom: 20px;
+        }
+        
+        /* Custom scrollbar for webkit browsers */
+        .main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .main-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .main-content::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .main-content {
+                padding: 10px 0;
+            }
+            
+            .navbar-brand {
+                font-size: 1.25rem !important;
+                gap: 8px;
+            }
+            
+            .brand-icon {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .brand-icon i {
+                font-size: 18px;
+            }
+            
+            .user-info {
+                display: none !important;
+            }
+            
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .dropdown-menu {
+                min-width: 250px;
+            }
+            
+            .app-footer {
+                padding: 8px 0 !important;
+            }
+            
+            .app-footer .row {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .app-footer .brand-icon {
+                width: 20px !important;
+                height: 20px !important;
+            }
+            
+            .app-footer .brand-icon i {
+                font-size: 10px !important;
+            }
+        }
+        
+        @@media (max-width: 992px) {
+            .user-info {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="app-container">
+        <!-- Enhanced Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-dark shadow-lg">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="@(User?.Identity?.IsAuthenticated == true ? "Dashboard" : "Landing")" asp-action="Index">
+                    <div class="brand-icon">
+                        <i class="bi bi-cpu-fill"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">ProactED</span>
+                        <small class="brand-subtitle">KNUST</small>
+                    </div>
+                </a>
+                
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
-                ProactED - KNUST
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                    <ul class="navbar-nav align-items-center ms-auto">
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <!-- Authenticated User Navigation -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="bi bi-speedometer2"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Equipment" asp-action="Index">
+                                    <i class="bi bi-gear-wide-connected"></i>
+                                    <span>Equipment</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="MaintenanceLog" asp-action="Index">
+                                    <i class="bi bi-clipboard-data-fill"></i>
+                                    <span>Logs</span>
+                                </a>
+                            </li>
+                            <li class="nav-item has-notification">
+                                <a class="nav-link" asp-controller="Alert" asp-action="Index">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    <span>Alerts</span>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <!-- Unauthenticated User Navigation -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Landing" asp-action="Index">
+                                    <i class="bi bi-house-door-fill"></i>
+                                    <span>Home</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#features">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span>Features</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#about">
+                                    <i class="bi bi-people"></i>
+                                    <span>About</span>
+                                </a>
+                            </li>
+                        }
 
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav align-items-center">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Equipment" asp-action="Index">Equipment</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="MaintenanceLog" asp-action="Index">Logs</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Alert" asp-action="Index">Alerts</a>
-                    </li>
-
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle me-1"></i>
-                                @User?.Identity?.Name ?? "Account"
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li>
-                                    <a class="dropdown-item" asp-controller="User" asp-action="Profile">
-                                        <i class="bi bi-person me-1"></i> Profile
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form asp-controller="User" asp-action="Logout" method="post" class="dropdown-item p-0 m-0">
-                                        <button type="submit" class="btn btn-link dropdown-item text-start">
-                                            <i class="bi bi-box-arrow-right me-1"></i> Logout
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    }
-                    else
-                    {
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item dropdown ms-3">
+                                <a class="nav-link dropdown-toggle user-dropdown-toggle d-flex align-items-center text-decoration-none" 
+                                   href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="user-avatar">
+                                        @(User?.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                                    </div>
+                                    <div class="user-info d-none d-md-flex">
+                                        <div class="user-name">@(User?.Identity?.Name?.Split('@')[0] ?? "User")</div>
+                                        <div class="user-email">@(User?.Identity?.Name ?? "user@example.com")</div>
+                                    </div>
+                                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li class="dropdown-header">
+                                        <div class="user-info-dropdown">
+                                            <div class="user-avatar-small">
+                                                @(User?.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                                            </div>
+                                            <div class="user-details">
+                                                <div class="user-name-dropdown">@(User?.Identity?.Name?.Split('@')[0] ?? "User")</div>
+                                                <div class="user-email-dropdown">@(User?.Identity?.Name ?? "user@example.com")</div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="User" asp-action="Profile">
+                                            <i class="bi bi-person-circle text-primary"></i>
+                                            <span>My Profile</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Dashboard" asp-action="Index">
+                                            <i class="bi bi-speedometer2 text-info"></i>
+                                            <span>Dashboard</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="User" asp-action="Settings">
+                                            <i class="bi bi-gear-fill text-secondary"></i>
+                                            <span>Account Settings</span>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="User" asp-action="Logout" method="post" class="m-0">
+                                            <button type="submit" class="dropdown-item border-0 bg-transparent text-start w-100 danger">
+                                                <i class="bi bi-box-arrow-right text-danger"></i>
+                                                <span>Sign Out</span>
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item ms-3">
+                                <a class="btn btn-login" asp-controller="User" asp-action="Login">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                                    Sign In
+                                </a>
+                            </li>
+                        }
+                        
+                        <!-- Theme Toggle Button -->
                         <li class="nav-item">
-                            <a class="btn btn-light btn-sm ms-3" asp-controller="User" asp-action="Login">Login</a>
+                            <div class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+                                <i class="bi bi-sun-fill sun-icon"></i>
+                                <i class="bi bi-moon-fill moon-icon"></i>
+                            </div>
                         </li>
-                    }
-                </ul>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <!-- Main Content Area -->
-    <div class="container mt-4">
-        @RenderBody()
+        <!-- Scrollable Main Content Area -->
+        <main class="main-content">
+            <div class="container content-wrapper">
+                @RenderBody()
+            </div>
+        </main>
+
+        <!-- Compact Footer -->
+        <footer class="app-footer text-white text-center py-2 shadow-sm" style="background: linear-gradient(135deg, #0d47a1 0%, #1976d2 50%, #42a5f5 100%);">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6 mb-1 mb-md-0">
+                        <div class="d-flex align-items-center justify-content-center justify-content-md-start">
+                            <div class="brand-icon me-2" style="width: 24px; height: 24px;">
+                                <i class="bi bi-cpu-fill" style="font-size: 12px;"></i>
+                            </div>
+                            <div>
+                                <span style="font-size: 14px; font-weight: 600;">ProactED</span>
+                                <small style="font-size: 12px; opacity: 0.8;"> - KNUST</small>
+                                <span style="font-size: 11px; opacity: 0.7; margin-left: 8px;">&copy; @DateTime.Now.Year</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-center justify-content-md-end align-items-center gap-2">
+                            <a href="#" class="text-white-50 text-decoration-none d-flex align-items-center" style="font-size: 11px;">
+                                <i class="bi bi-shield-check me-1" style="font-size: 12px;"></i>
+                                <span>Privacy</span>
+                            </a>
+                            <a href="#" class="text-white-50 text-decoration-none d-flex align-items-center" style="font-size: 11px;">
+                                <i class="bi bi-file-text me-1" style="font-size: 12px;"></i>
+                                <span>Terms</span>
+                            </a>
+                            <a href="#" class="text-white-50 text-decoration-none d-flex align-items-center" style="font-size: 11px;">
+                                <i class="bi bi-question-circle me-1" style="font-size: 12px;"></i>
+                                <span>Help</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
-
-    <!-- Footer -->
-    <footer class="bg-primary text-white text-center py-4 mt-5 shadow-sm">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6 mb-2 mb-md-0">
-                    <strong>ProactED - KNUST</strong> &copy; @DateTime.Now.Year. All rights reserved.
-                </div>
-                <div class="col-md-6">
-                    <a href="#" class="text-white me-3">Terms</a>
-                    <a href="#" class="text-white">Privacy</a>
-                </div>
-            </div>
-        </div>
-    </footer>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/@@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
     <script src="~/js/site.js"></script>
+    
+    <!-- Global Theme Toggle Functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+            
+            // Check for saved theme preference or default to light mode
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme) {
+                body.classList.add(currentTheme);
+            }
+            
+            // Theme toggle event listener
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    body.classList.toggle('dark-mode');
+                    
+                    // Save theme preference
+                    if (body.classList.contains('dark-mode')) {
+                        localStorage.setItem('theme', 'dark-mode');
+                    } else {
+                        localStorage.setItem('theme', '');
+                    }
+                    
+                    // Add a subtle bounce animation to the toggle button
+                    this.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            this.style.transform = 'scale(1)';
+                        }, 100);
+                    }, 100);
+                });
+                
+                // Add keyboard shortcut (Ctrl/Cmd + Shift + T)
+                document.addEventListener('keydown', function(e) {
+                    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'T') {
+                        e.preventDefault();
+                        themeToggle.click();
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- SignalR Global Connection -->
+    <script>
+        // Global SignalR connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/maintenanceHub")
+            .build();
+
+        // Start connection
+        connection.start().then(function () {
+            console.log("SignalR Connected");
+            // Join notifications group for all users
+            connection.invoke("JoinGroup", "Notifications");
+        }).catch(function (err) {
+            console.error("SignalR Connection Error: " + err.toString());
+        });
+
+        // Global notification handler
+        connection.on("ReceiveNotification", function (notification) {
+            showNotification(notification.Type, notification.Title, notification.Message);
+        });
+
+        // Global alert handler
+        connection.on("NewAlert", function (alert) {
+            showNotification("warning", "New Alert", `Alert for ${alert.equipmentName}: ${alert.description}`);
+            // Update alert counter if exists
+            const alertBadge = document.querySelector('.alert-badge');
+            if (alertBadge) {
+                const count = parseInt(alertBadge.textContent) + 1;
+                alertBadge.textContent = count;
+                alertBadge.style.display = count > 0 ? 'inline' : 'none';
+            }
+        });
+
+        // Notification function
+        function showNotification(type, title, message) {
+            // Create toast notification
+            const toastContainer = document.getElementById('toast-container') || createToastContainer();
+            
+            const toastId = 'toast-' + Date.now();
+            const iconClass = {
+                'success': 'bi-check-circle-fill text-success',
+                'warning': 'bi-exclamation-triangle-fill text-warning', 
+                'error': 'bi-x-circle-fill text-danger',
+                'info': 'bi-info-circle-fill text-info'
+            }[type] || 'bi-info-circle-fill text-info';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi ${iconClass} me-2"></i>
+                                <div>
+                                    <div class="fw-semibold">${title}</div>
+                                    <div class="text-muted small">${message}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Show toast
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
+            toast.show();
+
+            // Remove after hidden
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                toastElement.remove();
+            });
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        // Expose connection globally for pages to use
+        window.maintenanceConnection = connection;
+        window.showNotification = showNotification;
+    </script>
+    
     @RenderSection("Scripts", required: false)
 
 </body>
+</html>

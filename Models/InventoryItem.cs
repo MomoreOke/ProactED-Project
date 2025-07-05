@@ -23,7 +23,7 @@ namespace FEENALOoFINALE.Models
 
         // Navigation properties
         public ICollection<InventoryStock>? InventoryStocks { get; set; }
-        public IEnumerable<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; }
+        public ICollection<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; } = new List<MaintenanceInventoryLink>();
         public ICollection<Alert>? Alerts { get; set; }
     }
 

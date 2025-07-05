@@ -24,6 +24,7 @@ namespace FEENALOoFINALE.Data
         public DbSet<EquipmentModel> EquipmentModels { get; set; }
         public DbSet<Building> Buildings { get; set; }
         public DbSet<Room> Rooms { get; set; }
+        public DbSet<SavedDashboardView> SavedDashboardViews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

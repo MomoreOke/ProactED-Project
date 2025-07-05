@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FEENALOoFINALE.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FEENALOoFINALE.Controllers
@@ -8,8 +9,10 @@ namespace FEENALOoFINALE.Controllers
     {
         private readonly ILogger<HomeController> _logger = logger;
 
+        [Authorize]
         public IActionResult Index()
         {
+            // This is now the authenticated user's dashboard/home page
             return View();
         }
 

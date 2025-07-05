@@ -8,17 +8,33 @@ namespace FEENALOoFINALE.Models
         public int CriticalAlerts { get; set; }
         public int OverdueMaintenances { get; set; }
         public int EquipmentNeedingAttention { get; set; }
-        public int CompletedMaintenanceTasks { get; set; }
-        public int TotalInventoryItems { get; set; }
         public List<Alert>? RecentAlerts { get; set; }
         public List<MaintenanceTask>? UpcomingMaintenances { get; set; }
-        public List<MaintenanceTask>? UpcomingMaintenanceTasks { get; set; }
-        public List<EquipmentStatusCount> EquipmentStatus { get; set; } = new List<EquipmentStatusCount>();
+        public List<Equipment>? CriticalEquipment { get; set; }
+        public List<QuickAction>? SuggestedActions { get; set; }
+        public required List<EquipmentStatusCount> EquipmentStatus { get; set; }
+        
+        // Additional properties for filtering
+        public int TotalRecordsBeforeFilter { get; set; }
+        public int TotalRecordsAfterFilter { get; set; }
+        public Dictionary<string, object> FilteredAnalytics { get; set; } = new();
     }
 
     public class EquipmentStatusCount
     {
         public EquipmentStatus Status { get; set; }
         public int Count { get; set; }
+    }
+
+    public class QuickAction
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+        public string Controller { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public string? RouteValue { get; set; }
+        public string Priority { get; set; } = "normal"; // normal, urgent, critical
+        public string BadgeText { get; set; } = string.Empty;
     }
 }

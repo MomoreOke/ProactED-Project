@@ -2,750 +2,155 @@
 @model IEnumerable<FEENALOoFINALE.Models.Equipment>
 
 @{
-    ViewData["Title"] = "Advanced Equipment Management Suite";
+    ViewData["Title"] = "Equipment Management";
+    var breadcrumbs = new List<(string Text, string? Controller, string? Action, object? RouteValues)>
+    {
+        ("Dashboard", "Dashboard", "Index", null),
+        ("Equipment Management", null, null, null)
+    };
 }
+
+@await Html.PartialAsync("_Breadcrumb", breadcrumbs)
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 mb-2">Equipment Management</h1>
+        <p class="text-muted">Manage and monitor all equipment in your facility</p>
+    </div>
+    <div>
+        <a asp-action="Create" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-circle me-2"></i>Add New Equipment
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-gear me-2 text-primary"></i>All Equipment
+            </h5>
+            <span class="badge bg-primary rounded-pill">@Model.Count() Total</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-modern mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>@(Model.Any() && Model.First().EquipmentType != null ? Html.DisplayNameFor(model => model.First().EquipmentType!.EquipmentTypeName) : "Equipment Type")</th>
+                            <th>@(Model.Any() && Model.First().EquipmentModel != null ? Html.DisplayNameFor(model => model.First().EquipmentModel!.ModelName) : "Model")</th> 
+                            <th>Location</th>
+                            <th>@(Model.Any() ? Html.DisplayNameFor(model => model.First().Status) : "Status")</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr class="@(item.Status == EquipmentStatus.Inactive ? "table-warning" : item.Status == EquipmentStatus.Retired ? "table-danger" : "")">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-gear me-2 text-muted"></i>
+                                        <strong>@(item.EquipmentType?.EquipmentTypeName ?? "N/A")</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@(item.EquipmentModel?.ModelName ?? "N/A")</strong>
+                                        <br>
+                                        <small class="text-muted">ID: @item.EquipmentId</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <i class="bi bi-geo-alt me-1 text-muted"></i>
+                                        @(item.Building?.BuildingName ?? "N/A")
+                                        <br>
+                                        <small class="text-muted">@(item.Room?.RoomName ?? "N/A")</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge @(item.Status == EquipmentStatus.Active ? "bg-success" : item.Status == EquipmentStatus.Inactive ? "bg-warning" : "bg-secondary")">
+                                        @Html.DisplayFor(modelItem => item.Status)
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@item.EquipmentId" class="btn btn-outline-primary btn-sm" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.EquipmentId" class="btn btn-outline-warning btn-sm" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="MaintenanceHistory" asp-route-id="@item.EquipmentId" class="btn btn-outline-info btn-sm" title="Maintenance History">
+                                            <i class="bi bi-clipboard-data"></i>
+                                        </a>
+                                        <a asp-controller="MaintenanceLog" asp-action="Create" asp-route-equipmentId="@item.EquipmentId" class="btn btn-outline-success btn-sm" title="Schedule Maintenance">
+                                            <i class="bi bi-plus"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.EquipmentId" class="btn btn-outline-danger btn-sm" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-gear display-1 text-muted mb-3"></i>
+                <h4>No Equipment Found</h4>
+                <p class="text-muted">Start by adding your first piece of equipment to the system.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Add First Equipment
+                </a>
+            </div>
+        }
+    </div>
+</div>
 
 <style>
-    .equipment-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 20px;
-        margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .equipment-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
-        opacity: 0.3;
-    }
-    
-    .header-content {
-        position: relative;
-        z-index: 2;
-    }
-    
-    .advanced-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    .table-modern {
         border: none;
-        overflow: hidden;
-        transition: all 0.3s ease;
     }
     
-    .advanced-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-    }
-    
-    .control-panel {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-        border: 1px solid #dee2e6;
-    }
-    
-    .search-box {
-        position: relative;
-    }
-    
-    .search-box input {
-        border-radius: 25px;
-        border: 2px solid #e9ecef;
-        padding: 12px 20px 12px 50px;
-        transition: all 0.3s ease;
-    }
-    
-    .search-box input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-    
-    .search-box i {
-        position: absolute;
-        left: 18px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-    }
-    
-    .filter-chip {
-        background: #667eea;
-        color: white;
+    .table-modern thead th {
         border: none;
-        padding: 8px 16px;
-        border-radius: 20px;
-        margin: 2px;
-        transition: all 0.3s ease;
-        font-size: 0.875rem;
-    }
-    
-    .filter-chip:hover {
-        background: #5a6fd8;
-        transform: translateY(-1px);
-    }
-    
-    .filter-chip.active {
-        background: #28a745;
-    }
-    
-    .equipment-table {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    }
-    
-    .table thead th {
-        background: linear-gradient(135deg, #495057 0%, #343a40 100%);
-        color: white;
-        border: none;
-        padding: 1rem;
         font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.875rem;
-        letter-spacing: 0.5px;
+        color: #495057;
+        background-color: #f8f9fa;
     }
     
-    .table tbody td {
-        padding: 1rem;
+    .table-modern tbody tr {
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-modern tbody td {
+        border: none;
+        border-bottom: 1px solid #f1f3f4;
         vertical-align: middle;
-        border-color: #f8f9fa;
+        padding: 1rem 0.75rem;
     }
     
-    .table tbody tr:hover {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    .btn-group .btn {
+        margin-right: 2px;
     }
     
-    .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .status-active {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-    }
-    
-    .status-inactive {
-        background: linear-gradient(135deg, #dc3545, #fd7e14);
-        color: white;
-    }
-    
-    .status-maintenance {
-        background: linear-gradient(135deg, #ffc107, #fd7e14);
-        color: #212529;
-    }
-    
-    .action-btn {
-        margin: 2px;
-        border-radius: 8px;
-        padding: 6px 12px;
-        font-size: 0.8rem;
-        border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .action-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-    
-    .btn-ai {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-    }
-    
-    .btn-predict {
-        background: linear-gradient(135deg, #11998e, #38ef7d);
-        color: white;
-        border: none;
-    }
-    
-    .equipment-metrics {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .metric-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        text-align: center;
-        border-left: 4px solid;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-2px);
-    }
-    
-    .metric-card.total { border-left-color: #007bff; }
-    .metric-card.active { border-left-color: #28a745; }
-    .metric-card.maintenance { border-left-color: #ffc107; }
-    .metric-card.critical { border-left-color: #dc3545; }
-    
-    .metric-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
-    .metric-label {
-        color: #6c757d;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-    }
-    
-    .floating-action {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 1000;
-    }
-    
-    .fab {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-        font-size: 1.5rem;
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        transition: all 0.3s ease;
-    }
-    
-    .fab:hover {
-        transform: scale(1.1);
-        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
-    }
-    
-    .equipment-grid {
-        display: none;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1.5rem;
-    }
-    
-    .equipment-card {
-        background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
-    }
-    
-    .equipment-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-    }
-    
-    .equipment-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .view-toggle {
-        background: white;
-        border-radius: 25px;
-        padding: 5px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    .view-toggle button {
-        border: none;
-        background: transparent;
-        padding: 8px 16px;
-        border-radius: 20px;
-        transition: all 0.3s ease;
-    }
-    
-    .view-toggle button.active {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-    }
-    
-    .ai-insights {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-    }
-    
-    .ai-insights h5 {
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .pulse {
-        animation: pulse-animation 2s infinite;
-    }
-    
-    @@keyframes pulse-animation {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
+    .btn-group .btn:last-child {
+        margin-right: 0;
     }
 </style>
-
-<div class="equipment-header">
-    <div class="header-content">
-        <h1 class="display-4 mb-3">
-            <i class="bi bi-gear-wide-connected me-3"></i>
-            Advanced Equipment Management Suite
-        </h1>
-        <p class="lead mb-0">Intelligent monitoring, predictive analytics, and comprehensive equipment lifecycle management</p>
-    </div>
-</div>
-
-<!-- Equipment Metrics Dashboard -->
-<div class="equipment-metrics">
-    <div class="metric-card total">
-        <h3 class="metric-value" id="totalEquipment">@Model.Count()</h3>
-        <p class="metric-label">Total Equipment</p>
-    </div>
-    <div class="metric-card active">
-        <h3 class="metric-value" id="activeEquipment">@Model.Count(e => e.Status == EquipmentStatus.Active)</h3>
-        <p class="metric-label">Active Equipment</p>
-    </div>
-    <div class="metric-card maintenance">
-        <h3 class="metric-value" id="maintenanceEquipment">@Model.Count(e => e.Status == EquipmentStatus.Retired)</h3>
-        <p class="metric-label">Retired Equipment</p>
-    </div>
-    <div class="metric-card critical">
-        <h3 class="metric-value" id="criticalEquipment">@Model.Count(e => e.Status == EquipmentStatus.Inactive)</h3>
-        <p class="metric-label">Needs Attention</p>
-    </div>
-</div>
-
-<!-- AI Insights Panel -->
-<div class="ai-insights">
-    <h5>
-        <i class="bi bi-robot pulse"></i>
-        AI Equipment Insights
-    </h5>
-    <div class="row">
-        <div class="col-md-4">
-            <strong>System Health:</strong> 87.3%
-        </div>
-        <div class="col-md-4">
-            <strong>Predicted Failures:</strong> 3 in next 30 days
-        </div>
-        <div class="col-md-4">
-            <strong>Maintenance Efficiency:</strong> 92.1%
-        </div>
-    </div>
-</div>
-
-<!-- Advanced Control Panel -->
-<div class="control-panel">
-    <div class="row align-items-center">
-        <div class="col-md-4">
-            <div class="search-box">
-                <i class="bi bi-search"></i>
-                <input type="text" class="form-control" id="equipmentSearch" placeholder="Search equipment...">
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="view-toggle">
-                <button type="button" class="active" onclick="toggleView('table')">
-                    <i class="bi bi-table"></i> Table
-                </button>
-                <button type="button" onclick="toggleView('grid')">
-                    <i class="bi bi-grid-3x3-gap"></i> Grid
-                </button>
-            </div>
-        </div>
-        <div class="col-md-4 text-end">
-            <button class="filter-chip" data-filter="all">All</button>
-            <button class="filter-chip" data-filter="active">Active</button>
-            <button class="filter-chip" data-filter="maintenance">Maintenance</button>
-            <button class="filter-chip" data-filter="critical">Critical</button>
-        </div>
-    </div>
-    <div class="row mt-3">
-        <div class="col-12">
-            <div class="d-flex gap-2 flex-wrap">
-                <span class="text-muted">Quick Actions:</span>
-                <button class="btn btn-sm btn-ai" onclick="runAIAnalysis()">
-                    <i class="bi bi-robot"></i> AI Analysis
-                </button>
-                <button class="btn btn-sm btn-predict" onclick="predictiveAnalysis()">
-                    <i class="bi bi-graph-up-arrow"></i> Predictive Analysis
-                </button>
-                <button class="btn btn-sm btn-outline-primary" onclick="exportToExcel()">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Export
-                </button>
-                <button class="btn btn-sm btn-outline-success" onclick="scheduleMaintenanceAll()">
-                    <i class="bi bi-calendar-plus"></i> Bulk Schedule
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Table View -->
-<div class="advanced-card equipment-table" id="tableView">
-    <table class="table table-hover mb-0">
-        <thead>
-            <tr>
-                <th><i class="bi bi-gear me-2"></i>Equipment</th>
-                <th><i class="bi bi-building me-2"></i>Location</th>
-                <th><i class="bi bi-activity me-2"></i>Status</th>
-                <th><i class="bi bi-graph-up me-2"></i>Health Score</th>
-                <th><i class="bi bi-calendar me-2"></i>Last Maintenance</th>
-                <th><i class="bi bi-tools me-2"></i>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr data-status="@item.Status.ToString().ToLower()">
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="equipment-icon me-3" style="width: 40px; height: 40px;">
-                                <i class="bi bi-gear-wide-connected"></i>
-                            </div>
-                            <div>
-                                <strong>@(item.EquipmentType?.EquipmentTypeName ?? "N/A")</strong><br>
-                                <small class="text-muted">@(item.EquipmentModel?.ModelName ?? "N/A")</small>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <strong>@(item.Building?.BuildingName ?? "N/A")</strong><br>
-                        <small class="text-muted">@(item.Room?.RoomName ?? "N/A")</small>
-                    </td>
-                    <td>
-                        <span class="status-badge status-@item.Status.ToString().ToLower()">
-                            @item.Status
-                        </span>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="progress me-2" style="width: 60px; height: 8px;">
-                                <div class="progress-bar bg-success" style="width: @(new Random().Next(60, 100))%"></div>
-                            </div>
-                            <span class="text-muted">@(new Random().Next(60, 100))%</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="text-muted">@DateTime.Now.AddDays(-new Random().Next(1, 30)).ToString("MMM dd")</span>
-                    </td>
-                    <td>
-                        <div class="btn-group" role="group">
-                            <a asp-action="Details" asp-route-id="@item.EquipmentId" class="action-btn btn-info">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a asp-action="Edit" asp-route-id="@item.EquipmentId" class="action-btn btn-warning">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button class="action-btn btn-ai" onclick="aiDiagnose(@item.EquipmentId)">
-                                <i class="bi bi-robot"></i>
-                            </button>
-                            <button class="action-btn btn-predict" onclick="predictMaintenance(@item.EquipmentId)">
-                                <i class="bi bi-graph-up-arrow"></i>
-                            </button>
-                            <a asp-action="MaintenanceHistory" asp-route-id="@item.EquipmentId" class="action-btn btn-secondary">
-                                <i class="bi bi-clock-history"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
-
-<!-- Grid View -->
-<div class="equipment-grid" id="gridView">
-    @foreach (var item in Model)
-    {
-        <div class="equipment-card" data-status="@item.Status.ToString().ToLower()">
-            <div class="equipment-icon">
-                <i class="bi bi-gear-wide-connected"></i>
-            </div>
-            <h5>@(item.EquipmentType?.EquipmentTypeName ?? "N/A")</h5>
-            <p class="text-muted">@(item.EquipmentModel?.ModelName ?? "N/A")</p>
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <span class="status-badge status-@item.Status.ToString().ToLower()">
-                    @item.Status
-                </span>
-                <span class="text-muted">@(new Random().Next(60, 100))% Health</span>
-            </div>
-            <div class="text-center">
-                <strong>@(item.Building?.BuildingName ?? "N/A")</strong><br>
-                <small class="text-muted">@(item.Room?.RoomName ?? "N/A")</small>
-            </div>
-            <div class="mt-3 text-center">
-                <a asp-action="Details" asp-route-id="@item.EquipmentId" class="action-btn btn-info btn-sm">Details</a>
-                <button class="action-btn btn-ai btn-sm" onclick="aiDiagnose(@item.EquipmentId)">AI Diagnose</button>
-            </div>
-        </div>
-    }
-</div>
-
-<!-- Floating Action Button -->
-<div class="floating-action">
-    <button class="fab" data-bs-toggle="modal" data-bs-target="#quickAddModal">
-        <i class="bi bi-plus"></i>
-    </button>
-</div>
-
-<!-- Quick Add Modal -->
-<div class="modal fade" id="quickAddModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Quick Add Equipment</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Equipment Type</label>
-                            <select class="form-select">
-                                <option>HVAC System</option>
-                                <option>Generator</option>
-                                <option>Pump</option>
-                                <option>Compressor</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Model</label>
-                            <input type="text" class="form-control" placeholder="Enter model">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Building</label>
-                            <select class="form-select">
-                                <option>Main Building</option>
-                                <option>Workshop</option>
-                                <option>Storage</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Room</label>
-                            <select class="form-select">
-                                <option>Room 101</option>
-                                <option>Room 102</option>
-                                <option>Basement</option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a asp-action="Create" class="btn btn-primary">Add Equipment</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function toggleView(view) {
-    const tableView = document.getElementById('tableView');
-    const gridView = document.getElementById('gridView');
-    const buttons = document.querySelectorAll('.view-toggle button');
-    
-    buttons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    if (view === 'table') {
-        tableView.style.display = 'block';
-        gridView.style.display = 'none';
-    } else {
-        tableView.style.display = 'none';
-        gridView.style.display = 'grid';
-    }
-}
-
-// Search functionality
-document.getElementById('equipmentSearch').addEventListener('input', function(e) {
-    const filter = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('#tableView tbody tr');
-    const cards = document.querySelectorAll('.equipment-card');
-    
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(filter) ? '' : 'none';
-    });
-    
-    cards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = text.includes(filter) ? '' : 'none';
-    });
-});
-
-// Filter functionality
-document.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', function() {
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-        
-        const filter = this.dataset.filter;
-        const rows = document.querySelectorAll('#tableView tbody tr');
-        const cards = document.querySelectorAll('.equipment-card');
-        
-        rows.forEach(row => {
-            if (filter === 'all' || row.dataset.status === filter) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        cards.forEach(card => {
-            if (filter === 'all' || card.dataset.status === filter) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    });
-});
-
-// AI Functions
-function aiDiagnose(equipmentId) {
-    Swal.fire({
-        title: 'AI Diagnosis Running...',
-        html: 'Analyzing equipment data with machine learning algorithms...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-            setTimeout(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'AI Diagnosis Complete',
-                    html: `
-                        <div class="text-start">
-                            <strong>Equipment Health:</strong> 87%<br>
-                            <strong>Risk Level:</strong> Low<br>
-                            <strong>Recommendation:</strong> Schedule routine maintenance in 2 weeks<br>
-                            <strong>Predicted Lifespan:</strong> 3.2 years remaining
-                        </div>
-                    `,
-                    showConfirmButton: true
-                });
-            }, 2000);
-        }
-    });
-}
-
-function predictMaintenance(equipmentId) {
-    Swal.fire({
-        title: 'Predictive Analysis',
-        html: `
-            <div class="text-start">
-                <h6>Maintenance Predictions:</h6>
-                <ul>
-                    <li>Next maintenance due: ${new Date(Date.now() + 14*24*60*60*1000).toLocaleDateString()}</li>
-                    <li>Critical component inspection: ${new Date(Date.now() + 45*24*60*60*1000).toLocaleDateString()}</li>
-                    <li>Potential failure risk: 12% in next 6 months</li>
-                </ul>
-            </div>
-        `,
-        icon: 'info',
-        showConfirmButton: true
-    });
-}
-
-function runAIAnalysis() {
-    Swal.fire({
-        title: 'Running Comprehensive AI Analysis...',
-        html: 'Processing all equipment data...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-            setTimeout(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'AI Analysis Complete',
-                    html: `
-                        <div class="text-start">
-                            <h6>System Overview:</h6>
-                            <ul>
-                                <li>Overall Health Score: 87.3%</li>
-                                <li>Equipment at Risk: 3 units</li>
-                                <li>Maintenance Efficiency: 92.1%</li>
-                                <li>Cost Optimization: 15% savings identified</li>
-                            </ul>
-                        </div>
-                    `
-                });
-            }, 3000);
-        }
-    });
-}
-
-function predictiveAnalysis() {
-    window.location.href = '/FailurePrediction';
-}
-
-function exportToExcel() {
-    Swal.fire({
-        icon: 'success',
-        title: 'Export Started',
-        text: 'Your equipment data is being exported to Excel...',
-        timer: 2000
-    });
-}
-
-function scheduleMaintenanceAll() {
-    Swal.fire({
-        title: 'Bulk Maintenance Scheduling',
-        text: 'Schedule maintenance for all selected equipment?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, schedule all'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Swal.fire('Scheduled!', 'Maintenance has been scheduled for all equipment.', 'success');
-        }
-    });
-}
-
-// Auto-refresh metrics every 30 seconds
-setInterval(() => {
-    // In a real application, this would fetch updated data from the server
-    document.querySelectorAll('.metric-value').forEach(el => {
-        const currentValue = parseInt(el.textContent);
-        const change = Math.random() > 0.5 ? 1 : -1;
-        el.textContent = Math.max(0, currentValue + change);
-    });
-}, 30000);
-</script>

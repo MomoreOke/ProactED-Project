@@ -29,7 +29,7 @@
                 <td>@item.LogDate.ToShortDateString()</td>
                 <td>@item.MaintenanceType</td>
                 <td>@item.Technician</td>
-                <td>@item.DowntimeDuration</td>
+                <td>@(item.DowntimeHours?.ToString("F1") ?? "N/A") hours</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.LogId" class="btn btn-info btn-sm">Details</a>
                     <a asp-action="Edit" asp-route-id="@item.LogId" class="btn btn-warning btn-sm">Edit</a>

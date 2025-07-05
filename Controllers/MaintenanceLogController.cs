@@ -43,49 +43,75 @@ namespace FEENALOoFINALE.Controllers
         }
 
         // GET: MaintenanceLog/Create
-        public IActionResult Create(int? equipmentId, int? alertId = null)
+        public async Task<IActionResult> Create(int? equipmentId, int? alertId = null)
         {
-            ViewBag.EquipmentId = equipmentId;
-            ViewBag.AlertId = alertId;
-            ViewBag.Equipment = _context.Equipment.ToList(); // Ensure this is always a non-null list
+            await LoadEquipmentViewBag(equipmentId, alertId);
             return View();
         }
 
         // POST: MaintenanceLog/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,DowntimeDuration,AlertId")] MaintenanceLog maintenanceLog)
+        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeHours,AlertId")] MaintenanceLog maintenanceLog)
         {
+            // Remove any validation errors for DowntimeDuration since we're using DowntimeHours
+            ModelState.Remove("DowntimeDuration");
+            
             if (ModelState.IsValid)
             {
-                if (User != null && User.Identity != null)
+                try
                 {
-                    maintenanceLog.Technician = User?.Identity?.Name ?? "Unknown";
-                }
-                else
-                {
-                    maintenanceLog.Technician = "Unknown";
-                }
-
-                _context.Add(maintenanceLog);
-                await _context.SaveChangesAsync();
-
-                // Mark alert as resolved if AlertId is present
-                if (maintenanceLog.AlertId.HasValue)
-                {
-                    var alert = await _context.Alerts.FindAsync(maintenanceLog.AlertId.Value);
-                    if (alert != null)
+                    // Ensure Technician is set if not provided
+                    if (string.IsNullOrEmpty(maintenanceLog.Technician))
                     {
-                        alert.Status = AlertStatus.Resolved; // Use your enum or string as appropriate
-                        _context.Update(alert);
-                        await _context.SaveChangesAsync();
+                        maintenanceLog.Technician = User?.Identity?.Name ?? "Unknown";
                     }
-                }
 
-                return RedirectToAction(nameof(Index));
+                    // Set default values for required properties
+                    maintenanceLog.Status = MaintenanceStatus.Completed;
+                    maintenanceLog.Cost = 0;
+
+                    _context.Add(maintenanceLog);
+                    await _context.SaveChangesAsync();
+
+                    // Mark alert as resolved if AlertId is present
+                    if (maintenanceLog.AlertId.HasValue)
+                    {
+                        var alert = await _context.Alerts.FindAsync(maintenanceLog.AlertId.Value);
+                        if (alert != null)
+                        {
+                            alert.Status = AlertStatus.Resolved;
+                            _context.Update(alert);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Database error: {ex.Message}");
+                    ModelState.AddModelError("", $"Database error: {ex.Message}");
+                }
             }
-            ViewBag.Equipment = _context.Equipment.ToList(); // Ensure this is always set on error
+            
+            // Reload equipment data for the view in case of validation errors
+            await LoadEquipmentViewBag(maintenanceLog.EquipmentId, maintenanceLog.AlertId);
             return View(maintenanceLog);
+        }
+
+        private async Task LoadEquipmentViewBag(int? selectedEquipmentId = null, int? alertId = null)
+        {
+            var equipment = await _context.Equipment
+                .Include(e => e.EquipmentModel)
+                .Include(e => e.EquipmentType)
+                .Include(e => e.Building)
+                .Include(e => e.Room)
+                .ToListAsync();
+                
+            ViewBag.Equipment = equipment;
+            ViewBag.EquipmentId = selectedEquipmentId;
+            ViewBag.AlertId = alertId;
         }
 
         // GET: MaintenanceLog/Edit/5
@@ -101,14 +127,15 @@ namespace FEENALOoFINALE.Controllers
             {
                 return NotFound();
             }
-            ViewBag.Equipment = _context.Equipment.ToList();
+            
+            await LoadEquipmentViewBag(maintenanceLog.EquipmentId);
             return View(maintenanceLog);
         }
 
         // POST: MaintenanceLog/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("LogId,EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeDuration")] MaintenanceLog maintenanceLog)
+        public async Task<IActionResult> Edit(int id, [Bind("LogId,EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeHours")] MaintenanceLog maintenanceLog)
         {
             if (id != maintenanceLog.LogId)
             {
@@ -135,7 +162,7 @@ namespace FEENALOoFINALE.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.Equipment = _context.Equipment.ToList();
+            await LoadEquipmentViewBag(maintenanceLog.EquipmentId);
             return View(maintenanceLog);
         }
 

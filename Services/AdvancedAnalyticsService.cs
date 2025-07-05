@@ -1,21 +1,19 @@
+using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace FEENALOoFINALE.Services
 {
     public interface IAdvancedAnalyticsService
     {
-        Task<EnhancedDashboardViewModel> GetEnhancedDashboardDataAsync();
-        Task<List<EquipmentPerformanceMetric>> GetEquipmentPerformanceMetricsAsync();
-        Task<List<PredictiveMaintenanceInsight>> GetPredictiveMaintenanceInsightsAsync();
-        Task<List<KPIIndicator>> GetKPIIndicatorsAsync();
-        Task<List<MaintenanceTrendData>> GetMaintenanceTrendDataAsync(int days = 30);
-        Task<List<CostAnalysisData>> GetCostAnalysisDataAsync();
-        Task<double> CalculateSystemHealthScoreAsync();
-        Task<double> CalculateMaintenanceEfficiencyAsync();
-        Task<double> CalculateCostEfficiencyAsync();
-        Task<double> CalculateEquipmentUtilizationAsync();
+        Task<AdvancedAnalyticsViewModel> GetAdvancedAnalyticsAsync(DashboardFilterViewModel? filters = null);
+        Task<List<EquipmentPerformanceMetrics>> GetEquipmentPerformanceMetricsAsync(DashboardFilterViewModel? filters = null);
+        Task<List<PredictiveAnalyticsData>> GetPredictiveAnalyticsAsync(DashboardFilterViewModel? filters = null);
+        Task<List<KPIProgressIndicator>> GetKPIProgressIndicatorsAsync(DashboardFilterViewModel? filters = null);
+        Task<EquipmentHeatmapData> GetEquipmentHeatmapDataAsync(DashboardFilterViewModel? filters = null);
+        Task<List<MaintenanceTrendData>> GetMaintenanceTrendAnalysisAsync(DashboardFilterViewModel? filters = null, int days = 30);
+        Task<List<CostAnalysisData>> GetCostAnalysisDataAsync(DashboardFilterViewModel? filters = null, int months = 6);
+        Task<Dictionary<string, object>> GetRealtimeMetricsAsync();
     }
 
     public class AdvancedAnalyticsService : IAdvancedAnalyticsService
@@ -27,184 +25,268 @@ namespace FEENALOoFINALE.Services
             _context = context;
         }
 
-        public async Task<EnhancedDashboardViewModel> GetEnhancedDashboardDataAsync()
+        public async Task<AdvancedAnalyticsViewModel> GetAdvancedAnalyticsAsync(DashboardFilterViewModel? filters = null)
         {
-            var viewModel = new EnhancedDashboardViewModel();
+            var analytics = new AdvancedAnalyticsViewModel
+            {
+                EquipmentPerformance = await GetEquipmentPerformanceMetricsAsync(filters),
+                PredictiveInsights = await GetPredictiveAnalyticsAsync(filters),
+                KPIProgress = await GetKPIProgressIndicatorsAsync(filters),
+                HeatmapData = await GetEquipmentHeatmapDataAsync(filters),
+                MaintenanceTrends = await GetMaintenanceTrendAnalysisAsync(filters),
+                CostAnalysis = await GetCostAnalysisDataAsync(filters),
+                RealTimeMetrics = await GetRealtimeMetricsAsync(),
+                LastUpdated = DateTime.Now
+            };
 
-            // Basic metrics
-            viewModel.TotalEquipment = await _context.Equipment.CountAsync();
-            viewModel.ActiveEquipment = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Active);
-            viewModel.CriticalAlerts = await _context.Alerts.CountAsync(a => a.Priority == AlertPriority.High);
-            viewModel.ActiveMaintenanceTasks = await _context.MaintenanceTasks.CountAsync(mt => mt.Status == MaintenanceStatus.InProgress);
-            viewModel.CompletedMaintenanceTasks = await _context.MaintenanceTasks.CountAsync(mt => mt.Status == MaintenanceStatus.Completed);
-            viewModel.PendingMaintenanceTasks = await _context.MaintenanceTasks.CountAsync(mt => mt.Status == MaintenanceStatus.Pending);
-            viewModel.OverdueMaintenances = await _context.MaintenanceTasks.CountAsync(mt => mt.ScheduledDate < DateTime.Now && mt.Status != MaintenanceStatus.Completed);
-            viewModel.EquipmentNeedingAttention = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Inactive);
-            viewModel.TotalInventoryItems = await _context.InventoryItems.CountAsync();
-            viewModel.LowStockItems = await _context.InventoryItems
-                .Where(i => i.InventoryStocks != null && i.InventoryStocks.Sum(s => s.Quantity) <= i.MinStockLevel)
-                .CountAsync();
+            return analytics;
+        }
 
-            // Advanced data
-            viewModel.RecentAlerts = await _context.Alerts
-                .Include(a => a.Equipment)
-                .OrderByDescending(a => a.CreatedDate)
-                .Take(10)
-                .ToListAsync();
-
-            viewModel.UpcomingMaintenanceTasks = await _context.MaintenanceTasks
-                .Include(mt => mt.Equipment)
-                .Include(mt => mt.AssignedTo)
-                .Where(mt => mt.Status == MaintenanceStatus.Pending)
-                .OrderBy(mt => mt.ScheduledDate)
-                .Take(10)
-                .ToListAsync();
-
-            viewModel.CriticalEquipment = await _context.Equipment
-                .Include(e => e.EquipmentType)
+        public async Task<List<EquipmentPerformanceMetrics>> GetEquipmentPerformanceMetricsAsync(DashboardFilterViewModel? filters = null)
+        {
+            var equipmentQuery = _context.Equipment
+                .Include(e => e.EquipmentModel)
+                    .ThenInclude(em => em!.EquipmentType)
                 .Include(e => e.Building)
-                .Where(e => e.Status == EquipmentStatus.Inactive) // Using Inactive as "critical" equivalent
-                .Take(10)
-                .ToListAsync();
+                .Include(e => e.Room)
+                .AsQueryable();
 
-            // Equipment status distribution
-            var statusCounts = await _context.Equipment
-                .GroupBy(e => e.Status)
-                .Select(g => new EnhancedEquipmentStatusCount
-                {
-                    Status = g.Key,
-                    Count = g.Count(),
-                    DisplayName = g.Key.ToString(),
-                    ColorClass = GetStatusColorClass(g.Key)
-                })
-                .ToListAsync();
-
-            var totalEquipment = statusCounts.Sum(sc => sc.Count);
-            foreach (var statusCount in statusCounts)
+            // Apply filters if provided
+            if (filters != null)
             {
-                statusCount.Percentage = totalEquipment > 0 ? (double)statusCount.Count / totalEquipment * 100 : 0;
+                if (filters.BuildingIds?.Any() == true)
+                    equipmentQuery = equipmentQuery.Where(e => filters.BuildingIds.Contains(e.BuildingId));
+                
+                if (filters.EquipmentTypeIds?.Any() == true)
+                    equipmentQuery = equipmentQuery.Where(e => e.EquipmentModel != null && 
+                        filters.EquipmentTypeIds.Contains(e.EquipmentModel.EquipmentTypeId));
             }
-            viewModel.EquipmentStatusCounts = statusCounts;
 
-            // Performance metrics
-            viewModel.OverallSystemHealth = await CalculateSystemHealthScoreAsync();
-            viewModel.MaintenanceEfficiency = await CalculateMaintenanceEfficiencyAsync();
-            viewModel.CostEfficiency = await CalculateCostEfficiencyAsync();
-            viewModel.EquipmentUtilization = await CalculateEquipmentUtilizationAsync();
+            var equipment = await equipmentQuery.ToListAsync();
+            var performanceMetrics = new List<EquipmentPerformanceMetrics>();
 
-            // Analytics data
-            viewModel.PerformanceMetrics = await GetEquipmentPerformanceMetricsAsync();
-            viewModel.PredictiveInsights = await GetPredictiveMaintenanceInsightsAsync();
-            viewModel.KPIIndicators = await GetKPIIndicatorsAsync();
-            viewModel.MaintenanceTrends = await GetMaintenanceTrendDataAsync();
-            viewModel.CostAnalysis = await GetCostAnalysisDataAsync();
+            foreach (var eq in equipment)
+            {
+                var maintenanceLogs = await _context.MaintenanceLogs
+                    .Where(ml => ml.EquipmentId == eq.EquipmentId)
+                    .OrderBy(ml => ml.LogDate)
+                    .ToListAsync();
 
-            // Filter options
-            viewModel.Buildings = await _context.Buildings.ToListAsync();
-            viewModel.EquipmentTypes = await _context.EquipmentTypes.ToListAsync();
+                var failurePrediction = await _context.FailurePredictions
+                    .Where(fp => fp.EquipmentId == eq.EquipmentId)
+                    .OrderByDescending(fp => fp.CreatedDate)
+                    .FirstOrDefaultAsync();
 
-            return viewModel;
+                var metrics = await CalculateEquipmentMetrics(eq, maintenanceLogs, failurePrediction);
+                performanceMetrics.Add(metrics);
+            }
+
+            return performanceMetrics.OrderByDescending(m => m.HealthScore).ToList();
         }
 
-        public async Task<List<EquipmentPerformanceMetric>> GetEquipmentPerformanceMetricsAsync()
+        public async Task<List<PredictiveAnalyticsData>> GetPredictiveAnalyticsAsync(DashboardFilterViewModel? filters = null)
         {
-            var equipment = await _context.Equipment
-                .Include(e => e.EquipmentType)
-                .Include(e => e.EquipmentModel)
-                .Include(e => e.MaintenanceLogs)
+            var predictions = await _context.FailurePredictions
+                .Include(fp => fp.Equipment)
+                    .ThenInclude(e => e!.EquipmentModel)
+                .Where(fp => fp.PredictedFailureDate >= DateTime.Now)
+                .OrderBy(fp => fp.PredictedFailureDate)
                 .ToListAsync();
 
-            return equipment.Select(e => new EquipmentPerformanceMetric
+            var analyticsData = new List<PredictiveAnalyticsData>();
+
+            foreach (var prediction in predictions)
             {
-                EquipmentName = e.EquipmentModel?.ModelName ?? "Unknown",
-                EquipmentType = e.EquipmentType?.EquipmentTypeName ?? "Unknown",
-                PerformanceScore = CalculatePerformanceScore(e),
-                UtilizationRate = CalculateUtilizationRate(e),
-                MaintenanceFrequency = e.MaintenanceLogs?.Count ?? 0,
-                TotalMaintenanceCost = e.MaintenanceLogs?.Sum(ml => ml.Cost) ?? 0,
-                AverageDowntime = CalculateAverageDowntime(e),
-                LastMaintenanceDate = e.MaintenanceLogs?.OrderByDescending(ml => ml.MaintenanceDate).FirstOrDefault()?.MaintenanceDate ?? DateTime.MinValue,
-                NextScheduledMaintenance = CalculateNextScheduledMaintenance(e),
-                HealthStatus = CalculateHealthStatus(e)
-            }).ToList();
+                var data = new PredictiveAnalyticsData
+                {
+                    EquipmentId = prediction.EquipmentId,
+                    EquipmentName = prediction.Equipment?.EquipmentModel?.ModelName ?? "Unknown",
+                    RiskLevel = prediction.Status,
+                    PredictedFailureDate = prediction.PredictedFailureDate,
+                    ConfidenceScore = prediction.ConfidenceLevel / 100.0, // Convert to 0-1 scale
+                    PredictionReason = prediction.AnalysisNotes ?? "System analysis",
+                    DaysUntilPredictedFailure = (int)(prediction.PredictedFailureDate - DateTime.Now).TotalDays,
+                    FinancialImpact = 5000.0, // Default estimated cost
+                    RecommendedActions = GenerateRecommendedActions(prediction),
+                    FactorContributions = await GetFactorContributions(prediction.EquipmentId)
+                };
+
+                analyticsData.Add(data);
+            }
+
+            return analyticsData;
         }
 
-        public async Task<List<PredictiveMaintenanceInsight>> GetPredictiveMaintenanceInsightsAsync()
+        public async Task<List<KPIProgressIndicator>> GetKPIProgressIndicatorsAsync(DashboardFilterViewModel? filters = null)
         {
-            var equipment = await _context.Equipment
-                .Include(e => e.EquipmentModel)
-                .Include(e => e.MaintenanceLogs)
-                .Where(e => e.Status == EquipmentStatus.Active)
-                .ToListAsync();
+            var kpis = new List<KPIProgressIndicator>();
 
-            return equipment.Select(e => new PredictiveMaintenanceInsight
+            // Overall Equipment Effectiveness (OEE)
+            var totalEquipment = await _context.Equipment.CountAsync();
+            var activeEquipment = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Active);
+            var currentOEE = totalEquipment > 0 ? (double)activeEquipment / totalEquipment * 100 : 0;
+
+            kpis.Add(new KPIProgressIndicator
             {
-                EquipmentName = e.EquipmentModel?.ModelName ?? "Unknown",
-                PredictedIssue = GetPredictedIssue(e),
-                ProbabilityPercentage = CalculateFailureProbability(e),
-                PredictedFailureDate = CalculatePredictedFailureDate(e),
-                RecommendedAction = GetRecommendedAction(e),
-                RiskLevel = CalculateRiskLevel(e),
-                EstimatedRepairCost = EstimateRepairCost(e),
-                DaysUntilPredictedFailure = (int)(CalculatePredictedFailureDate(e) - DateTime.Now).TotalDays
-            }).Where(p => p.ProbabilityPercentage > 30).ToList();
-        }
-
-        public async Task<List<KPIIndicator>> GetKPIIndicatorsAsync()
-        {
-            var kpis = new List<KPIIndicator>();
-
-            var equipmentUptime = await CalculateEquipmentUptimeAsync();
-            kpis.Add(new KPIIndicator
-            {
-                Name = "Equipment Uptime",
-                CurrentValue = equipmentUptime,
-                TargetValue = 95.0,
-                PreviousValue = 92.5,
+                KPIName = "Overall Equipment Effectiveness",
+                Category = "Equipment",
+                CurrentValue = Math.Round(currentOEE, 1),
+                TargetValue = 85.0,
+                PreviousValue = 82.3, // This would come from historical data
                 Unit = "%",
-                Status = equipmentUptime >= 95 ? "Good" : equipmentUptime >= 85 ? "Warning" : "Critical",
-                TrendDirection = equipmentUptime > 92.5 ? "Up" : "Down",
-                PercentageChange = ((equipmentUptime - 92.5) / 92.5) * 100,
-                Description = "Percentage of time equipment is operational",
-                Icon = "fas fa-chart-line"
+                Direction = currentOEE > 82.3 ? "up" : "down",
+                PercentageChange = Math.Round(((currentOEE - 82.3) / 82.3) * 100, 1),
+                ProgressPercentage = Math.Round((currentOEE / 85.0) * 100, 1),
+                Status = currentOEE >= 85.0 ? "on-track" : currentOEE >= 75.0 ? "warning" : "critical",
+                Icon = "bi-speedometer2",
+                Color = currentOEE >= 85.0 ? "#10b981" : currentOEE >= 75.0 ? "#f59e0b" : "#ef4444",
+                LastUpdated = DateTime.Now
             });
 
-            var mttr = await CalculateMTTRAsync();
-            kpis.Add(new KPIIndicator
+            // Mean Time Between Failures (MTBF)
+            var mtbf = await CalculateMTBF();
+            kpis.Add(new KPIProgressIndicator
             {
-                Name = "Mean Time To Repair (MTTR)",
-                CurrentValue = mttr,
-                TargetValue = 4.0,
-                PreviousValue = 5.2,
-                Unit = "hours",
-                Status = mttr <= 4 ? "Good" : mttr <= 6 ? "Warning" : "Critical",
-                TrendDirection = mttr < 5.2 ? "Down" : "Up",
-                PercentageChange = ((mttr - 5.2) / 5.2) * 100,
-                Description = "Average time to repair equipment failures",
-                Icon = "fas fa-wrench"
+                KPIName = "Mean Time Between Failures",
+                Category = "Maintenance",
+                CurrentValue = Math.Round(mtbf, 1),
+                TargetValue = 30.0,
+                PreviousValue = 25.2,
+                Unit = "days",
+                Direction = mtbf > 25.2 ? "up" : "down",
+                PercentageChange = Math.Round(((mtbf - 25.2) / 25.2) * 100, 1),
+                ProgressPercentage = Math.Round((mtbf / 30.0) * 100, 1),
+                Status = mtbf >= 30.0 ? "on-track" : mtbf >= 20.0 ? "warning" : "critical",
+                Icon = "bi-clock-history",
+                Color = mtbf >= 30.0 ? "#10b981" : mtbf >= 20.0 ? "#f59e0b" : "#ef4444",
+                LastUpdated = DateTime.Now
             });
 
-            var mtbf = await CalculateMTBFAsync();
-            kpis.Add(new KPIIndicator
+            // Maintenance Cost Efficiency
+            var totalCost = await _context.MaintenanceLogs.SumAsync(ml => ml.Cost);
+            var costPerEquipment = totalEquipment > 0 ? (double)(totalCost / totalEquipment) : 0;
+            kpis.Add(new KPIProgressIndicator
             {
-                Name = "Mean Time Between Failures (MTBF)",
-                CurrentValue = mtbf,
-                TargetValue = 720.0,
-                PreviousValue = 680.0,
-                Unit = "hours",
-                Status = mtbf >= 720 ? "Good" : mtbf >= 600 ? "Warning" : "Critical",
-                TrendDirection = mtbf > 680 ? "Up" : "Down",
-                PercentageChange = ((mtbf - 680) / 680) * 100,
-                Description = "Average time between equipment failures",
-                Icon = "fas fa-clock"
+                KPIName = "Maintenance Cost per Equipment",
+                Category = "Financial",
+                CurrentValue = Math.Round(costPerEquipment, 2),
+                TargetValue = 500.0,
+                PreviousValue = 520.5,
+                Unit = "$",
+                Direction = costPerEquipment < 520.5 ? "down" : "up",
+                PercentageChange = Math.Round(((costPerEquipment - 520.5) / 520.5) * 100, 1),
+                ProgressPercentage = Math.Round((1 - (costPerEquipment / 1000.0)) * 100, 1), // Inverse for cost
+                Status = costPerEquipment <= 500.0 ? "on-track" : costPerEquipment <= 750.0 ? "warning" : "critical",
+                Icon = "bi-currency-dollar",
+                Color = costPerEquipment <= 500.0 ? "#10b981" : costPerEquipment <= 750.0 ? "#f59e0b" : "#ef4444",
+                LastUpdated = DateTime.Now
+            });
+
+            // Preventive Maintenance Ratio
+            var totalMaintenance = await _context.MaintenanceLogs.CountAsync();
+            var preventiveMaintenance = await _context.MaintenanceLogs
+                .CountAsync(ml => ml.MaintenanceType == MaintenanceType.Preventive);
+            var preventiveRatio = totalMaintenance > 0 ? (double)preventiveMaintenance / totalMaintenance * 100 : 0;
+
+            kpis.Add(new KPIProgressIndicator
+            {
+                KPIName = "Preventive Maintenance Ratio",
+                Category = "Operational",
+                CurrentValue = Math.Round(preventiveRatio, 1),
+                TargetValue = 80.0,
+                PreviousValue = 65.8,
+                Unit = "%",
+                Direction = preventiveRatio > 65.8 ? "up" : "down",
+                PercentageChange = Math.Round(((preventiveRatio - 65.8) / 65.8) * 100, 1),
+                ProgressPercentage = Math.Round((preventiveRatio / 80.0) * 100, 1),
+                Status = preventiveRatio >= 80.0 ? "on-track" : preventiveRatio >= 60.0 ? "warning" : "critical",
+                Icon = "bi-tools",
+                Color = preventiveRatio >= 80.0 ? "#10b981" : preventiveRatio >= 60.0 ? "#f59e0b" : "#ef4444",
+                LastUpdated = DateTime.Now
             });
 
             return kpis;
         }
 
-        public async Task<List<MaintenanceTrendData>> GetMaintenanceTrendDataAsync(int days = 30)
+        public async Task<EquipmentHeatmapData> GetEquipmentHeatmapDataAsync(DashboardFilterViewModel? filters = null)
         {
-            var startDate = DateTime.Now.AddDays(-days);
+            var buildings = await _context.Buildings
+                .Include(b => b.Rooms)
+                    .ThenInclude(r => r.Equipments)
+                        .ThenInclude(e => e.EquipmentModel)
+                .ToListAsync();
+
+            var heatmapData = new EquipmentHeatmapData();
+            var totalEquipment = 0;
+            var totalHealthScore = 0.0;
+
+            foreach (var building in buildings)
+            {
+                var buildingData = new BuildingHeatmapData
+                {
+                    BuildingId = building.BuildingId,
+                    BuildingName = building.BuildingName,
+                    StatusCounts = new Dictionary<string, int>()
+                };
+
+                foreach (var room in building.Rooms ?? new List<Room>())
+                {
+                    var roomData = new RoomHeatmapData
+                    {
+                        RoomId = room.RoomId,
+                        RoomName = room.RoomName
+                    };
+
+                    foreach (var equipment in room.Equipments ?? new List<Equipment>())
+                    {
+                        var healthScore = await CalculateEquipmentHealthScore(equipment.EquipmentId);
+                        var riskLevel = await GetEquipmentRiskLevel(equipment.EquipmentId);
+
+                        var equipmentItem = new EquipmentHeatmapItem
+                        {
+                            EquipmentId = equipment.EquipmentId,
+                            Name = equipment.EquipmentModel?.ModelName ?? "Unknown",
+                            Status = equipment.Status,
+                            HealthScore = healthScore,
+                            RiskLevel = riskLevel,
+                            StatusColor = GetStatusColor(equipment.Status),
+                            ToolTip = $"{equipment.EquipmentModel?.ModelName} - Health: {healthScore:F1}%"
+                        };
+
+                        roomData.Equipment.Add(equipmentItem);
+                        totalEquipment++;
+                        totalHealthScore += healthScore;
+
+                        // Update building status counts
+                        var statusKey = equipment.Status.ToString();
+                        buildingData.StatusCounts[statusKey] = buildingData.StatusCounts.GetValueOrDefault(statusKey, 0) + 1;
+                    }
+
+                    roomData.RoomHealthScore = roomData.Equipment.Any() ? 
+                        roomData.Equipment.Average(e => e.HealthScore) : 100.0;
+                    roomData.DominantStatus = GetDominantStatus(roomData.Equipment);
+
+                    buildingData.Rooms.Add(roomData);
+                }
+
+                buildingData.TotalEquipment = buildingData.Rooms.Sum(r => r.Equipment.Count);
+                buildingData.BuildingHealthScore = buildingData.Rooms.Any() ? 
+                    buildingData.Rooms.Average(r => r.RoomHealthScore) : 100.0;
+
+                heatmapData.Buildings.Add(buildingData);
+            }
+
+            heatmapData.TotalEquipment = totalEquipment;
+            heatmapData.OverallHealthScore = totalEquipment > 0 ? totalHealthScore / totalEquipment : 100.0;
+            heatmapData.StatusCounts = await GetOverallStatusCounts();
+            heatmapData.StatusColors = GetStatusColorMapping();
+
+            return heatmapData;
+        }
+
+        public async Task<List<MaintenanceTrendData>> GetMaintenanceTrendAnalysisAsync(DashboardFilterViewModel? filters = null, int days = 30)
+        {
+            var startDate = DateTime.Now.AddDays(-days).Date;
             var trends = new List<MaintenanceTrendData>();
 
             for (int i = 0; i < days; i++)
@@ -213,261 +295,380 @@ namespace FEENALOoFINALE.Services
                 var dayStart = date.Date;
                 var dayEnd = dayStart.AddDays(1);
 
-                var completed = await _context.MaintenanceLogs
-                    .Where(ml => ml.MaintenanceDate >= dayStart && ml.MaintenanceDate < dayEnd)
-                    .CountAsync();
+                var dayLogs = await _context.MaintenanceLogs
+                    .Where(ml => ml.LogDate >= dayStart && ml.LogDate < dayEnd)
+                    .ToListAsync();
 
-                var scheduled = await _context.MaintenanceTasks
-                    .Where(mt => mt.ScheduledDate >= dayStart && mt.ScheduledDate < dayEnd)
-                    .CountAsync();
-
-                var overdue = await _context.MaintenanceTasks
-                    .Where(mt => mt.ScheduledDate < dayStart && mt.Status != MaintenanceStatus.Completed)
-                    .CountAsync();
-
-                var totalCost = await _context.MaintenanceLogs
-                    .Where(ml => ml.MaintenanceDate >= dayStart && ml.MaintenanceDate < dayEnd)
-                    .SumAsync(ml => ml.Cost);
-
-                var preventiveCost = await _context.MaintenanceLogs
-                    .Where(ml => ml.MaintenanceDate >= dayStart && ml.MaintenanceDate < dayEnd && ml.MaintenanceType == MaintenanceType.Preventive)
-                    .SumAsync(ml => ml.Cost);
-
-                trends.Add(new MaintenanceTrendData
+                var trendData = new MaintenanceTrendData
                 {
                     Date = date,
-                    CompletedCount = completed,
-                    ScheduledCount = scheduled,
-                    OverdueCount = overdue,
-                    TotalCost = totalCost,
-                    PreventiveCost = preventiveCost,
-                    CorrectiveCost = totalCost - preventiveCost
-                });
+                    PreventiveMaintenanceCount = dayLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Preventive),
+                    CorrectiveMaintenanceCount = dayLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Corrective),
+                    InspectionMaintenanceCount = dayLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Inspection),
+                    TotalCost = dayLogs.Sum(ml => ml.Cost),
+                    AverageDowntime = dayLogs.Where(ml => ml.DowntimeDuration.HasValue)
+                        .Select(ml => ml.DowntimeDuration!.Value.TotalHours)
+                        .DefaultIfEmpty(0)
+                        .Average(),
+                    EquipmentAffected = dayLogs.Select(ml => ml.EquipmentId).Distinct().Count(),
+                    EfficiencyScore = CalculateDailyEfficiencyScore(dayLogs)
+                };
+
+                trends.Add(trendData);
             }
 
             return trends;
         }
 
-        public async Task<List<CostAnalysisData>> GetCostAnalysisDataAsync()
+        public async Task<List<CostAnalysisData>> GetCostAnalysisDataAsync(DashboardFilterViewModel? filters = null, int months = 6)
         {
-            var currentMonth = DateTime.Now.Month;
-            var currentYear = DateTime.Now.Year;
-            var previousMonth = currentMonth == 1 ? 12 : currentMonth - 1;
-            var previousYear = currentMonth == 1 ? currentYear - 1 : currentYear;
-
-            var categories = new[] { "Preventive", "Corrective", "Emergency", "Parts", "Labor" };
             var costAnalysis = new List<CostAnalysisData>();
 
-            foreach (var category in categories)
-            {
-                var currentCost = await GetCostByCategory(category, currentMonth, currentYear);
-                var previousCost = await GetCostByCategory(category, previousMonth, previousYear);
-                var budget = GetBudgetForCategory(category);
-
-                costAnalysis.Add(new CostAnalysisData
+            // Cost by Equipment Type
+            var equipmentTypeCosts = await _context.MaintenanceLogs
+                .Include(ml => ml.Equipment)
+                    .ThenInclude(e => e!.EquipmentModel)
+                        .ThenInclude(em => em!.EquipmentType)
+                .GroupBy(ml => ml.Equipment!.EquipmentModel!.EquipmentType!.EquipmentTypeName)
+                .Select(g => new CostAnalysisData
                 {
-                    Category = category,
-                    CurrentPeriodCost = currentCost,
-                    PreviousPeriodCost = previousCost,
-                    BudgetAllocated = budget,
-                    VariancePercentage = budget > 0 ? ((double)(currentCost - budget) / (double)budget) * 100 : 0,
-                    TrendDirection = currentCost > previousCost ? "Up" : currentCost < previousCost ? "Down" : "Stable"
-                });
+                    Category = "Equipment Type",
+                    CategoryValue = g.Key,
+                    TotalCost = g.Sum(ml => ml.Cost),
+                    AverageCost = g.Average(ml => ml.Cost),
+                    MaintenanceCount = g.Count(),
+                    Trend = "stable" // This would be calculated from historical data
+                })
+                .ToListAsync();
+
+            var totalCost = equipmentTypeCosts.Sum(c => c.TotalCost);
+            foreach (var cost in equipmentTypeCosts)
+            {
+                cost.CostPercentage = totalCost > 0 ? (double)(cost.TotalCost / totalCost) * 100 : 0;
+                cost.ProjectedCost = cost.TotalCost * 1.1m; // 10% increase projection
             }
+
+            costAnalysis.AddRange(equipmentTypeCosts);
 
             return costAnalysis;
         }
 
-        public async Task<double> CalculateSystemHealthScoreAsync()
+        public async Task<Dictionary<string, object>> GetRealtimeMetricsAsync()
         {
-            var totalEquipment = await _context.Equipment.CountAsync();
-            if (totalEquipment == 0) return 100;
+            var metrics = new Dictionary<string, object>
+            {
+                ["TotalEquipment"] = await _context.Equipment.CountAsync(),
+                ["ActiveEquipment"] = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Active),
+                ["CriticalAlerts"] = await _context.Alerts.CountAsync(a => a.Priority == AlertPriority.High && a.Status == AlertStatus.Open),
+                ["PendingMaintenance"] = await _context.MaintenanceTasks.CountAsync(m => m.Status != MaintenanceStatus.Completed),
+                ["LowStockItems"] = await _context.InventoryItems.CountAsync(i => i.InventoryStocks != null && i.InventoryStocks.Sum(s => s.Quantity) <= i.MinStockLevel),
+                ["LastUpdated"] = DateTime.Now
+            };
 
-            var activeEquipment = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Active);
-            var inactiveEquipment = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Inactive);
-            var retiredEquipment = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Retired);
-
-            var score = ((double)activeEquipment / totalEquipment * 100) - 
-                       ((double)inactiveEquipment / totalEquipment * 30) - 
-                       ((double)retiredEquipment / totalEquipment * 50);
-
-            return Math.Max(0, Math.Min(100, score));
+            return metrics;
         }
 
-        public async Task<double> CalculateMaintenanceEfficiencyAsync()
+        #region Private Helper Methods
+
+        private async Task<EquipmentPerformanceMetrics> CalculateEquipmentMetrics(
+            Equipment equipment, 
+            List<MaintenanceLog> maintenanceLogs, 
+            FailurePrediction? prediction)
         {
-            var totalTasks = await _context.MaintenanceTasks.CountAsync();
-            if (totalTasks == 0) return 100;
+            var failureCount = maintenanceLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Corrective);
+            var totalCost = maintenanceLogs.Sum(ml => ml.Cost);
+            var avgDailyCost = maintenanceLogs.Any() ? totalCost / Math.Max(1, (DateTime.Now - maintenanceLogs.Min(ml => ml.LogDate)).Days) : 0;
+            
+            var mtbf = CalculateMTBFForEquipment(maintenanceLogs);
+            var mttr = maintenanceLogs.Where(ml => ml.DowntimeDuration.HasValue)
+                .Select(ml => ml.DowntimeDuration!.Value.TotalHours)
+                .DefaultIfEmpty(0)
+                .Average();
 
-            var completedOnTime = await _context.MaintenanceTasks
-                .CountAsync(mt => mt.Status == MaintenanceStatus.Completed);
+            var healthScore = await CalculateEquipmentHealthScore(equipment.EquipmentId);
+            var uptimePercentage = CalculateUptimePercentage(equipment, maintenanceLogs);
 
-            return (double)completedOnTime / totalTasks * 100;
+            return new EquipmentPerformanceMetrics
+            {
+                EquipmentId = equipment.EquipmentId,
+                EquipmentName = equipment.EquipmentModel?.ModelName ?? "Unknown",
+                EquipmentType = equipment.EquipmentModel?.EquipmentType?.EquipmentTypeName ?? "Unknown",
+                Building = equipment.Building?.BuildingName ?? "Unknown",
+                Room = equipment.Room?.RoomName ?? "Unknown",
+                Status = equipment.Status,
+                UptimePercentage = uptimePercentage,
+                EfficiencyScore = CalculateEfficiencyScore(equipment, maintenanceLogs),
+                MaintenanceCostPerMonth = (double)(totalCost / Math.Max(1, maintenanceLogs.Count)),
+                FailureCount = failureCount,
+                MeanTimeBetweenFailures = mtbf,
+                MeanTimeToRepair = mttr,
+                PredictedRisk = prediction?.Status ?? PredictionStatus.Low,
+                NextMaintenanceDue = await GetNextMaintenanceDue(equipment.EquipmentId),
+                HealthScore = healthScore,
+                TotalMaintenanceCost = totalCost,
+                AverageDailyCost = avgDailyCost,
+                EstimatedReplacementCost = 50000, // This would come from equipment specifications
+                TotalMaintenanceHours = (int)maintenanceLogs.Where(ml => ml.DowntimeDuration.HasValue).Sum(ml => ml.DowntimeDuration!.Value.TotalHours),
+                LastMaintenanceDate = maintenanceLogs.Any() ? maintenanceLogs.Max(ml => ml.LogDate) : DateTime.MinValue,
+                DaysSinceLastMaintenance = maintenanceLogs.Any() ? 
+                    (int)(DateTime.Now - maintenanceLogs.Max(ml => ml.LogDate)).TotalDays : 0
+            };
         }
 
-        public async Task<double> CalculateCostEfficiencyAsync()
+        private double CalculateMTBFForEquipment(List<MaintenanceLog> maintenanceLogs)
         {
-            var currentMonthCost = await _context.MaintenanceLogs
-                .Where(ml => ml.MaintenanceDate.Month == DateTime.Now.Month && ml.MaintenanceDate.Year == DateTime.Now.Year)
-                .SumAsync(ml => ml.Cost);
+            var failures = maintenanceLogs
+                .Where(ml => ml.MaintenanceType == MaintenanceType.Corrective)
+                .OrderBy(ml => ml.LogDate)
+                .ToList();
 
-            var budget = 50000; // Example budget
-            if (budget == 0) return 100;
+            if (failures.Count < 2) return 365.0; // Default if insufficient data
 
-            var efficiency = (1 - ((double)currentMonthCost / budget)) * 100;
-            return Math.Max(0, Math.Min(100, efficiency));
+            var intervals = new List<double>();
+            for (int i = 1; i < failures.Count; i++)
+            {
+                var interval = (failures[i].LogDate - failures[i - 1].LogDate).TotalDays;
+                intervals.Add(interval);
+            }
+
+            return intervals.Average();
         }
 
-        public async Task<double> CalculateEquipmentUtilizationAsync()
+        private async Task<double> CalculateMTBF()
         {
-            var totalEquipment = await _context.Equipment.CountAsync();
-            if (totalEquipment == 0) return 0;
+            var failures = await _context.MaintenanceLogs
+                .Where(ml => ml.MaintenanceType == MaintenanceType.Corrective)
+                .OrderBy(ml => ml.LogDate)
+                .ToListAsync();
 
-            var activeEquipment = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Active);
-            return (double)activeEquipment / totalEquipment * 100;
+            if (failures.Count < 2) return 30.0;
+
+            var intervals = new List<double>();
+            for (int i = 1; i < failures.Count; i++)
+            {
+                var interval = (failures[i].LogDate - failures[i - 1].LogDate).TotalDays;
+                intervals.Add(interval);
+            }
+
+            return intervals.Average();
         }
 
-        // Helper methods
-        private string GetStatusColorClass(EquipmentStatus status)
+        private async Task<double> CalculateEquipmentHealthScore(int equipmentId)
+        {
+            var equipment = await _context.Equipment.FindAsync(equipmentId);
+            if (equipment == null) return 0;
+
+            // Simple health score calculation based on status and recent maintenance
+            var baseScore = equipment.Status switch
+            {
+                EquipmentStatus.Active => 90.0,
+                EquipmentStatus.Inactive => 30.0,
+                EquipmentStatus.Retired => 10.0,
+                _ => 50.0
+            };
+
+            // Adjust based on recent maintenance
+            var recentMaintenance = await _context.MaintenanceLogs
+                .Where(ml => ml.EquipmentId == equipmentId && ml.LogDate >= DateTime.Now.AddDays(-30))
+                .CountAsync();
+
+            if (recentMaintenance > 3) baseScore -= 20; // Frequent maintenance reduces health
+            else if (recentMaintenance == 0) baseScore -= 10; // No maintenance might indicate neglect
+
+            return Math.Max(0, Math.Min(100, baseScore));
+        }
+
+        private async Task<PredictionStatus> GetEquipmentRiskLevel(int equipmentId)
+        {
+            var prediction = await _context.FailurePredictions
+                .Where(fp => fp.EquipmentId == equipmentId)
+                .OrderByDescending(fp => fp.CreatedDate)
+                .FirstOrDefaultAsync();
+
+            return prediction?.Status ?? PredictionStatus.Low;
+        }
+
+        private string GetStatusColor(EquipmentStatus status)
         {
             return status switch
             {
-                EquipmentStatus.Active => "success",
-                EquipmentStatus.Inactive => "warning",
-                EquipmentStatus.Retired => "danger",
-                _ => "info"
+                EquipmentStatus.Active => "#10b981",
+                EquipmentStatus.Inactive => "#ef4444",
+                EquipmentStatus.Retired => "#6b7280",
+                _ => "#3b82f6"
             };
         }
 
-        private double CalculatePerformanceScore(Equipment equipment)
+        private Dictionary<string, string> GetStatusColorMapping()
         {
-            var maintenanceLogs = equipment.MaintenanceLogs?.ToList() ?? new List<MaintenanceLog>();
-            if (!maintenanceLogs.Any()) return 95.0;
-
-            var correctiveCount = maintenanceLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Corrective);
-            var totalCount = maintenanceLogs.Count;
-
-            return Math.Max(0, 100 - (correctiveCount * 10) - (totalCount * 2));
+            return new Dictionary<string, string>
+            {
+                ["Active"] = "#10b981",
+                ["Inactive"] = "#ef4444",
+                ["Retired"] = "#6b7280"
+            };
         }
 
-        private double CalculateUtilizationRate(Equipment equipment)
+        private async Task<Dictionary<string, int>> GetOverallStatusCounts()
         {
-            return equipment.Status == EquipmentStatus.Active ? 85.0 + (new Random().NextDouble() * 10) : 0;
+            return await _context.Equipment
+                .GroupBy(e => e.Status)
+                .ToDictionaryAsync(g => g.Key.ToString(), g => g.Count());
         }
 
-        private TimeSpan CalculateAverageDowntime(Equipment equipment)
+        private string GetDominantStatus(List<EquipmentHeatmapItem> equipment)
         {
-            return equipment.MaintenanceLogs?.Any() == true ? 
-                TimeSpan.FromHours(2 + equipment.MaintenanceLogs.Count() * 0.5) : 
-                TimeSpan.Zero;
+            if (!equipment.Any()) return "Unknown";
+
+            return equipment
+                .GroupBy(e => e.Status)
+                .OrderByDescending(g => g.Count())
+                .First()
+                .Key
+                .ToString();
         }
 
-        private DateTime CalculateNextScheduledMaintenance(Equipment equipment)
+        private double CalculateUptimePercentage(Equipment equipment, List<MaintenanceLog> maintenanceLogs)
         {
-            var lastMaintenance = equipment.MaintenanceLogs?.OrderByDescending(ml => ml.MaintenanceDate).FirstOrDefault();
-            return lastMaintenance?.MaintenanceDate.AddDays(90) ?? DateTime.Now.AddDays(30);
+            if (equipment.Status == EquipmentStatus.Retired) return 0;
+
+            var totalDowntime = maintenanceLogs
+                .Where(ml => ml.DowntimeDuration.HasValue)
+                .Sum(ml => ml.DowntimeDuration!.Value.TotalHours);
+
+            var totalTime = (DateTime.Now - DateTime.Now.AddDays(-30)).TotalHours; // Last 30 days
+            
+            return Math.Max(0, Math.Min(100, ((totalTime - totalDowntime) / totalTime) * 100));
         }
 
-        private string CalculateHealthStatus(Equipment equipment)
+        private double CalculateEfficiencyScore(Equipment equipment, List<MaintenanceLog> maintenanceLogs)
         {
-            var score = CalculatePerformanceScore(equipment);
-            return score >= 80 ? "Excellent" : score >= 60 ? "Good" : score >= 40 ? "Fair" : "Poor";
+            var preventiveMaintenance = maintenanceLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Preventive);
+            var correctiveMaintenance = maintenanceLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Corrective);
+            var total = preventiveMaintenance + correctiveMaintenance;
+
+            if (total == 0) return 100; // No maintenance data, assume good
+
+            var preventiveRatio = (double)preventiveMaintenance / total;
+            return Math.Min(100, preventiveRatio * 100 + 20); // Bonus for preventive maintenance
         }
 
-        private string GetPredictedIssue(Equipment equipment)
+        private async Task<DateTime?> GetNextMaintenanceDue(int equipmentId)
         {
-            var issues = new[] { "Bearing wear", "Oil change needed", "Filter replacement", "Calibration drift", "Belt tension" };
-            return issues[new Random().Next(issues.Length)];
+            var lastMaintenance = await _context.MaintenanceLogs
+                .Where(ml => ml.EquipmentId == equipmentId)
+                .OrderByDescending(ml => ml.LogDate)
+                .FirstOrDefaultAsync();
+
+            if (lastMaintenance == null) return DateTime.Now.AddDays(30); // Default schedule
+
+            // Simple calculation - next maintenance in 90 days after last
+            return lastMaintenance.LogDate.AddDays(90);
         }
 
-        private double CalculateFailureProbability(Equipment equipment)
+        private List<string> GenerateRecommendedActions(FailurePrediction prediction)
         {
-            var daysSinceLastMaintenance = equipment.MaintenanceLogs?.Any() == true ?
-                (DateTime.Now - equipment.MaintenanceLogs.OrderByDescending(ml => ml.MaintenanceDate).First().MaintenanceDate).TotalDays :
-                365;
+            var actions = new List<string>();
 
-            return Math.Min(90, daysSinceLastMaintenance / 365 * 100);
+            switch (prediction.Status)
+            {
+                case PredictionStatus.High:
+                    actions.Add("Schedule immediate inspection");
+                    actions.Add("Prepare replacement parts");
+                    actions.Add("Plan maintenance downtime");
+                    break;
+                case PredictionStatus.Medium:
+                    actions.Add("Schedule preventive maintenance");
+                    actions.Add("Monitor performance closely");
+                    break;
+                case PredictionStatus.Low:
+                    actions.Add("Continue routine monitoring");
+                    break;
+            }
+
+            return actions;
         }
 
-        private DateTime CalculatePredictedFailureDate(Equipment equipment)
+        private async Task<Dictionary<string, double>> GetFactorContributions(int equipmentId)
         {
-            var probability = CalculateFailureProbability(equipment);
-            var daysUntilFailure = (100 - probability) * 3.65; // Rough calculation
-            return DateTime.Now.AddDays(daysUntilFailure);
+            // This would analyze various factors contributing to failure prediction
+            return new Dictionary<string, double>
+            {
+                ["Age"] = 0.3,
+                ["Usage"] = 0.25,
+                ["Maintenance History"] = 0.2,
+                ["Environmental Factors"] = 0.15,
+                ["Performance Degradation"] = 0.1
+            };
         }
 
-        private string GetRecommendedAction(Equipment equipment)
+        private double CalculateDailyEfficiencyScore(List<MaintenanceLog> dayLogs)
         {
-            var actions = new[] { "Schedule preventive maintenance", "Replace worn parts", "Inspect and lubricate", "Calibrate sensors", "Update software" };
-            return actions[new Random().Next(actions.Length)];
+            if (!dayLogs.Any()) return 100;
+
+            var preventive = dayLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Preventive);
+            var corrective = dayLogs.Count(ml => ml.MaintenanceType == MaintenanceType.Corrective);
+            var total = dayLogs.Count;
+
+            var preventiveRatio = (double)preventive / total;
+            var correctivePenalty = (double)corrective / total * 30; // Corrective maintenance reduces efficiency
+
+            return Math.Max(0, Math.Min(100, (preventiveRatio * 100) - correctivePenalty));
         }
 
-        private string CalculateRiskLevel(Equipment equipment)
+        private async Task<Dictionary<string, object>> GetRealTimeMetricsAsync()
         {
-            var probability = CalculateFailureProbability(equipment);
-            return probability >= 70 ? "High" : probability >= 40 ? "Medium" : "Low";
+            return new Dictionary<string, object>
+            {
+                ["equipmentOnline"] = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Active),
+                ["criticalAlerts"] = await _context.Alerts.CountAsync(a => a.Priority == AlertPriority.High && a.Status == AlertStatus.Open),
+                ["maintenanceInProgress"] = await _context.MaintenanceTasks.CountAsync(m => m.Status == MaintenanceStatus.InProgress),
+                ["systemHealth"] = 92.5,
+                ["lastUpdate"] = DateTime.Now
+            };
         }
 
-        private decimal EstimateRepairCost(Equipment equipment)
+        private async Task<List<object>> GetRecentAlertUpdates()
         {
-            var avgCost = equipment.MaintenanceLogs?.Any() == true ? equipment.MaintenanceLogs.Average(ml => ml.Cost) : 1000;
-            return avgCost * (decimal)(1 + new Random().NextDouble());
-        }
-
-        private async Task<double> CalculateEquipmentUptimeAsync()
-        {
-            // Simplified calculation - in real scenario, you'd track actual uptime/downtime
-            var totalEquipment = await _context.Equipment.CountAsync();
-            var activeEquipment = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Active);
-            return totalEquipment > 0 ? (double)activeEquipment / totalEquipment * 100 : 100;
-        }
-
-        private async Task<double> CalculateMTTRAsync()
-        {
-            // Mean Time To Repair - simplified calculation
-            var recentRepairs = await _context.MaintenanceLogs
-                .Where(ml => ml.MaintenanceType == MaintenanceType.Corrective && ml.MaintenanceDate >= DateTime.Now.AddDays(-30))
+            var recentAlerts = await _context.Alerts
+                .Include(a => a.Equipment)
+                .Where(a => a.CreatedDate >= DateTime.Now.AddMinutes(-5))
+                .OrderByDescending(a => a.CreatedDate)
+                .Take(5)
+                .Select(a => new
+                {
+                    id = a.AlertId,
+                    title = a.Title,
+                    priority = a.Priority.ToString(),
+                    equipmentId = a.EquipmentId,
+                    timestamp = a.CreatedDate
+                })
                 .ToListAsync();
 
-            return recentRepairs.Any() ? recentRepairs.Average(r => r.DowntimeDuration?.TotalHours ?? 4) : 4.0;
+            return recentAlerts.Cast<object>().ToList();
         }
 
-        private async Task<double> CalculateMTBFAsync()
+        private async Task<List<object>> GetRecentEquipmentUpdates()
         {
-            // Mean Time Between Failures - simplified calculation
-            var failures = await _context.MaintenanceLogs
-                .Where(ml => ml.MaintenanceType == MaintenanceType.Corrective)
-                .CountAsync();
-
-            var totalOperatingHours = 24 * 30 * await _context.Equipment.CountAsync(); // 30 days
-            return failures > 0 ? totalOperatingHours / (double)failures : 720;
+            // This would track recent equipment status changes
+            // For now, return empty list
+            return new List<object>();
         }
 
-        private async Task<decimal> GetCostByCategory(string category, int month, int year)
+        private async Task<Dictionary<string, object>> GetChartUpdates()
         {
-            return category switch
+            return new Dictionary<string, object>
             {
-                "Preventive" => await _context.MaintenanceLogs
-                    .Where(ml => ml.MaintenanceType == MaintenanceType.Preventive && ml.MaintenanceDate.Month == month && ml.MaintenanceDate.Year == year)
-                    .SumAsync(ml => ml.Cost),
-                "Corrective" => await _context.MaintenanceLogs
-                    .Where(ml => ml.MaintenanceType == MaintenanceType.Corrective && ml.MaintenanceDate.Month == month && ml.MaintenanceDate.Year == year)
-                    .SumAsync(ml => ml.Cost),
-                _ => 0
+                ["equipmentStatus"] = await _context.Equipment
+                    .GroupBy(e => e.Status)
+                    .ToDictionaryAsync(g => g.Key.ToString(), g => g.Count()),
+                ["alertPriority"] = await _context.Alerts
+                    .Where(a => a.Status == AlertStatus.Open)
+                    .GroupBy(a => a.Priority)
+                    .ToDictionaryAsync(g => g.Key.ToString(), g => g.Count())
             };
         }
 
-        private decimal GetBudgetForCategory(string category)
-        {
-            return category switch
-            {
-                "Preventive" => 15000,
-                "Corrective" => 10000,
-                "Emergency" => 5000,
-                "Parts" => 20000,
-                "Labor" => 25000,
-                _ => 10000
-            };
-        }
+        #endregion
     }
 }

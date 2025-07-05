@@ -35,7 +35,7 @@
             <dd class="col-sm-9">@Model.Technician</dd>
 
             <dt class="col-sm-3">Downtime</dt>
-            <dd class="col-sm-9">@Model.DowntimeDuration hours</dd>
+            <dd class="col-sm-9">@(Model.DowntimeHours?.ToString("F1") ?? "N/A") hours</dd>
         </dl>
 
         @if (Model.MaintenanceInventoryLinks?.Any() == true)

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace FEENALOoFINALE.Models
 {
@@ -7,25 +8,42 @@ namespace FEENALOoFINALE.Models
     {
         [Key]
         public int LogId { get; set; }
-        [DataType(DataType.Date)]
-        public DateTime MaintenanceDate { get; set; }  // Add this property
+        
+        [Required]
         public int EquipmentId { get; set; }
+        
+        [Required]
         public DateTime LogDate { get; set; }
+        
+        [Required]
         public MaintenanceType MaintenanceType { get; set; }
+        
         public string? Description { get; set; }
-        public required string Technician { get; set; } // 'required' is fine for value types or strings if needed for DTOs/creation
+        
+        [Required]
+        public string Technician { get; set; } = string.Empty;
+        
         public TimeSpan? DowntimeDuration { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")] // Example: Store as decimal with 2 decimal places
-        public decimal Cost { get; set; }
+        // Helper property for form input (hours as decimal)
+        [NotMapped]
+        public double? DowntimeHours
+        {
+            get => DowntimeDuration?.TotalHours;
+            set => DowntimeDuration = value.HasValue ? TimeSpan.FromHours(value.Value) : null;
+        }
 
-        public MaintenanceStatus Status { get; set; } // Assuming you have a MaintenanceStatus enum
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Cost { get; set; } = 0;
+
+        public MaintenanceStatus Status { get; set; } = MaintenanceStatus.Completed;
 
         public int? AlertId { get; set; }
         public Alert? Alert { get; set; }
 
-        // Navigation properties
-        public Equipment Equipment { get; set; } = null!; // Changed from 'public required Equipment Equipment'
+        // Navigation properties - explicitly exclude from validation
+        [ValidateNever]
+        public Equipment? Equipment { get; set; }
         public ICollection<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; } = new List<MaintenanceInventoryLink>();
     }
 
@@ -33,6 +51,7 @@ namespace FEENALOoFINALE.Models
     {
         Preventive,
         Corrective,
-        Inspection
+        Inspection,
+        Emergency
     }
 }

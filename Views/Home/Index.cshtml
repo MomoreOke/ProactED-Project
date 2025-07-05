@@ -81,6 +81,47 @@
         text-align: center;
         color: #333;
     }
+
+    .feature-card {
+        border: none;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .feature-icon {
+        margin-bottom: 1rem;
+    }
+
+    .feature-stat h4 {
+        font-weight: 700;
+        font-size: 2rem;
+    }
+
+    .about-icon {
+        display: inline-block;
+    }
+
+    #about {
+        background-color: #f8f9fa;
+    }
+
+    #features {
+        background-color: #ffffff;
+    }
+
+    .badge {
+        transition: all 0.3s ease;
+    }
+
+    .badge:hover {
+        transform: scale(1.05);
+    }
 </style>
 
 <!-- Hero Section -->
@@ -172,6 +213,160 @@
                     <h5 class="card-title">Maintenance Logs</h5>
                     <p class="card-text text-muted">Access and manage all maintenance logs and activities.</p>
                     <a asp-controller="MaintenanceLog" asp-action="Index" class="btn btn-primary mt-3">Go to Logs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- About Section -->
+<div id="about" class="container py-5">
+    <h2 class="section-title">About ProactED</h2>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="about-icon mx-auto mb-3">
+                            <i class="bi bi-building text-primary" style="font-size: 4rem;"></i>
+                        </div>
+                        <h3 class="text-primary mb-3">KNUST Predictive Maintenance System</h3>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-target text-primary me-3 mt-1" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <h5 class="text-dark mb-2">Our Mission</h5>
+                                    <p class="text-muted">To provide a comprehensive equipment management and predictive maintenance solution that ensures optimal performance and minimizes downtime for KNUST facilities.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-eye text-primary me-3 mt-1" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <h5 class="text-dark mb-2">Our Vision</h5>
+                                    <p class="text-muted">To become the leading maintenance management system that enhances operational efficiency and extends equipment lifespan through intelligent monitoring and proactive maintenance.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="feature-stat">
+                                <h4 class="text-primary mb-1">24/7</h4>
+                                <p class="text-muted mb-0">Monitoring</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="feature-stat">
+                                <h4 class="text-primary mb-1">Real-time</h4>
+                                <p class="text-muted mb-0">Alerts</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="feature-stat">
+                                <h4 class="text-primary mb-1">Predictive</h4>
+                                <p class="text-muted mb-0">Analytics</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-3">
+                            <strong>ProactED</strong> leverages advanced predictive analytics and IoT integration to transform traditional maintenance practices into proactive, data-driven operations.
+                        </p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <span class="badge bg-primary fs-6 px-3 py-2">Equipment Tracking</span>
+                            <span class="badge bg-primary fs-6 px-3 py-2">Maintenance Scheduling</span>
+                            <span class="badge bg-primary fs-6 px-3 py-2">Alert Management</span>
+                            <span class="badge bg-primary fs-6 px-3 py-2">Analytics Dashboard</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div id="features" class="container py-5">
+    <h2 class="section-title">Key Features</h2>
+    <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-gear-fill text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title text-dark">Equipment Management</h5>
+                    <p class="card-text text-muted">Comprehensive tracking and management of all equipment with detailed specifications, maintenance history, and performance metrics.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-bell-fill text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title text-dark">Smart Alerts</h5>
+                    <p class="card-text text-muted">Real-time notifications and alerts for equipment failures, maintenance schedules, and critical system events.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-graph-up text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title text-dark">Predictive Analytics</h5>
+                    <p class="card-text text-muted">Advanced algorithms predict equipment failures before they occur, optimizing maintenance schedules and reducing costs.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-clipboard-data text-info" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title text-dark">Maintenance Logs</h5>
+                    <p class="card-text text-muted">Detailed logging of all maintenance activities with technician assignments, parts usage, and completion tracking.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-speedometer2 text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title text-dark">Performance Dashboard</h5>
+                    <p class="card-text text-muted">Comprehensive dashboard with real-time metrics, KPIs, and visual analytics for informed decision making.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 feature-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-box-seam text-secondary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title text-dark">Inventory Management</h5>
+                    <p class="card-text text-muted">Track spare parts, tools, and maintenance supplies with automated reorder alerts and stock level monitoring.</p>
                 </div>
             </div>
         </div>
