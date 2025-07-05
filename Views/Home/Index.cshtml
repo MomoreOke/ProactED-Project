@@ -4,105 +4,176 @@
 @inject FEENALOoFINALE.Data.ApplicationDbContext _context
 
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
     var currentUser = await UserManager.GetUserAsync(User);
     var technicianName = User?.Identity?.Name ?? "";
 }
 
 <style>
     .hero-section {
-        background-color: #f8f9fa; /* Light grey background */
-        padding: 4rem 2rem;
-        margin-bottom: 2rem;
-        border-radius: 0.3rem;
+        background: linear-gradient(135deg, #007bff, #004080);
+        color: white;
+        padding: 5rem 2rem;
+        margin: 3rem auto;
+        border-radius: 0.75rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        max-width: 900px;
+        text-align: center;
     }
 
     .hero-section h1 {
         font-size: 3.5rem;
-        font-weight: 300;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
     }
 
     .hero-section p {
-        font-size: 1.25rem;
-        font-weight: 300;
+        font-size: 1.5rem;
+        opacity: 0.95;
     }
 
     .card-icon {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-        color: #007bff; /* Bootstrap primary color */
+        font-size: 4rem;
+        margin: 1rem 0;
+        color: #007bff;
+    }
+
+    .card {
+        border: none;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-align: center;
+        padding: 2.5rem 1rem;
+        height: 100%;
+    }
+
+    .card:hover {
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn {
+        width: 80%;
+        font-weight: 500;
+    }
+
+    .table-responsive-custom {
+        overflow-x: auto;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    .table thead {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+    }
+
+    .section-title {
+        font-size: 2.25rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: #333;
     }
 </style>
 
-<div class="hero-section text-center">
-    <h1 class="display-4">Welcome to KNUST Maintenance</h1>
+<!-- Hero Section -->
+<div class="hero-section">
+    <h1>Welcome to ProactED - KNUST</h1>
+    <p>Your comprehensive equipment management and maintenance service.</p>
 </div>
 
-@if(currentUser != null)
+<!-- User Greeting and Logs -->
+@if (currentUser != null)
 {
-    <p>Hello, @currentUser.FirstName!</p>
-    <h3>Your Maintenance Logs</h3>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card p-4 shadow-sm">
+                <h2 class="card-title text-primary">Hello, @currentUser.FirstName!</h2>
+                <p class="card-text">Here's a quick overview of your recent activities.</p>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mb-3 section-title">Your Recent Maintenance Logs</h3>
+
     var userLogs = _context.MaintenanceLogs
             .Where(l => l.Technician == technicianName)
             .OrderByDescending(l => l.LogDate)
+            .Take(5)
             .ToList();
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Equipment</th>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var log in userLogs)
-            {
-                <tr>
-                    <td>@log.EquipmentId</td>
-                    <td>@log.LogDate.ToShortDateString()</td>
-                    <td>@log.MaintenanceType</td>
-                    <td>@log.Description</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+
+    if (userLogs.Any())
+    {
+        <div class="table-responsive-custom mb-5">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in userLogs)
+                    {
+                        <tr>
+                            <td>@log.EquipmentId</td>
+                            <td>@log.LogDate.ToShortDateString()</td>
+                            <td>@log.MaintenanceType</td>
+                            <td>@log.Description</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="alert alert-info">No recent maintenance logs found for your account.</p>
+    }
 }
 
-<div id="quick-actions" class="container">
-    <h2 class="text-center mb-4">Quick Actions</h2>
-    <div class="row">
+<!-- Quick Actions -->
+<div id="quick-actions" class="container py-5 quick-actions">
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="row justify-content-center">
         <div class="col-md-4 mb-4">
-            <div class="card text-center h-100">
-                <div class="card-body">
-                    <div class="card-icon">🛠️</div> 
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div class="card-icon mx-auto">⚙️</div>
                     <h5 class="card-title">Manage Equipment</h5>
-                    <p class="card-text">View, add, or update equipment details and maintenance schedules.</p>
-                    <a asp-controller="Equipment" asp-action="Index" class="btn btn-outline-primary">Go to Equipment</a>
+                    <p class="card-text text-muted">View, add, or update equipment details and maintenance schedules.</p>
+                    <a asp-controller="Equipment" asp-action="Index" class="btn btn-primary mt-3">Go to Equipment</a>
                 </div>
             </div>
         </div>
         <div class="col-md-4 mb-4">
-            <div class="card text-center h-100">
-                <div class="card-body">
-                    <div class="card-icon">🔔</div>
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div class="card-icon mx-auto">🚨</div>
                     <h5 class="card-title">View Alerts</h5>
-                    <p class="card-text">Check active alerts and notifications for immediate attention.</p>
-                    <a asp-controller="Alert" asp-action="Index" class="btn btn-outline-primary">Go to Alerts</a>
+                    <p class="card-text text-muted">Check active alerts and notifications for immediate attention.</p>
+                    <a asp-controller="Alert" asp-action="Index" class="btn btn-primary mt-3">Go to Alerts</a>
                 </div>
             </div>
         </div>
         <div class="col-md-4 mb-4">
-            <div class="card text-center h-100">
-                <div class="card-body">
-                    <div class="card-icon">📋</div>
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div class="card-icon mx-auto">📝</div>
                     <h5 class="card-title">Maintenance Logs</h5>
-                    <p class="card-text">Access and manage all maintenance logs and activities.</p>
-                    <a asp-controller="MaintenanceLog" asp-action="Index" class="btn btn-outline-primary">Go to Logs</a>
+                    <p class="card-text text-muted">Access and manage all maintenance logs and activities.</p>
+                    <a asp-controller="MaintenanceLog" asp-action="Index" class="btn btn-primary mt-3">Go to Logs</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-

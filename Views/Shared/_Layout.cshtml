@@ -3,123 +3,104 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - FEENALOoFINALE</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/FEENALOoFINALE.styles.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Views/Shared/_Layout.cshtml.css" />
-    <style>
-        .hamburger-button {
-            font-size: 28px; /* Size of the hamburger icon */
-            cursor: pointer;
-            background: none;
-            border: none;
-            position: fixed; /* Fixed position to stay in place on scroll */
-            top: 15px;
-            left: 15px;
-            z-index: 1002; /* Ensure it's above other content but below an open sidebar's close button */
-            color: #333; /* Icon color */
-        }
+    <title>@ViewData["Title"] - ProactED</title>
+    
+    <!-- Bootstrap & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    
+    <!-- Custom Site Styles -->
+    <link rel="stylesheet" href="~/css/site.css" />
 
-        .sidebar {
-            height: 100%; /* Full-height */
-            width: 0; /* Initially hidden */
-            position: fixed; /* Stay in place */
-            z-index: 1001; /* Stay on top */
-            top: 0;
-            left: 0;
-            background-color: #f8f9fa; /* Sidebar background color */
-            overflow-x: hidden; /* Disable horizontal scroll */
-            transition: 0.3s; /* Transition effect for sliding */
-            padding-top: 60px; /* Place content below the close button */
-            border-right: 1px solid #dee2e6; /* Optional border */
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Optional shadow */
-        }
-
-        .sidebar a {
-            padding: 12px 15px;
-            text-decoration: none;
-            font-size: 18px;
-            color: #007bff; /* Link color */
-            display: block; /* Make links take full width */
-            transition: 0.2s;
-        }
-
-        .sidebar a:hover {
-            background-color: #e9ecef; /* Hover background color */
-            color: #0056b3; /* Hover link color */
-        }
-
-        .sidebar .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 36px;
-            color: #888; /* Close button color */
-        }
-        
-        /* When the sidebar is open */
-        .sidebar.open {
-            width: 260px; /* Width of the sidebar when open */
-        }
-    </style>
+    @RenderSection("Styles", required: false)
 </head>
 <body>
-    <button class="hamburger-button" onclick="toggleSidebar()">
-        &#9776; <!-- Hamburger Icon -->
-    </button>
 
-    <div id="mySidebar" class="sidebar">
-        <a href="javascript:void(0)" class="close-btn" onclick="toggleSidebar()">&times;</a>
-        <a asp-controller="Equipment" asp-action="Index">Manage Equipment</a>
-        <a asp-controller="Alert" asp-action="Index">View Alerts</a>
-        <a asp-controller="MaintenanceLog" asp-action="Index">Maintenance Logs</a>
-        <a asp-controller="FailurePrediction" asp-action="Index">Failure Predictions</a>
-        <a asp-controller="Inventory" asp-action="Index">Manage Inventory</a>
-        <a asp-controller="Report" asp-action="Alerts">Alerts Report</a>
-        <a asp-controller="Report" asp-action="MaintenanceLogs">Maintenance Report</a>
-        <a asp-controller="Report" asp-action="Inventory">Inventory Report</a>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                ProactED - KNUST
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Equipment" asp-action="Index">Equipment</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="MaintenanceLog" asp-action="Index">Logs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Alert" asp-action="Index">Alerts</a>
+                    </li>
+
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle me-1"></i>
+                                @User?.Identity?.Name ?? "Account"
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="User" asp-action="Profile">
+                                        <i class="bi bi-person me-1"></i> Profile
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-controller="User" asp-action="Logout" method="post" class="dropdown-item p-0 m-0">
+                                        <button type="submit" class="btn btn-link dropdown-item text-start">
+                                            <i class="bi bi-box-arrow-right me-1"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="btn btn-light btn-sm ms-3" asp-controller="User" asp-action="Login">Login</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="container mt-4">
+        @RenderBody()
     </div>
 
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-house-door-fill"></i> Home <!-- Bootstrap Home Icon -->
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <div></div> <!-- This empty div will push the next element to the right -->
-                    <partial name="_LoginPartial" />
+    <!-- Footer -->
+    <footer class="bg-primary text-white text-center py-4 mt-5 shadow-sm">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 mb-2 mb-md-0">
+                    <strong>ProactED - KNUST</strong> &copy; @DateTime.Now.Year. All rights reserved.
+                </div>
+                <div class="col-md-6">
+                    <a href="#" class="text-white me-3">Terms</a>
+                    <a href="#" class="text-white">Privacy</a>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - FEENALOoFINALE - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        function toggleSidebar() {
-            var sidebar = document.getElementById("mySidebar");
-            sidebar.classList.toggle("open");
-        }
-    </script>
-    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js"></script>
+    @RenderSection("Scripts", required: false)
+
 </body>
-</html>

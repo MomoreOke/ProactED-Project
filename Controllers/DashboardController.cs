@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
-using FEENALOoFINALE.Models; // Ensures MaintenanceTask and MaintenanceStatus enum are in scope
+using FEENALOoFINALE.Models; 
+using FEENALOoFINALE.Services;
 using Microsoft.AspNetCore.Authorization;
 
 namespace FEENALOoFINALE.Controllers
@@ -10,53 +11,45 @@ namespace FEENALOoFINALE.Controllers
     public class DashboardController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAdvancedAnalyticsService _analyticsService;
 
-        public DashboardController(ApplicationDbContext context)
+        public DashboardController(ApplicationDbContext context, IAdvancedAnalyticsService analyticsService)
         {
             _context = context;
+            _analyticsService = analyticsService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var viewModel = new DashboardViewModel
-            {
-                TotalEquipment = await _context.Equipment.CountAsync(),
-                ActiveMaintenanceTasks = await _context.MaintenanceTasks
-                    .Where(t => t.Status != MaintenanceStatus.Completed) // Accessing t.Status
-                    .CountAsync(),
-                LowStockItems = await _context.InventoryItems
-                    .Where(i => i.InventoryStocks != null && i.InventoryStocks.Sum(s => s.Quantity) <= i.MinStockLevel)
-                    .CountAsync(),
-                RecentAlerts = await _context.Alerts
-                    .Include(a => a.Equipment) 
-                    .Include(a => a.AssignedTo)
-                    .OrderByDescending(a => a.CreatedDate)
-                    .Take(5)
-                    .ToListAsync(),
-                UpcomingMaintenances = await _context.MaintenanceTasks
-                    .Include(m => m.Equipment) 
-                    .Include(m => m.AssignedTo)
-                    .Where(m => m.Status != MaintenanceStatus.Completed) // Accessing m.Status
-                    .OrderBy(m => m.ScheduledDate)
-                    .Take(5)
-                    .ToListAsync(),
-                EquipmentStatus = await _context.Equipment
-                    .GroupBy(e => e.Status)                    
-                    .Select(g => new EquipmentStatusCount { Status = g.Key, Count = g.Count() })
-                    .ToListAsync()
-            };
-
-            return View(viewModel);
+            var enhancedViewModel = await _analyticsService.GetEnhancedDashboardDataAsync();
+            return View(enhancedViewModel);
         }
-    }
 
-    internal class DashboardViewModel
-    {
-        public int TotalEquipment { get; set; }
-        public int ActiveMaintenanceTasks { get; set; }
-        public int LowStockItems { get; set; }
-        public List<Alert> RecentAlerts { get; set; } = new List<Alert>();
-        public List<MaintenanceTask> UpcomingMaintenances { get; set; } = new List<MaintenanceTask>();
-        public List<EquipmentStatusCount> EquipmentStatus { get; set; } = new List<EquipmentStatusCount>();
+        [HttpGet]
+        public async Task<IActionResult> GetLiveMetrics()
+        {
+            var metrics = new
+            {
+                EquipmentHealth = await _analyticsService.CalculateSystemHealthScoreAsync(),
+                MaintenanceEfficiency = await _analyticsService.CalculateMaintenanceEfficiencyAsync(),
+                CostEfficiency = await _analyticsService.CalculateCostEfficiencyAsync(),
+                UtilizationRate = await _analyticsService.CalculateEquipmentUtilizationAsync()
+            };
+            return Json(metrics);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTrendData(int days = 30)
+        {
+            var trendData = await _analyticsService.GetMaintenanceTrendDataAsync(days);
+            return Json(trendData);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCostAnalysis()
+        {
+            var costData = await _analyticsService.GetCostAnalysisDataAsync();
+            return Json(costData);
+        }
     }
 }

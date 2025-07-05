@@ -1,0 +1,2689 @@
+@model FEENALOoFINALE.Models.EnhancedDashboardViewModel
+@using Microsoft.AspNetCore.Identity
+@using FEENALOoFINALE.Models
+@inject UserManager<User> UserManager
+@{
+    ViewData["Title"] = "Advanced Analytics Dashboard";
+    var currentUser = await UserManager.GetUserAsync(User);
+}
+
+<style>
+    /* Modern Dashboard Styles */
+    .dashboard-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .dashboard-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .dashboard-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0.5rem 0 0 0;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .user-greeting {
+        font-size: 1rem;
+        opacity: 0.8;
+        margin-top: 1rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: none;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card.primary::before {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    
+    .metric-card.success::before {
+        background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+    }
+    
+    .metric-card.warning::before {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+    
+    .metric-card.danger::before {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .metric-card:hover::before {
+        width: 8px;
+    }
+    
+    .metric-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .metric-icon.primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    
+    .metric-icon.success {
+        background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+    }
+    
+    .metric-icon.warning {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+    
+    .metric-icon.danger {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin: 0.5rem 0 0 0;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .metric-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .trend-up {
+        color: #27ae60;
+    }
+    
+    .trend-down {
+        color: #e74c3c;
+    }
+    
+    .content-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .content-card-header {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .content-card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .content-card-body {
+        padding: 2rem;
+    }
+    
+    .table-modern {
+        margin: 0;
+    }
+    
+    .table-modern thead th {
+        background: transparent;
+        border: none;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+    }
+    
+    .table-modern tbody td {
+        border: none;
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-modern tbody tr:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .badge-modern {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-success-modern {
+        background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+        color: white;
+    }
+    
+    .badge-warning-modern {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+        color: white;
+    }
+    
+    .badge-danger-modern {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        color: white;
+    }
+    
+    .badge-info-modern {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .action-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: none;
+        height: 100%;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+        margin: 0 auto 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .action-icon.primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    
+    .action-icon.success {
+        background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+    }
+    
+    .action-icon.warning {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+    
+    .action-icon.info {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+    
+    .action-card:hover .action-icon {
+        transform: scale(1.1);
+    }
+    
+    .action-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .quick-stats {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .quick-stat {
+        flex: 1;
+        text-align: center;
+        padding: 1rem;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 10px;
+    }
+    
+    .quick-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #667eea;
+        margin: 0;
+    }
+    
+    .quick-stat-label {
+        font-size: 0.75rem;
+        color: #7f8c8d;
+        margin: 0.25rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #7f8c8d;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .btn-view-all {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-view-all:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    
+    /* Quick Action Cards */
+    .quick-action-card {
+        background: white;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border-color: #667eea;
+    }
+    
+    .quick-action-link {
+        display: block;
+        padding: 1.5rem;
+        text-decoration: none;
+        color: inherit;
+        height: 100%;
+    }
+    
+    .quick-action-link:hover {
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .quick-action-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .quick-action-header i {
+        font-size: 2rem;
+        color: #667eea;
+    }
+    
+    .quick-action-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 12px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .quick-action-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+    }
+    
+    .quick-action-description {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin: 0;
+        line-height: 1.4;
+    }
+    
+    /* Priority-based styling */
+    .priority-critical {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .priority-critical .quick-action-header i {
+        color: #dc3545;
+    }
+    
+    .priority-urgent {
+        border-left: 4px solid #fd7e14;
+    }
+    
+    .priority-urgent .quick-action-header i {
+        color: #fd7e14;
+    }
+    
+    .priority-normal {
+        border-left: 4px solid #28a745;
+    }
+    
+    /* Enhanced metric cards */
+    .metric-warning {
+        border-left: 4px solid #ffc107;
+        background: linear-gradient(135deg, #fff3cd, #ffffff);
+    }
+    
+    .metric-danger {
+        border-left: 4px solid #dc3545;
+        background: linear-gradient(135deg, #f8d7da, #ffffff);
+    }
+    
+    .metric-info {
+        border-left: 4px solid #17a2b8;
+        background: linear-gradient(135deg, #d6f5f5, #ffffff);
+    }
+
+    /* Enhanced table rows */
+    .table-row-critical {
+        background-color: rgba(220, 53, 69, 0.05);
+        border-left: 3px solid #dc3545;
+    }
+    
+    .table-row-warning {
+        background-color: rgba(255, 193, 7, 0.05);
+        border-left: 3px solid #ffc107;
+    }
+    
+    .table-row-critical:hover,
+    .table-row-warning:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+
+    /* KPI Indicators */
+    .kpi-indicator {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    
+    .kpi-indicator:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .kpi-content {
+        flex: 1;
+    }
+    
+    .kpi-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: #2c3e50;
+    }
+    
+    .kpi-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin: 0.25rem 0;
+    }
+    
+    .progress-sm {
+        height: 4px;
+        margin-top: 0.5rem;
+    }
+    
+    /* Insight Cards */
+    .insight-card {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 12px;
+        border-left: 4px solid #007bff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .insight-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .insight-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .insight-content {
+        flex: 1;
+    }
+    
+    .insight-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: #2c3e50;
+    }
+    
+    .insight-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .insight-confidence, .insight-timeline {
+        font-size: 0.8rem;
+        color: #495057;
+        margin-right: 1rem;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+    }
+
+    /*@@media (max-width: 768px) {
+        .dashboard-title {
+            font-size: 2rem;
+        }
+        
+        .metric-card {
+            margin-bottom: 1rem;
+        }
+        
+        .content-card-body {
+            padding: 1rem;
+        }
+        
+        .quick-stats {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .quick-action-card {
+            margin-bottom: 1rem;
+        }
+    }*/
+    
+    /* Dark Mode Styles for Dashboard */
+    body.dark-mode .dashboard-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+    
+    body.dark-mode .dashboard-header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+    
+    body.dark-mode .metric-card {
+        background: var(--card-bg-dark);
+        color: var(--text-primary-dark);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    body.dark-mode .metric-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    body.dark-mode .metric-value {
+        color: var(--text-primary-dark);
+    }
+    
+    body.dark-mode .metric-label {
+        color: var(--text-secondary-dark);
+    }
+    
+    body.dark-mode .chart-card {
+        background: var(--card-bg-dark);
+        color: var(--text-primary-dark);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    body.dark-mode .recent-activity-card {
+        background: var(--card-bg-dark);
+        color: var(--text-primary-dark);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    body.dark-mode .quick-action-card {
+        background: var(--card-bg-dark);
+        color: var(--text-primary-dark);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    body.dark-mode .table-modern thead th {
+        color: var(--text-primary-dark);
+    }
+    
+    body.dark-mode .table-modern tbody td {
+        color: var(--text-primary-dark);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    body.dark-mode .table-modern tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    body.dark-mode .section-header {
+        color: var(--text-primary-dark);
+    }
+    
+    body.dark-mode .activity-item {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    body.dark-mode .activity-item .activity-text {
+        color: var(--text-primary-dark);
+    }
+    
+    body.dark-mode .activity-item .activity-time {
+        color: var(--text-secondary-dark);
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="dashboard-title">
+                        <i class="bi bi-speedometer2 me-3"></i>
+                        Dashboard
+                    </h1>
+                    <p class="dashboard-subtitle">Predictive Maintenance Overview</p>
+                    @if (currentUser != null)
+                    {
+                        <p class="user-greeting">
+                            <i class="bi bi-person-circle me-2"></i>
+                            Welcome back, @currentUser.FirstName @currentUser.LastName
+                        </p>
+                    }
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <!-- Export Buttons -->
+                    <div class="mb-3">
+                        <div class="btn-group" role="group" aria-label="Export Options">
+                            <button type="button" class="btn btn-outline-light btn-sm" onclick="exportToExcel()">
+                                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                                Excel
+                            </button>
+                            <button type="button" class="btn btn-outline-light btn-sm" onclick="exportToPdf()">
+                                <i class="bi bi-file-earmark-pdf me-1"></i>
+                                PDF
+                            </button>
+                            <button type="button" class="btn btn-outline-light btn-sm" onclick="refreshDashboard()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="quick-stats">
+                        <div class="quick-stat">
+                            <p class="quick-stat-value">@DateTime.Now.ToString("MMM")</p>
+                            <p class="quick-stat-label">Month</p>
+                        </div>
+                        <div class="quick-stat">
+                            <p class="quick-stat-value">@DateTime.Now.Day</p>
+                            <p class="quick-stat-label">Day</p>
+                        </div>
+                        <div class="quick-stat">
+                            <p class="quick-stat-value">@DateTime.Now.Year</p>
+                            <p class="quick-stat-label">Year</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Filter Bar -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="text-muted me-3">Quick Filters:</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="applyQuickFilter('critical')">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Critical Only
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="applyQuickFilter('today')">
+                        <i class="bi bi-calendar-day me-1"></i>Today
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="applyQuickFilter('week')">
+                        <i class="bi bi-calendar-week me-1"></i>This Week
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="applyQuickFilter('inactive')">
+                        <i class="bi bi-gear me-1"></i>Inactive Equipment
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearFilters()">
+                        <i class="bi bi-x-circle me-1"></i>Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Row -->
+        <div class="row g-4 mb-4">
+            <!-- Total Equipment -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="metric-card primary">
+                    <div class="metric-icon primary">
+                        <i class="bi bi-gear-wide-connected"></i>
+                    </div>
+                    <h3 class="metric-value">@Model.TotalEquipment</h3>
+                    <p class="metric-label">Total Equipment</p>
+                </div>
+            </div>
+
+            <!-- Critical Alerts -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="metric-card @(Model.CriticalAlerts > 0 ? "danger metric-danger" : "success")">
+                    <div class="metric-icon @(Model.CriticalAlerts > 0 ? "danger" : "success")">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="metric-value">@Model.CriticalAlerts</h3>
+                    <p class="metric-label">Critical Alerts</p>
+                </div>
+            </div>
+
+            <!-- Active Maintenance -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="metric-card @(Model.ActiveMaintenanceTasks > 0 ? "warning metric-info" : "success")">
+                    <div class="metric-icon @(Model.ActiveMaintenanceTasks > 0 ? "warning" : "success")">
+                        <i class="bi bi-wrench-adjustable"></i>
+                    </div>
+                    <h3 class="metric-value">@Model.ActiveMaintenanceTasks</h3>
+                    <p class="metric-label">Active Tasks</p>
+                </div>
+            </div>
+
+            <!-- Overdue Maintenance -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="metric-card @(Model.OverdueMaintenances > 0 ? "danger metric-danger" : "success")">
+                    <div class="metric-icon @(Model.OverdueMaintenances > 0 ? "danger" : "success")">
+                        <i class="bi bi-calendar-x"></i>
+                    </div>
+                    <h3 class="metric-value">@Model.OverdueMaintenances</h3>
+                    <p class="metric-label">Overdue</p>
+                </div>
+            </div>
+
+            <!-- Equipment Needing Attention -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="metric-card @(Model.EquipmentNeedingAttention > 0 ? "warning metric-warning" : "success")">
+                    <div class="metric-icon @(Model.EquipmentNeedingAttention > 0 ? "warning" : "success")">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                    <h3 class="metric-value">@Model.EquipmentNeedingAttention</h3>
+                    <p class="metric-label">Need Attention</p>
+                </div>
+            </div>
+
+            <!-- Low Stock Items -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="metric-card @(Model.LowStockItems > 0 ? "warning metric-warning" : "success")">
+                    <div class="metric-icon @(Model.LowStockItems > 0 ? "danger" : "success")">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <h3 class="metric-value">@Model.LowStockItems</h3>
+                    <p class="metric-label">Low Stock</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+            <!-- Equipment Status Chart -->
+            <div class="col-xl-3 col-lg-6">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-pie-chart text-info"></i>
+                            Equipment Status
+                        </h6>
+                    </div>
+                    <div class="content-card-body text-center">
+                        <canvas id="equipmentStatusChart" width="200" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Trends Chart -->
+            <div class="col-xl-6 col-lg-6">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-graph-up text-success"></i>
+                            Maintenance Trends (Last 7 Days)
+                        </h6>
+                    </div>
+                    <div class="content-card-body">
+                        <canvas id="maintenanceTrendsChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Priority Chart -->
+            <div class="col-xl-3 col-lg-6">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-exclamation-triangle text-warning"></i>
+                            Alert Priorities
+                        </h6>
+                    </div>
+                    <div class="content-card-body text-center">
+                        <canvas id="alertPriorityChart" width="200" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Status Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-4 col-lg-6">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-box-seam text-primary"></i>
+                            Inventory Status
+                        </h6>
+                    </div>
+                    <div class="content-card-body text-center">
+                        <canvas id="inventoryStatusChart" width="200" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Charts Row -->
+        <div class="row g-4 mb-4">
+            <!-- Maintenance Cost Analysis Chart -->
+            <div class="col-xl-6 col-lg-6">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-currency-dollar text-success"></i>
+                            Maintenance Cost Analysis
+                        </h6>
+                    </div>
+                    <div class="content-card-body">
+                        <canvas id="maintenanceCostChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipment Lifecycle Chart -->
+            <div class="col-xl-6 col-lg-6">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-gear text-info"></i>
+                            Equipment Lifecycle
+                        </h6>
+                    </div>
+                    <div class="content-card-body">
+                        <canvas id="equipmentLifecycleChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictive Analytics Row -->
+        <div class="row g-4 mb-4">
+            <!-- Failure Prediction Trends Chart -->
+            <div class="col-xl-6 col-lg-6">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-graph-down text-danger"></i>
+                            Failure Prediction Trends
+                        </h6>
+                    </div>
+                    <div class="content-card-body">
+                        <canvas id="failurePredictionChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Dashboard Chart -->
+            <div class="col-xl-6 col-lg-6">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-speedometer2 text-primary"></i>
+                            Key Performance Indicators
+                        </h6>
+                    </div>
+                    <div class="content-card-body">
+                        <canvas id="kpiChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Efficiency Analysis Row -->
+        <div class="row g-4 mb-4">
+            <!-- Maintenance Efficiency Chart -->
+            <div class="col-xl-12">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-bar-chart text-warning"></i>
+                            Maintenance Efficiency Analysis
+                        </h6>
+                    </div>
+                    <div class="content-card-body">
+                        <canvas id="maintenanceEfficiencyChart" width="800" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Row -->
+        <div class="row g-4">
+            <!-- Recent Alerts -->
+            <div class="col-xl-6">
+                <div class="content-card">
+                    <div class="content-card-header d-flex justify-content-between align-items-center">
+                        <h5 class="content-card-title">
+                            <i class="bi bi-bell text-warning"></i>
+                            Recent Alerts
+                        </h5>
+                        <a asp-controller="Alert" asp-action="Index" class="btn-view-all">
+                            View All
+                        </a>
+                    </div>
+                    <div class="content-card-body">
+                        @if (Model.RecentAlerts?.Any() == true)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-modern">
+                                    <thead>
+                                        <tr>
+                                            <th>Equipment</th>
+                                            <th>Priority</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var alert in Model.RecentAlerts)
+                                        {
+                                            <tr class="@(alert.Priority == FEENALOoFINALE.Models.AlertPriority.High ? "table-row-critical" : "")">
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-gear me-2 text-muted"></i>
+                                                        <div>
+                                                            <strong>@(alert.Equipment?.EquipmentModel?.ModelName ?? "Unknown")</strong>
+                                                            <br>
+                                                            <small class="text-muted">@(alert.Equipment?.Building?.BuildingName) - @(alert.Equipment?.Room?.RoomName)</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge-modern @(alert.Priority == FEENALOoFINALE.Models.AlertPriority.High ? "badge-danger-modern" : alert.Priority == FEENALOoFINALE.Models.AlertPriority.Medium ? "badge-warning-modern" : "badge-info-modern")">
+                                                        @alert.Priority
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @alert.CreatedDate.ToString("MMM dd, yyyy")
+                                                    <br>
+                                                    <small class="text-muted">@alert.CreatedDate.ToString("HH:mm")</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge-modern @(alert.Status == FEENALOoFINALE.Models.AlertStatus.Open ? "badge-warning-modern" : "badge-success-modern")">
+                                                        @alert.Status
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group-sm">
+                                                        @if (alert.Equipment != null)
+                                                        {
+                                                            <a asp-controller="Equipment" asp-action="Details" asp-route-id="@alert.Equipment.EquipmentId" 
+                                                               class="btn btn-outline-primary btn-sm" title="View Equipment">
+                                                                <i class="bi bi-eye"></i>
+                                                            </a>
+                                                            <a asp-controller="MaintenanceLog" asp-action="Create" asp-route-equipmentId="@alert.Equipment.EquipmentId" 
+                                                               class="btn btn-outline-success btn-sm" title="Schedule Maintenance">
+                                                                <i class="bi bi-plus"></i>
+                                                            </a>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="bi bi-bell-slash"></i>
+                                </div>
+                                <p>No recent alerts</p>
+                                <small class="text-muted">All systems are running smoothly</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Maintenance -->
+            <div class="col-xl-6">
+                <div class="content-card">
+                    <div class="content-card-header d-flex justify-content-between align-items-center">
+                        <h5 class="content-card-title">
+                            <i class="bi bi-calendar-check text-primary"></i>
+                            Upcoming Maintenance
+                        </h5>
+                        <a asp-controller="MaintenanceLog" asp-action="Index" class="btn-view-all">
+                            View All
+                        </a>
+                    </div>
+                    <div class="content-card-body">
+                        @if (Model.UpcomingMaintenanceTasks?.Any() == true)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-modern">
+                                    <thead>
+                                        <tr>
+                                            <th>Equipment</th>
+                                            <th>Task</th>
+                                            <th>Due Date</th>
+                                            <th>Assigned To</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var task in Model.UpcomingMaintenanceTasks)
+                                        {
+                                            var isOverdue = task.ScheduledDate < DateTime.Now;
+                                            var isDueSoon = task.ScheduledDate < DateTime.Now.AddDays(7);
+                                            <tr class="@(isOverdue ? "table-row-critical" : isDueSoon ? "table-row-warning" : "")">
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-tools me-2 text-muted"></i>
+                                                        <div>
+                                                            <strong>@(task.Equipment?.EquipmentModel?.ModelName ?? "Unknown")</strong>
+                                                            <br>
+                                                            <small class="text-muted">@(task.Equipment?.Building?.BuildingName) - @(task.Equipment?.Room?.RoomName)</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @task.Description
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <span class="badge-modern @(task.Status == FEENALOoFINALE.Models.MaintenanceStatus.InProgress ? "badge-warning-modern" : task.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending ? "badge-info-modern" : "badge-secondary-modern")">
+                                                            @task.Status
+                                                        </span>
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <span class="@(isOverdue ? "text-danger fw-bold" : isDueSoon ? "text-warning fw-bold" : "")">
+                                                        @task.ScheduledDate.ToString("MMM dd, yyyy")
+                                                    </span>
+                                                    <br>
+                                                    <small class="@(isOverdue ? "text-danger" : isDueSoon ? "text-warning" : "text-muted")">
+                                                        @if (isOverdue)
+                                                        {
+                                                            <text><i class="bi bi-exclamation-triangle me-1"></i>@((DateTime.Now - task.ScheduledDate).Days) days overdue</text>
+                                                        }
+                                                        else if (isDueSoon)
+                                                        {
+                                                            <text><i class="bi bi-clock me-1"></i>@((task.ScheduledDate - DateTime.Now).Days) days remaining</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>@((task.ScheduledDate - DateTime.Now).Days) days</text>
+                                                        }
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-person me-2 text-muted"></i>
+                                                        @(task.AssignedTo?.FullName ?? "Unassigned")
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group-sm">
+                                                        @if (task.Equipment != null)
+                                                        {
+                                                            <a asp-controller="Equipment" asp-action="Details" asp-route-id="@task.Equipment.EquipmentId" 
+                                                               class="btn btn-outline-primary btn-sm" title="View Equipment">
+                                                                <i class="bi bi-eye"></i>
+                                                            </a>
+                                                        }
+                                                        <a asp-controller="MaintenanceLog" asp-action="Create" asp-route-taskId="@task.TaskId" 
+                                                           class="btn btn-outline-success btn-sm" title="Complete Task">
+                                                            <i class="bi bi-check-circle"></i>
+                                                        </a>
+                                                        @if (task.Status != FEENALOoFINALE.Models.MaintenanceStatus.InProgress)
+                                                        {
+                                                            <button class="btn btn-outline-warning btn-sm" title="Start Task">
+                                                                <i class="bi bi-play"></i>
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="bi bi-calendar-x"></i>
+                                </div>
+                                <p>No upcoming maintenance</p>
+                                <small class="text-muted">All maintenance tasks are up to date</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-4 mt-2">
+            <div class="col-12">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h5 class="content-card-title">
+                            <i class="bi bi-lightning text-warning"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="content-card-body">
+                        <div class="row g-3">
+                            <div class="col-lg-3 col-md-6">
+                                <a asp-controller="Equipment" asp-action="Index" class="action-card">
+                                    <div class="action-icon primary">
+                                        <i class="bi bi-gear-wide-connected"></i>
+                                    </div>
+                                    <h6 class="action-title">Manage Equipment</h6>
+                                </a>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <a asp-controller="MaintenanceLog" asp-action="Create" class="action-card">
+                                    <div class="action-icon success">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
+                                    <h6 class="action-title">Add Maintenance Log</h6>
+                                </a>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <a asp-controller="Inventory" asp-action="Index" class="action-card">
+                                    <div class="action-icon warning">
+                                        <i class="bi bi-boxes"></i>
+                                    </div>
+                                    <h6 class="action-title">Check Inventory</h6>
+                                </a>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <a asp-controller="Report" asp-action="Index" class="action-card">
+                                    <div class="action-icon info">
+                                        <i class="bi bi-bar-chart"></i>
+                                    </div>
+                                    <h6 class="action-title">View Reports</h6>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Filtering Panel -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-funnel me-2"></i>
+                            Advanced Filters
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false" aria-controls="filterPanel">
+                            <i class="bi bi-chevron-down"></i>
+                            Toggle Filters
+                        </button>
+                    </div>
+                    <div class="collapse" id="filterPanel">
+                        <div class="card-body">
+                            <form id="dashboardFilterForm" method="get">
+                                @Html.AntiForgeryToken()
+                                <div class="row g-3">
+                                    <!-- Date Range -->
+                                    <div class="col-md-3">
+                                        <label for="dateFrom" class="form-label">Date From</label>
+                                        <input type="date" class="form-control" id="dateFrom" name="DateFrom" value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="dateTo" class="form-label">Date To</label>
+                                        <input type="date" class="form-control" id="dateTo" name="DateTo" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                                    </div>
+                                    
+                                    <!-- Equipment Status -->
+                                    <div class="col-md-3">
+                                        <label for="equipmentStatus" class="form-label">Equipment Status</label>
+                                        <select class="form-select" id="equipmentStatus" name="EquipmentStatuses" multiple>
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                            <option value="Retired">Retired</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Search Term -->
+                                    <div class="col-md-3">
+                                        <label for="searchTerm" class="form-label">Search</label>
+                                        <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Search equipment, alerts...">
+                                    </div>
+                                    
+                                    <!-- Quick Filters -->
+                                    <div class="col-md-12">
+                                        <div class="d-flex gap-3 flex-wrap">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="showOnlyCritical" name="ShowOnlyCritical">
+                                                <label class="form-check-label" for="showOnlyCritical">
+                                                    Show Only Critical Items
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="includeCompleted" name="IncludeCompleted" checked>
+                                                <label class="form-check-label" for="includeCompleted">
+                                                    Include Completed Items
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Filter Actions -->
+                                    <div class="col-md-12">
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-search me-1"></i>
+                                                Apply Filters
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                                <i class="bi bi-x-circle me-1"></i>
+                                                Clear All
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="saveCurrentView()">
+                                                <i class="bi bi-bookmark me-1"></i>
+                                                Save View
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics KPI Section -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h5 class="content-card-title">
+                            <i class="bi bi-graph-up-arrow text-primary"></i>
+                            Advanced Performance Indicators
+                        </h5>
+                    </div>
+                    <div class="content-card-body">
+                        <div class="row">
+                            <div class="col-xl-3 col-md-6 mb-3">
+                                <div class="kpi-indicator">
+                                    <div class="kpi-icon bg-gradient-primary">
+                                        <i class="bi bi-heart-pulse"></i>
+                                    </div>
+                                    <div class="kpi-content">
+                                        <h4 class="kpi-value">@Model.OverallSystemHealth.ToString("F1")%</h4>
+                                        <p class="kpi-label">System Health Score</p>
+                                        <div class="progress progress-sm">
+                                            <div class="progress-bar bg-primary" style="width: @Model.OverallSystemHealth%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-md-6 mb-3">
+                                <div class="kpi-indicator">
+                                    <div class="kpi-icon bg-gradient-success">
+                                        <i class="bi bi-gear-wide-connected"></i>
+                                    </div>
+                                    <div class="kpi-content">
+                                        <h4 class="kpi-value">@Model.MaintenanceEfficiency.ToString("F1")%</h4>
+                                        <p class="kpi-label">Maintenance Efficiency</p>
+                                        <div class="progress progress-sm">
+                                            <div class="progress-bar bg-success" style="width: @Model.MaintenanceEfficiency%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-md-6 mb-3">
+                                <div class="kpi-indicator">
+                                    <div class="kpi-icon bg-gradient-info">
+                                        <i class="bi bi-currency-dollar"></i>
+                                    </div>
+                                    <div class="kpi-content">
+                                        <h4 class="kpi-value">@Model.CostEfficiency.ToString("F1")%</h4>
+                                        <p class="kpi-label">Cost Efficiency</p>
+                                        <div class="progress progress-sm">
+                                            <div class="progress-bar bg-info" style="width: @Model.CostEfficiency%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-3 col-md-6 mb-3">
+                                <div class="kpi-indicator">
+                                    <div class="kpi-icon bg-gradient-warning">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </div>
+                                    <div class="kpi-content">
+                                        <h4 class="kpi-value">@Model.EquipmentUtilization.ToString("F1")%</h4>
+                                        <p class="kpi-label">Equipment Utilization</p>
+                                        <div class="progress progress-sm">
+                                            <div class="progress-bar bg-warning" style="width: @Model.EquipmentUtilization%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictive Analytics Section -->
+        @if (Model.PredictiveInsights != null && Model.PredictiveInsights.Any())
+        {
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="content-card">
+                        <div class="content-card-header">
+                            <h5 class="content-card-title">
+                                <i class="bi bi-robot text-info"></i>
+                                Predictive Maintenance Insights
+                            </h5>
+                        </div>
+                        <div class="content-card-body">
+                            <div class="row">
+                                @foreach (var insight in Model.PredictiveInsights.Take(4))
+                                {
+                                    <div class="col-xl-6 col-lg-12 mb-3">
+                                        <div class="insight-card">
+                                            <div class="insight-icon @GetRiskLevelClass(insight.RiskLevel)">
+                                                <i class="bi bi-exclamation-triangle"></i>
+                                            </div>
+                                            <div class="insight-content">
+                                                <h6 class="insight-title">@insight.EquipmentName</h6>
+                                                <p class="insight-description">@insight.PredictedIssue</p>
+                                                <span class="insight-confidence">Probability: @insight.ProbabilityPercentage.ToString("F1")%</span>
+                                                <span class="insight-timeline">@insight.DaysUntilPredictedFailure days</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Advanced Filtering Panel -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-funnel me-2"></i>
+                            Advanced Filters
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false" aria-controls="filterPanel">
+                            <i class="bi bi-chevron-down"></i>
+                            Toggle Filters
+                        </button>
+                    </div>
+                    <div class="collapse" id="filterPanel">
+                        <div class="card-body">
+                            <form id="dashboardFilterForm" method="get">
+                                @Html.AntiForgeryToken()
+                                <div class="row g-3">
+                                    <!-- Date Range -->
+                                    <div class="col-md-3">
+                                        <label for="dateFrom" class="form-label">Date From</label>
+                                        <input type="date" class="form-control" id="dateFrom" name="DateFrom" value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="dateTo" class="form-label">Date To</label>
+                                        <input type="date" class="form-control" id="dateTo" name="DateTo" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                                    </div>
+                                    
+                                    <!-- Equipment Status -->
+                                    <div class="col-md-3">
+                                        <label for="equipmentStatus" class="form-label">Equipment Status</label>
+                                        <select class="form-select" id="equipmentStatus" name="EquipmentStatuses" multiple>
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                            <option value="Retired">Retired</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Search Term -->
+                                    <div class="col-md-3">
+                                        <label for="searchTerm" class="form-label">Search</label>
+                                        <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Search equipment, alerts...">
+                                    </div>
+                                    
+                                    <!-- Quick Filters -->
+                                    <div class="col-md-12">
+                                        <div class="d-flex gap-3 flex-wrap">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="showOnlyCritical" name="ShowOnlyCritical">
+                                                <label class="form-check-label" for="showOnlyCritical">
+                                                    Show Only Critical Items
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="includeCompleted" name="IncludeCompleted" checked>
+                                                <label class="form-check-label" for="includeCompleted">
+                                                    Include Completed Items
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Filter Actions -->
+                                    <div class="col-md-12">
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-search me-1"></i>
+                                                Apply Filters
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                                <i class="bi bi-x-circle me-1"></i>
+                                                Clear All
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="saveCurrentView()">
+                                                <i class="bi bi-bookmark me-1"></i>
+                                                Save View
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/lib/signalr/dist/browser/signalr.min.js"></script>
+<script>
+    // Chart configurations and initialization
+    let equipmentStatusChart, maintenanceTrendsChart, alertPriorityChart, inventoryStatusChart;
+    let maintenanceCostChart, equipmentLifecycleChart, failurePredictionChart, kpiChart, maintenanceEfficiencyChart;
+
+    // SignalR connection
+    window.maintenanceConnection = null;
+
+    // Initialize SignalR connection
+    async function initializeSignalR() {
+        try {
+            window.maintenanceConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/maintenanceHub")
+                .withAutomaticReconnect()
+                .build();
+
+            // Set up event handlers
+            window.maintenanceConnection.on("DashboardUpdate", function (data) {
+                updateDashboardMetrics(data);
+                refreshCharts();
+                showNotification('info', 'Dashboard Updated', 'Real-time data refreshed');
+            });
+
+            window.maintenanceConnection.on("ReceiveNotification", function (notification) {
+                showNotification(notification.type, notification.title, notification.message);
+            });
+
+            // Start connection
+            await window.maintenanceConnection.start();
+            console.log("SignalR connection established");
+
+            // Join dashboard group
+            await window.maintenanceConnection.invoke("JoinGroup", "Dashboard");
+            console.log("Joined Dashboard group");
+
+        } catch (err) {
+            console.error("SignalR connection error:", err);
+            // Fall back to periodic refresh if SignalR fails
+            setInterval(refreshDashboardData, 30000);
+        }
+    }
+
+    // Initialize all charts when page loads
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Initialize SignalR first
+        await initializeSignalR();
+
+        // Initialize charts
+        await initializeCharts();
+
+        // Set up real-time updates
+        setupRealTimeUpdates();
+    });
+
+    async function initializeCharts() {
+        try {
+            // Initialize Equipment Status Chart
+            await initEquipmentStatusChart();
+            
+            // Initialize Maintenance Trends Chart
+            await initMaintenanceTrendsChart();
+            
+            // Initialize Alert Priority Chart
+            await initAlertPriorityChart();
+            
+            // Initialize Inventory Status Chart
+            await initInventoryStatusChart();
+            
+            // Initialize Advanced Analytics Charts
+            await initMaintenanceCostChart();
+            await initEquipmentLifecycleChart();
+            await initFailurePredictionChart();
+            await initKpiChart();
+            await initMaintenanceEfficiencyChart();
+            
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+        }
+    }
+
+    async function initEquipmentStatusChart() {
+        const response = await fetch('/Dashboard/GetEquipmentStatusChart');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('equipmentStatusChart').getContext('2d');
+        equipmentStatusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' items';
+                            }
+                        }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+
+    async function initMaintenanceTrendsChart() {
+        const response = await fetch('/Dashboard/GetMaintenanceTrendsChart');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('maintenanceTrendsChart').getContext('2d');
+        maintenanceTrendsChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    }
+
+    async function initAlertPriorityChart() {
+        const response = await fetch('/Dashboard/GetAlertPriorityChart');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('alertPriorityChart').getContext('2d');
+        alertPriorityChart = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function initInventoryStatusChart() {
+        const response = await fetch('/Dashboard/GetInventoryStatusChart');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('inventoryStatusChart').getContext('2d');
+        inventoryStatusChart = new Chart(ctx, {
+            type: 'pie',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            });
+    }
+
+    // Advanced Analytics Chart Initialization Functions
+    async function initMaintenanceCostChart() {
+        try {
+            const response = await fetch('/Dashboard/GetCostAnalysisData');
+            const data = await response.json();
+            
+            // Transform the cost analysis data for Chart.js
+            const chartData = {
+                labels: data.map(item => item.categoryValue),
+                datasets: [{
+                    label: 'Total Cost',
+                    data: data.map(item => item.totalCost),
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2
+                }, {
+                    label: 'Average Cost',
+                    data: data.map(item => item.averageCost),
+                    backgroundColor: 'rgba(118, 75, 162, 0.8)',
+                    borderColor: 'rgba(118, 75, 162, 1)',
+                    borderWidth: 2
+                }]
+            };
+            
+            const ctx = document.getElementById('maintenanceCostChart').getContext('2d');
+            maintenanceCostChart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Maintenance Cost Trends'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Cost ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function initEquipmentLifecycleChart() {
+        const response = await fetch('/Dashboard/GetEquipmentLifecycleAnalysis');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('equipmentLifecycleChart').getContext('2d');
+        equipmentLifecycleChart = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Equipment Lifecycle by Type'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Equipment Type'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Average Age (Years)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function initFailurePredictionChart() {
+        const response = await fetch('/Dashboard/GetFailurePredictionTrends');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('failurePredictionChart').getContext('2d');
+        failurePredictionChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Failure Prediction Risk Levels'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Predictions'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function initKpiChart() {
+        const response = await fetch('/Dashboard/GetKpiMetrics');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('kpiChart').getContext('2d');
+        kpiChart = new Chart(ctx, {
+            type: 'radar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Key Performance Indicators'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                }
+            }
+        });
+    }
+
+    async function initMaintenanceEfficiencyChart() {
+        const response = await fetch('/Dashboard/GetMaintenanceEfficiency');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('maintenanceEfficiencyChart').getContext('2d');
+        maintenanceEfficiencyChart = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Maintenance Efficiency by Equipment Type'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Equipment Type'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Percentage (%)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Hours / Cost ($)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+    }
+
+    function setupRealTimeUpdates() {
+        // Auto-refresh charts every 5 minutes (real-time updates come via SignalR)
+        setInterval(refreshCharts, 300000);
+        
+        // Auto-refresh dashboard data every 2 minutes as backup
+        setInterval(refreshDashboardData, 120000);
+    }
+
+    // Notification system for real-time alerts
+    function showNotification(type, title, message) {
+        // Create notification container if it doesn't exist
+        let container = document.getElementById('notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notification-container';
+            container.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                max-width: 400px;
+            `;
+            document.body.appendChild(container);
+        }
+
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${getBootstrapClass(type)} alert-dismissible fade show`;
+        notification.style.cssText = `
+            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 10px;
+        `;
+        
+        notification.innerHTML = `
+            <strong>${title}</strong>
+            <p class="mb-0 mt-1">${message}</p>
+            <button type="button" class="btn-close" aria-label="Close"></button>
+        `;
+
+        // Add click handler for close button
+        notification.querySelector('.btn-close').addEventListener('click', function() {
+            notification.remove();
+        });
+
+        // Add to container
+        container.appendChild(notification);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+
+        // Play notification sound for critical alerts
+        if (type === 'error' || type === 'warning') {
+            playNotificationSound();
+        }
+    }
+
+    function getBootstrapClass(type) {
+        switch(type) {
+            case 'error': return 'danger';
+            case 'warning': return 'warning';
+            case 'success': return 'success';
+            case 'info': return 'info';
+            default: return 'info';
+        }
+    }
+
+    function playNotificationSound() {
+        // Create audio context and play a simple beep
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        } catch (e) {
+            // Silently fail if audio not supported
+            console.log('Audio notification not supported');
+        }
+    }
+
+    // Export functions
+    function exportToExcel() {
+        showNotification('info', 'Export Started', 'Generating Excel file...');
+        window.location.href = '/Dashboard/ExportExcel';
+    }
+
+    function exportToPdf() {
+        showNotification('info', 'Export Started', 'Generating PDF file...');
+        window.location.href = '/Dashboard/ExportPdf';
+    }
+
+    function refreshDashboard() {
+        showNotification('info', 'Refreshing', 'Updating dashboard data...');
+        refreshDashboardData();
+        refreshCharts();
+    }
+
+    async function refreshCharts() {
+        try {
+            // Refresh all charts with new data
+            await Promise.all([
+                refreshEquipmentStatusChart(),
+                refreshMaintenanceTrendsChart(),
+                refreshAlertPriorityChart(),
+                refreshInventoryStatusChart(),
+                refreshMaintenanceCostChart(),
+                refreshEquipmentLifecycleChart(),
+                refreshFailurePredictionChart(),
+                refreshKpiChart(),
+                refreshMaintenanceEfficiencyChart()
+            ]);
+        } catch (error) {
+            console.error('Error refreshing charts:', error);
+        }
+    }
+
+    async function refreshEquipmentStatusChart() {
+        const response = await fetch('/Dashboard/GetEquipmentStatusChart');
+        const data = await response.json();
+        
+        if (equipmentStatusChart) {
+            equipmentStatusChart.data = data;
+            equipmentStatusChart.update('none');
+        }
+    }
+
+    async function refreshMaintenanceTrendsChart() {
+        const response = await fetch('/Dashboard/GetMaintenanceTrendsChart');
+        const data = await response.json();
+        
+        if (maintenanceTrendsChart) {
+            maintenanceTrendsChart.data = data;
+            maintenanceTrendsChart.update('none');
+        }
+    }
+
+    async function refreshAlertPriorityChart() {
+        const response = await fetch('/Dashboard/GetAlertPriorityChart');
+        const data = await response.json();
+        
+        if (alertPriorityChart) {
+            alertPriorityChart.data = data;
+            alertPriorityChart.update('none');
+        }
+    }
+
+    async function refreshInventoryStatusChart() {
+        const response = await fetch('/Dashboard/GetInventoryStatusChart');
+        const data = await response.json();
+        
+        if (inventoryStatusChart) {
+            inventoryStatusChart.data = data;
+            inventoryStatusChart.update('none');
+        }
+    }
+
+    // Advanced Analytics Chart Refresh Functions
+    async function refreshMaintenanceCostChart() {
+        const response = await fetch('/Dashboard/GetMaintenanceCostAnalysis');
+        const data = await response.json();
+        
+        if (maintenanceCostChart) {
+            maintenanceCostChart.data = data;
+            maintenanceCostChart.update('none');
+        }
+    }
+
+    async function refreshEquipmentLifecycleChart() {
+        const response = await fetch('/Dashboard/GetEquipmentLifecycleAnalysis');
+        const data = await response.json();
+        
+        if (equipmentLifecycleChart) {
+            equipmentLifecycleChart.data = data;
+            equipmentLifecycleChart.update('none');
+        }
+    }
+
+    async function refreshFailurePredictionChart() {
+        const response = await fetch('/Dashboard/GetFailurePredictionTrends');
+        const data = await response.json();
+        
+        if (failurePredictionChart) {
+            failurePredictionChart.data = data;
+            failurePredictionChart.update('none');
+        }
+    }
+
+    async function refreshKpiChart() {
+        const response = await fetch('/Dashboard/GetKpiMetrics');
+        const data = await response.json();
+        
+        if (kpiChart) {
+            kpiChart.data = data;
+            kpiChart.update('none');
+        }
+    }
+
+    async function refreshMaintenanceEfficiencyChart() {
+        const response = await fetch('/Dashboard/GetMaintenanceEfficiency');
+        const data = await response.json();
+        
+        if (maintenanceEfficiencyChart) {
+            maintenanceEfficiencyChart.data = data;
+            maintenanceEfficiencyChart.update('none');
+        }
+    }
+
+    async function refreshDashboardData() {
+        try {
+            const response = await fetch('/Dashboard/GetDashboardData');
+            const data = await response.json();
+            updateDashboardMetrics(data);
+        } catch (error) {
+            console.error('Error refreshing dashboard data:', error);
+        }
+    }
+
+    function updateDashboardMetrics(data) {
+        // Update metric cards with new data
+        const updateMetric = (selector, value) => {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.textContent = value;
+                // Add a subtle animation
+                element.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    element.style.transform = 'scale(1)';
+                }, 200);
+            }
+        };
+
+        // Update each metric (you may need to adjust selectors based on your HTML)
+        updateMetric('.total-equipment-count', data.TotalEquipment);
+        updateMetric('.active-maintenance-count', data.ActiveMaintenanceTasks);
+        updateMetric('.low-stock-count', data.LowStockItems);
+        updateMetric('.critical-alerts-count', data.CriticalAlerts);
+        updateMetric('.overdue-maintenance-count', data.OverdueMaintenances);
+        updateMetric('.equipment-attention-count', data.EquipmentNeedingAttention);
+    }
+
+    // Advanced Filtering Functions
+    function clearFilters() {
+        document.getElementById('dashboardFilterForm').reset();
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+        document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+        document.getElementById('includeCompleted').checked = true;
+        
+        showNotification('info', 'Filters Cleared', 'All filters have been reset');
+        // Apply filters immediately
+        applyFiltersAjax();
+    }
+
+    function saveCurrentView() {
+        const viewName = prompt('Enter a name for this view:');
+        if (viewName) {
+            saveFiltersAsView(viewName);
+        }
+    }
+
+    function applyQuickFilter(filterType) {
+        const form = document.getElementById('dashboardFilterForm');
+        clearFilters();
+        
+        switch(filterType) {
+            case 'critical':
+                document.getElementById('showOnlyCritical').checked = true;
+                break;
+            case 'today':
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('dateFrom').value = today;
+                document.getElementById('dateTo').value = today;
+                break;
+            case 'week':
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                document.getElementById('dateFrom').value = weekAgo.toISOString().split('T')[0];
+                break;
+            case 'inactive':
+                const statusSelect = document.getElementById('equipmentStatus');
+                Array.from(statusSelect.options).forEach(option => {
+                    option.selected = option.value === 'Inactive';
+                });
+                break;
+        }
+        
+        // Apply filters immediately via AJAX instead of form submission
+        applyFiltersAjax();
+    }
+
+    // Real-time AJAX filter application
+    async function applyFiltersAjax() {
+        try {
+            showLoadingState(true);
+            
+            const formData = new FormData(document.getElementById('dashboardFilterForm'));
+            
+            const response = await fetch('/Dashboard/ApplyDashboardFilters', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                updateDashboardWithFilteredData(result.data);
+                updateFilterSummary(result.filterSummary);
+                updateUrlWithFilters(formData);
+                showNotification('success', 'Filters Applied', 'Dashboard updated with filtered data');
+            } else {
+                throw new Error(result.error || 'Failed to apply filters');
+            }
+        } catch (error) {
+            console.error('Error applying filters:', error);
+            showNotification('error', 'Filter Error', 'Failed to apply filters. Please try again.');
+        } finally {
+            showLoadingState(false);
+        }
+    }
+
+    function updateDashboardWithFilteredData(data) {
+        // Update metric cards
+        updateMetricCard('.total-equipment-count', data.totalEquipment);
+        updateMetricCard('.active-maintenance-count', data.activeMaintenanceTasks);
+        updateMetricCard('.low-stock-count', data.lowStockItems);
+        updateMetricCard('.critical-alerts-count', data.criticalAlerts);
+        updateMetricCard('.overdue-maintenance-count', data.overdueMaintenances);
+        updateMetricCard('.equipment-attention-count', data.equipmentNeedingAttention);
+        
+        // Update lists and tables
+        updateRecentAlerts(data.recentAlerts);
+        updateUpcomingMaintenances(data.upcomingMaintenances);
+        updateCriticalEquipment(data.criticalEquipment);
+        
+        // Update charts
+        updateEquipmentStatusChart(data.equipmentStatus);
+        
+        // Show filter analytics
+        showFilterAnalytics(data);
+    }
+
+    function updateMetricCard(selector, value) {
+        const element = document.querySelector(selector);
+        if (element) {
+            // Add animation
+            element.style.transform = 'scale(1.05)';
+            element.style.color = '#007bff';
+            
+            setTimeout(() => {
+                element.textContent = value;
+                element.style.transform = 'scale(1)';
+                element.style.color = '';
+            }, 150);
+        }
+    }
+
+    function updateRecentAlerts(alerts) {
+        const container = document.querySelector('.recent-alerts-container');
+        if (container && alerts) {
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-item p-3 mb-2 border-left border-${getPriorityColor(alert.priority)}">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1">${alert.title}</h6>
+                        <small class="text-muted">${formatDate(alert.createdDate)}</small>
+                    </div>
+                    <p class="mb-1">${alert.description}</p>
+                    <small class="text-muted">Equipment: ${alert.equipmentName} | Assigned: ${alert.assignedTo}</small>
+                </div>
+            `).join('');
+        }
+    }
+
+    function updateUpcomingMaintenances(maintenances) {
+        const container = document.querySelector('.upcoming-maintenances-container');
+        if (container && maintenances) {
+            container.innerHTML = maintenances.map(maintenance => `
+                <div class="maintenance-item p-3 mb-2 border-left border-info">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1">${maintenance.description}</h6>
+                        <small class="text-muted">${formatDate(maintenance.scheduledDate)}</small>
+                    </div>
+                    <small class="text-muted">Equipment: ${maintenance.equipmentName} | Assigned: ${maintenance.assignedTo}</small>
+                </div>
+            `).join('');
+        }
+    }
+
+    function updateCriticalEquipment(equipment) {
+        const container = document.querySelector('.critical-equipment-container');
+        if (container && equipment) {
+            container.innerHTML = equipment.map(item => `
+                <div class="equipment-item p-3 mb-2 border-left border-danger">
+                    <h6 class="mb-1">${item.name}</h6>
+                    <p class="mb-1">Status: <span class="badge badge-${getStatusColor(item.status)}">${item.status}</span></p>
+                    <small class="text-muted">Location: ${item.building} - ${item.room}</small>
+                </div>
+            `).join('');
+        }
+    }
+
+    function updateFilterSummary(summary) {
+        const summaryContainer = document.querySelector('.filter-summary');
+        if (summaryContainer && summary) {
+            const summaryHtml = `
+                <div class="alert alert-info">
+                    <strong>Filter Applied:</strong> 
+                    ${summary.hasActiveFilters ? `${summary.filterCount} filters active` : 'No filters'}
+                    ${summary.dateRange ? ` | Date: ${summary.dateRange}` : ''}
+                    ${summary.searchTerm ? ` | Search: "${summary.searchTerm}"` : ''}
+                    ${summary.criticalOnly ? ' | Critical items only' : ''}
+                </div>
+            `;
+            summaryContainer.innerHTML = summaryHtml;
+        }
+    }
+
+    function showFilterAnalytics(data) {
+        const analyticsContainer = document.querySelector('.filter-analytics');
+        if (analyticsContainer) {
+            const reductionPercent = data.totalRecordsBeforeFilter > 0 
+                ? Math.round(((data.totalRecordsBeforeFilter - data.totalRecordsAfterFilter) / data.totalRecordsBeforeFilter) * 100)
+                : 0;
+            
+            analyticsContainer.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-primary">${data.totalRecordsBeforeFilter}</h4>
+                            <small class="text-muted">Total Records</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-success">${data.totalRecordsAfterFilter}</h4>
+                            <small class="text-muted">Filtered Records</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-info">${reductionPercent}%</h4>
+                            <small class="text-muted">Reduction</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function showLoadingState(show) {
+        const loadingOverlay = document.querySelector('.loading-overlay') || createLoadingOverlay();
+        loadingOverlay.style.display = show ? 'flex' : 'none';
+    }
+
+    function createLoadingOverlay() {
+        const overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        `;
+        overlay.innerHTML = `
+            <div class="spinner-border text-light" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    // Helper functions
+    function getPriorityColor(priority) {
+        const colors = {
+            'Low': 'success',
+            'Medium': 'warning', 
+            'High': 'danger'
+        };
+        return colors[priority] || 'secondary';
+    }
+
+    function getStatusColor(status) {
+        const colors = {
+            'Active': 'success',
+            'Inactive': 'warning',
+            'Retired': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString();
+    }
+
+    // Auto-apply filters when form changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('dashboardFilterForm');
+        if (form) {
+            // Add change listeners to form elements
+            const formElements = form.querySelectorAll('input, select');
+            formElements.forEach(element => {
+                if (element.type === 'text') {
+                    // Debounce text inputs
+                    let timeout;
+                    element.addEventListener('input', function() {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => applyFiltersAjax(), 500);
+                    });
+                } else {
+                    // Immediate for checkboxes, selects, etc.
+                    element.addEventListener('change', applyFiltersAjax);
+                }
+            });
+        }
+        
+        // Load filters from URL on page load
+        loadFiltersFromUrl();
+    });
+
+    // Missing utility functions
+    function updateUrlWithFilters(formData) {
+        try {
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                if (value && value !== '' && key !== '__RequestVerificationToken') {
+                    params.append(key, value);
+                }
+            }
+            
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.pushState({}, '', newUrl);
+        } catch (error) {
+            console.error('Error updating URL with filters:', error);
+        }
+    }
+
+    function loadFiltersFromUrl() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const form = document.getElementById('dashboardFilterForm');
+            
+            if (form && urlParams.toString()) {
+                urlParams.forEach((value, key) => {
+                    const field = form.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        if (field.type === 'checkbox') {
+                            field.checked = value === 'true';
+                        } else if (field.tagName === 'SELECT' && field.multiple) {
+                            Array.from(field.options).forEach(option => {
+                                option.selected = urlParams.getAll(key).includes(option.value);
+                            });
+                        } else {
+                            field.value = value;
+                        }
+                    }
+                });
+                
+                // Apply filters if URL contains filter parameters
+                if (urlParams.toString()) {
+                    applyFiltersAjax();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading filters from URL:', error);
+        }
+    }
+
+    async function saveFiltersAsView(viewName) {
+        try {
+            const formData = new FormData(document.getElementById('dashboardFilterForm'));
+            formData.append('viewName', viewName);
+            formData.append('isPublic', false);
+            
+            const response = await fetch('/Dashboard/SaveDashboardView', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    showNotification('success', 'View Saved', `View "${viewName}" saved successfully`);
+                    // Refresh saved views list
+                    await refreshSavedViews();
+                } else {
+                    throw new Error(result.error || 'Failed to save view');
+                }
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error saving view:', error);
+            showNotification('error', 'Save Failed', 'Failed to save view. Please try again.');
+        }
+    }
+
+    async function refreshSavedViews() {
+        try {
+            const response = await fetch('/Dashboard/GetSavedViews');
+            if (response.ok) {
+                const views = await response.json();
+                updateSavedViewsDropdown(views);
+            }
+        } catch (error) {
+            console.error('Error refreshing saved views:', error);
+        }
+    }
+
+    function updateSavedViewsDropdown(views) {
+        const dropdown = document.getElementById('savedViews');
+        if (dropdown && views) {
+            dropdown.innerHTML = '<option value="">Select a saved view...</option>';
+            views.forEach(view => {
+                const option = document.createElement('option');
+                option.value = view.id;
+                option.textContent = view.name;
+                dropdown.appendChild(option);
+            });
+        }
+    }
+</script>
+}
+
+@functions {
+    public string GetRiskLevelClass(string riskLevel)
+    {
+        return riskLevel.ToLower() switch
+        {
+            "high" => "bg-danger",
+            "medium" => "bg-warning",
+            "low" => "bg-success",
+            _ => "bg-info"
+        };
+    }
+}

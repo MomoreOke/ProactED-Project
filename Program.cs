@@ -1,5 +1,6 @@
 using FEENALOoFINALE.Data;
-using FEENALOoFINALE.Models; // Add this line
+using FEENALOoFINALE.Models;
+using FEENALOoFINALE.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,10 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Around line 14, where builder.Services.AddDefaultIdentity<User> is called
 builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Register advanced services
+builder.Services.AddScoped<IAdvancedAnalyticsService, AdvancedAnalyticsService>();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

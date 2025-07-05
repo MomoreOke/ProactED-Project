@@ -24,3 +24,22 @@ artifacts/
 
 # Rider
 *.ReSharper.user
+
+# Backup files
+*.backup
+*.bak
+*.cs.backup
+*.csproj.backup
+
+# Documentation and report files (exclude from commits)
+*_REPORT.md
+*_STATUS.md
+*_ANALYSIS.md
+*_GUIDE.md
+*_SUMMARY.md
+*_PLAN.md
+*_COMPLETE.md
+*_FIX.md
+PROJECT_ABSTRACT.md
+STEP_*.md
+test-user-info.js

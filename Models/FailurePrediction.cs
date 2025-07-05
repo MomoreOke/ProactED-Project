@@ -8,24 +8,19 @@ namespace FEENALOoFINALE.Models
         [Key]
         public int PredictionId { get; set; }
 
-        [Required]
         public int EquipmentId { get; set; }
 
-        [Required]
         public DateTime PredictedFailureDate { get; set; }
 
-        [Required]
         [Range(0, 100)]
         public int ConfidenceLevel { get; set; }
 
-        [Required]
         public PredictionStatus Status { get; set; }
 
         public string? AnalysisNotes { get; set; }
 
         public string? ContributingFactors { get; set; }
 
-        [Required]
         public DateTime CreatedDate { get; set; }
 
         // Navigation property

@@ -5,9 +5,15 @@ namespace FEENALOoFINALE.Models
         public int TotalEquipment { get; set; }
         public int ActiveMaintenanceTasks { get; set; }
         public int LowStockItems { get; set; }
+        public int CriticalAlerts { get; set; }
+        public int OverdueMaintenances { get; set; }
+        public int EquipmentNeedingAttention { get; set; }
+        public int CompletedMaintenanceTasks { get; set; }
+        public int TotalInventoryItems { get; set; }
         public List<Alert>? RecentAlerts { get; set; }
         public List<MaintenanceTask>? UpcomingMaintenances { get; set; }
-        public required List<EquipmentStatusCount> EquipmentStatus { get; set; }
+        public List<MaintenanceTask>? UpcomingMaintenanceTasks { get; set; }
+        public List<EquipmentStatusCount> EquipmentStatus { get; set; } = new List<EquipmentStatusCount>();
     }
 
     public class EquipmentStatusCount
