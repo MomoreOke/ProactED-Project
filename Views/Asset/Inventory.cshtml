@@ -1,0 +1,266 @@
+@model IEnumerable<FEENALOoFINALE.Models.InventoryItem>
+@using FEENALOoFINALE.Models
+
+@{
+    ViewData["Title"] = "Inventory Assets";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Asset")">Assets</a></li>
+                    <li class="breadcrumb-item active">Inventory</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 mb-0">Inventory Assets</h1>
+                    <p class="text-muted">Manage spare parts and supplies</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Create", "Inventory")" class="btn btn-info">
+                        <i class="bi bi-plus"></i> Add Inventory Item
+                    </a>
+                    <a href="@Url.Action("Index", "Asset")" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Assets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-boxes text-info" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">@Model.Count()</h5>
+                    <p class="card-text text-muted">Total Items</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">@Model.Count(i => (i.InventoryStocks?.Sum(s => s.Quantity) ?? 0) > i.MinStockLevel)</h5>
+                    <p class="card-text text-muted">Good Stock</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">@Model.Count(i => (i.InventoryStocks?.Sum(s => s.Quantity) ?? 0) <= i.MinStockLevel)</h5>
+                    <p class="card-text text-muted">Low Stock</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-currency-dollar text-primary" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">@Model.Sum(i => i.InventoryStocks?.Sum(s => s.Quantity * s.UnitCost) ?? 0).ToString("C")</h5>
+                    <p class="card-text text-muted">Total Value</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Inventory Items</h5>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm" placeholder="Search items..." id="inventorySearch" style="width: 250px;">
+                            <select class="form-select form-select-sm" id="categoryFilter" style="width: 150px;">
+                                <option value="">All Categories</option>
+                                <option value="Electrical">Electrical</option>
+                                <option value="Mechanical">Mechanical</option>
+                                <option value="Consumable">Consumable</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="stockFilter" style="width: 150px;">
+                                <option value="">All Stock Levels</option>
+                                <option value="good">Good Stock</option>
+                                <option value="low">Low Stock</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="inventoryTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Category</th>
+                                        <th>Current Stock</th>
+                                        <th>Min Level</th>
+                                        <th>Stock Status</th>
+                                        <th>Total Value</th>
+                                        <th>Compatible Models</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        var currentStock = item.InventoryStocks?.Sum(s => s.Quantity) ?? 0;
+                                        var isLowStock = currentStock <= item.MinStockLevel;
+                                        var totalValue = item.InventoryStocks?.Sum(s => s.Quantity * s.UnitCost) ?? 0;
+                                        
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-box text-info me-2"></i>
+                                                    <div>
+                                                        <strong>@item.Name</strong>
+                                                        @if (!string.IsNullOrEmpty(item.Description))
+                                                        {
+                                                            <br><small class="text-muted">@item.Description</small>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@(item.Category == ItemCategory.Electrical ? "primary" : item.Category == ItemCategory.Mechanical ? "success" : "warning")">
+                                                    @item.Category
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <strong>@currentStock</strong>
+                                            </td>
+                                            <td>@item.MinStockLevel</td>
+                                            <td>
+                                                <span class="badge bg-@(isLowStock ? "danger" : "success")">
+                                                    @(isLowStock ? "Low Stock" : "Good")
+                                                </span>
+                                            </td>
+                                            <td>@totalValue.ToString("C")</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.CompatibleModels))
+                                                {
+                                                    <small class="text-muted">@item.CompatibleModels</small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">Universal</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="@Url.Action("Details", "Inventory", new { id = item.ItemId })" class="btn btn-outline-info" title="View Details">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Edit", "Inventory", new { id = item.ItemId })" class="btn btn-outline-secondary" title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    @if (isLowStock)
+                                                    {
+                                                        <a href="@Url.Action("AddStock", "Inventory", new { id = item.ItemId })" class="btn btn-outline-warning" title="Add Stock">
+                                                            <i class="bi bi-plus-circle"></i>
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-boxes text-muted" style="font-size: 4rem;"></i>
+                            <h5 class="text-muted mt-3">No Inventory Items Found</h5>
+                            <p class="text-muted">Start by adding your first inventory item.</p>
+                            <a href="@Url.Action("Create", "Inventory")" class="btn btn-info">
+                                <i class="bi bi-plus"></i> Add Inventory Item
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert Section -->
+    @{
+        var lowStockItems = Model.Where(i => (i.InventoryStocks?.Sum(s => s.Quantity) ?? 0) <= i.MinStockLevel);
+    }
+    @if (lowStockItems.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm border-start border-warning border-4">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Low Stock Alert
+                        </h5>
+                        <p class="card-text">The following items need restocking:</p>
+                        <div class="row">
+                            @foreach (var lowStockItem in lowStockItems.Take(6))
+                            {
+                                var currentStock = lowStockItem.InventoryStocks?.Sum(s => s.Quantity) ?? 0;
+                                <div class="col-md-4 mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                                        <div>
+                                            <strong>@lowStockItem.Name</strong><br>
+                                            <small class="text-muted">Stock: @currentStock / Min: @lowStockItem.MinStockLevel</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Search and filter functionality
+        document.getElementById('inventorySearch').addEventListener('input', filterTable);
+        document.getElementById('categoryFilter').addEventListener('change', filterTable);
+        document.getElementById('stockFilter').addEventListener('change', filterTable);
+
+        function filterTable() {
+            const searchText = document.getElementById('inventorySearch').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const stockFilter = document.getElementById('stockFilter').value;
+            const table = document.getElementById('inventoryTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const text = row.textContent.toLowerCase();
+                const categoryCell = row.cells[1].textContent.trim();
+                const stockStatusCell = row.cells[4].textContent.trim();
+                
+                const matchesSearch = text.includes(searchText);
+                const matchesCategory = !categoryFilter || categoryCell.includes(categoryFilter);
+                let matchesStock = true;
+                
+                if (stockFilter === 'good') {
+                    matchesStock = stockStatusCell.includes('Good');
+                } else if (stockFilter === 'low') {
+                    matchesStock = stockStatusCell.includes('Low');
+                }
+                
+                row.style.display = (matchesSearch && matchesCategory && matchesStock) ? '' : 'none';
+            }
+        }
+    </script>
+}

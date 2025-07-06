@@ -58,46 +58,73 @@ namespace FEENALOoFINALE.Controllers
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName");
             ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName");
             ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName");
-            // Add this line to initialize EquipmentModelId with an empty SelectList
-            ViewData["EquipmentModelId"] = new SelectList(new List<EquipmentModel>(), "EquipmentModelId", "ModelName");
+            // No longer need EquipmentModelId dropdown since we'll use text input
             return View();
         }
 
         // POST: Equipment/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentId,EquipmentTypeId,EquipmentModelId,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
+        public async Task<IActionResult> Create([Bind("EquipmentId,EquipmentTypeId,EquipmentModelName,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
         {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(equipment.EquipmentModelName))
+            {
+                ModelState.AddModelError("EquipmentModelName", "Equipment Model is required.");
+            }
+
             if (ModelState.IsValid)
             {
-                // Example: Check if IDs are valid
+                // Validate foreign keys
                 var equipmentTypeExists = await _context.EquipmentTypes.AnyAsync(e => e.EquipmentTypeId == equipment.EquipmentTypeId);
-                var equipmentModelExists = await _context.EquipmentModels.AnyAsync(e => e.EquipmentModelId == equipment.EquipmentModelId);
                 var buildingExists = await _context.Buildings.AnyAsync(b => b.BuildingId == equipment.BuildingId);
                 var roomExists = await _context.Rooms.AnyAsync(r => r.RoomId == equipment.RoomId);
 
-                if (!equipmentTypeExists || !equipmentModelExists || !buildingExists || !roomExists)
+                if (!equipmentTypeExists || !buildingExists || !roomExists)
                 {
                     ModelState.AddModelError("", "One or more selected values are invalid.");
-                    // Repopulate dropdowns and return the view as before
+                    // Repopulate dropdowns and return view
                     ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
-
-                    // Repopulate EquipmentModelId based on selected EquipmentTypeId
-                    var equipmentModels = await _context.EquipmentModels
-                        .Where(m => m.EquipmentTypeId == equipment.EquipmentTypeId)
-                        .ToListAsync();
-                    ViewData["EquipmentModelId"] = new SelectList(equipmentModels, "EquipmentModelId", "ModelName", equipment.EquipmentModelId);
-
                     ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
                     ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
-
                     return View(equipment);
                 }
 
                 try
                 {
+                    // Find or create the equipment model
+                    var existingModel = await _context.EquipmentModels
+                        .FirstOrDefaultAsync(m => m.ModelName.ToLower() == equipment.EquipmentModelName!.ToLower() 
+                                                && m.EquipmentTypeId == equipment.EquipmentTypeId);
+
+                    if (existingModel != null)
+                    {
+                        // Use existing model
+                        equipment.EquipmentModelId = existingModel.EquipmentModelId;
+                    }
+                    else
+                    {
+                        // Create new model
+                        var newModel = new EquipmentModel
+                        {
+                            ModelName = equipment.EquipmentModelName!.Trim(),
+                            EquipmentTypeId = equipment.EquipmentTypeId
+                        };
+                        
+                        _context.EquipmentModels.Add(newModel);
+                        await _context.SaveChangesAsync(); // Save to get the ID
+                        equipment.EquipmentModelId = newModel.EquipmentModelId;
+                    }
+
+                    // Clear the non-mapped property before saving equipment
+                    equipment.EquipmentModelName = null;
+                    
                     _context.Add(equipment);
                     await _context.SaveChangesAsync();
+
+                    // Generate alert for new equipment if status is problematic
+                    await GenerateNewEquipmentAlert(equipment);
+
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -111,13 +138,6 @@ namespace FEENALOoFINALE.Controllers
             // Set a breakpoint here or log 'errors' to see what is failing
 
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
-
-            // Repopulate EquipmentModelId based on selected EquipmentTypeId
-            var models = await _context.EquipmentModels
-                .Where(m => m.EquipmentTypeId == equipment.EquipmentTypeId)
-                .ToListAsync();
-            ViewData["EquipmentModelId"] = new SelectList(models, "EquipmentModelId", "ModelName", equipment.EquipmentModelId);
-
             ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
             ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
 
@@ -132,18 +152,18 @@ namespace FEENALOoFINALE.Controllers
                 return NotFound();
             }
 
-            var equipment = await _context.Equipment.FindAsync(id);
+            var equipment = await _context.Equipment
+                .Include(e => e.EquipmentModel)
+                .FirstOrDefaultAsync(e => e.EquipmentId == id);
             if (equipment == null)
             {
                 return NotFound();
             }
+
+            // Set the model name for the text input
+            equipment.EquipmentModelName = equipment.EquipmentModel?.ModelName;
+
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
-
-            var models = await _context.EquipmentModels
-                .Where(m => m.EquipmentTypeId == equipment.EquipmentTypeId)
-                .ToListAsync();
-            ViewData["EquipmentModelId"] = new SelectList(models, "EquipmentModelId", "ModelName", equipment.EquipmentModelId);
-
             ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
             ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
             return View(equipment);
@@ -152,19 +172,63 @@ namespace FEENALOoFINALE.Controllers
         // POST: Equipment/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EquipmentId,EquipmentTypeId,EquipmentModelId,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
+        public async Task<IActionResult> Edit(int id, [Bind("EquipmentId,EquipmentTypeId,EquipmentModelName,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
         {
             if (id != equipment.EquipmentId)
             {
                 return NotFound();
             }
 
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(equipment.EquipmentModelName))
+            {
+                ModelState.AddModelError("EquipmentModelName", "Equipment Model is required.");
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Get the original equipment status for comparison
+                    var originalEquipment = await _context.Equipment
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(e => e.EquipmentId == id);
+
+                    // Find or create the equipment model
+                    var existingModel = await _context.EquipmentModels
+                        .FirstOrDefaultAsync(m => m.ModelName.ToLower() == equipment.EquipmentModelName!.ToLower() 
+                                                && m.EquipmentTypeId == equipment.EquipmentTypeId);
+
+                    if (existingModel != null)
+                    {
+                        // Use existing model
+                        equipment.EquipmentModelId = existingModel.EquipmentModelId;
+                    }
+                    else
+                    {
+                        // Create new model
+                        var newModel = new EquipmentModel
+                        {
+                            ModelName = equipment.EquipmentModelName!.Trim(),
+                            EquipmentTypeId = equipment.EquipmentTypeId
+                        };
+                        
+                        _context.EquipmentModels.Add(newModel);
+                        await _context.SaveChangesAsync(); // Save to get the ID
+                        equipment.EquipmentModelId = newModel.EquipmentModelId;
+                    }
+
+                    // Clear the non-mapped property before saving equipment
+                    equipment.EquipmentModelName = null;
+
                     _context.Update(equipment);
                     await _context.SaveChangesAsync();
+
+                    // Generate condition-based alerts only when status changes to problematic states
+                    if (originalEquipment != null && originalEquipment.Status != equipment.Status)
+                    {
+                        await GenerateConditionBasedAlert(equipment, originalEquipment.Status);
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -180,12 +244,6 @@ namespace FEENALOoFINALE.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
-
-            var models = await _context.EquipmentModels
-                .Where(m => m.EquipmentTypeId == equipment.EquipmentTypeId)
-                .ToListAsync();
-            ViewData["EquipmentModelId"] = new SelectList(models, "EquipmentModelId", "ModelName", equipment.EquipmentModelId);
-
             ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
             ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
             return View(equipment);
@@ -402,5 +460,182 @@ namespace FEENALOoFINALE.Controllers
                 .ToListAsync();
             return Json(buildings);
         }    
+
+        // Generate condition-based alerts when equipment status changes
+        private async Task GenerateConditionBasedAlert(Equipment equipment, EquipmentStatus previousStatus)
+        {
+            string? alertTitle = null;
+            string? alertDescription = null;
+            AlertPriority priority = AlertPriority.Low;
+
+            // Only generate alerts for problematic status changes
+            switch (equipment.Status)
+            {
+                case EquipmentStatus.Inactive:
+                    if (previousStatus == EquipmentStatus.Active)
+                    {
+                        alertTitle = "Equipment Became Inactive";
+                        alertDescription = $"Equipment has changed from Active to Inactive status. Immediate attention may be required.";
+                        priority = AlertPriority.High;
+                    }
+                    break;
+
+                case EquipmentStatus.Retired:
+                    if (previousStatus != EquipmentStatus.Retired)
+                    {
+                        alertTitle = "Equipment Retired";
+                        alertDescription = $"Equipment has been retired from service. Consider replacement planning.";
+                        priority = AlertPriority.Low;
+                    }
+                    break;
+
+                case EquipmentStatus.Active:
+                    // Good news - equipment is back to active, no alert needed
+                    // But we could optionally create a "resolved" type notification
+                    if (previousStatus == EquipmentStatus.Inactive)
+                    {
+                        alertTitle = "Equipment Restored to Active";
+                        alertDescription = $"Equipment has been successfully restored to active status.";
+                        priority = AlertPriority.Low;
+                    }
+                    break;
+            }
+
+            // Only create alert if we determined one is needed
+            if (!string.IsNullOrEmpty(alertTitle) && !string.IsNullOrEmpty(alertDescription))
+            {
+                // Check if a similar alert already exists for this equipment
+                var existingAlert = await _context.Alerts
+                    .Where(a => a.EquipmentId == equipment.EquipmentId && 
+                               a.Status == AlertStatus.Open && 
+                               a.Title == alertTitle)
+                    .FirstOrDefaultAsync();
+
+                if (existingAlert == null)
+                {
+                    var alert = new Alert
+                    {
+                        Title = alertTitle,
+                        Description = alertDescription,
+                        Priority = priority,
+                        Status = AlertStatus.Open,
+                        CreatedDate = DateTime.Now,
+                        EquipmentId = equipment.EquipmentId,
+                        AssignedToUserId = null // Can be assigned later
+                    };
+
+                    _context.Alerts.Add(alert);
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
+
+        private async Task GenerateNewEquipmentAlert(Equipment equipment)
+        {
+            string? alertTitle = null;
+            string? alertDescription = null;
+            AlertPriority priority = AlertPriority.Low;
+
+            // Generate alerts for newly added equipment with problematic status
+            switch (equipment.Status)
+            {
+                case EquipmentStatus.Inactive:
+                    alertTitle = "New Equipment Added with Inactive Status";
+                    alertDescription = $"New equipment has been added with Inactive status. Please verify if this is correct and take appropriate action.";
+                    priority = AlertPriority.High;
+                    break;
+
+                case EquipmentStatus.Retired:
+                    alertTitle = "New Equipment Added with Retired Status";
+                    alertDescription = $"New equipment has been added with Retired status. Please verify if this is correct.";
+                    priority = AlertPriority.Medium;
+                    break;
+
+                case EquipmentStatus.Active:
+                    // Optional: Create a welcome/tracking alert for new active equipment
+                    alertTitle = "New Active Equipment Added";
+                    alertDescription = $"New equipment has been successfully added to the system with Active status.";
+                    priority = AlertPriority.Low;
+                    break;
+            }
+
+            // Create alert if one is needed
+            if (!string.IsNullOrEmpty(alertTitle) && !string.IsNullOrEmpty(alertDescription))
+            {
+                var alert = new Alert
+                {
+                    Title = alertTitle,
+                    Description = alertDescription,
+                    Priority = priority,
+                    Status = AlertStatus.Open,
+                    CreatedDate = DateTime.Now,
+                    EquipmentId = equipment.EquipmentId,
+                    AssignedToUserId = null // Can be assigned later
+                };
+
+                _context.Alerts.Add(alert);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // Check for overdue maintenance and generate condition-based alerts
+        public async Task<IActionResult> CheckMaintenanceOverdue()
+        {
+            var alertsGenerated = 0;
+            
+            // Get all active equipment with their maintenance logs
+            var equipmentList = await _context.Equipment
+                .Where(e => e.Status == EquipmentStatus.Active)
+                .Include(e => e.MaintenanceLogs)
+                .Include(e => e.EquipmentType)
+                .ToListAsync();
+
+            foreach (var equipment in equipmentList)
+            {
+                var lastMaintenance = equipment.MaintenanceLogs?
+                    .OrderByDescending(ml => ml.LogDate)
+                    .FirstOrDefault();
+
+                // Consider equipment overdue if no maintenance in last 90 days for active equipment
+                var daysSinceLastMaintenance = lastMaintenance != null ? 
+                    (DateTime.Now - lastMaintenance.LogDate).Days : 
+                    equipment.InstallationDate.HasValue ? (DateTime.Now - equipment.InstallationDate.Value).Days : 365;
+
+                if (daysSinceLastMaintenance > 90)
+                {
+                    // Check if alert already exists
+                    var existingAlert = await _context.Alerts
+                        .Where(a => a.EquipmentId == equipment.EquipmentId && 
+                                   a.Status == AlertStatus.Open && 
+                                   a.Title!.Contains("Maintenance Overdue"))
+                        .FirstOrDefaultAsync();
+
+                    if (existingAlert == null)
+                    {
+                        var alert = new Alert
+                        {
+                            Title = "Maintenance Overdue",
+                            Description = $"Equipment {equipment.EquipmentType?.EquipmentTypeName} has not received maintenance for {daysSinceLastMaintenance} days. Recommended maintenance interval exceeded.",
+                            Priority = daysSinceLastMaintenance > 180 ? AlertPriority.High : AlertPriority.Medium,
+                            Status = AlertStatus.Open,
+                            CreatedDate = DateTime.Now,
+                            EquipmentId = equipment.EquipmentId,
+                            AssignedToUserId = null
+                        };
+
+                        _context.Alerts.Add(alert);
+                        alertsGenerated++;
+                    }
+                }
+            }
+
+            if (alertsGenerated > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["SuccessMessage"] = $"Maintenance check completed. {alertsGenerated} alerts generated for overdue maintenance.";
+            return RedirectToAction("Index", "Alert");
+        }
     }
 }

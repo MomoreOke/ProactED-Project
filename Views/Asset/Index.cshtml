@@ -1,0 +1,460 @@
+@model FEENALOoFINALE.Models.UnifiedAssetDashboardViewModel
+@using FEENALOoFINALE.Models
+
+@{
+    ViewData["Title"] = "Asset Management";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6 mb-0">
+                <i class="bi bi-collection text-primary me-2"></i>
+                Asset Management
+            </h1>
+            <p class="text-muted">Unified view of equipment and inventory assets</p>
+        </div>
+    </div>
+
+    <!-- Asset Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-gear-wide-connected text-primary" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-1 text-muted">Equipment</h6>
+                            <h3 class="mb-1 fw-bold">@Model.TotalEquipment</h3>
+                            <small class="text-success">
+                                <i class="bi bi-check-circle-fill me-1"></i>
+                                @Model.OperationalEquipment operational
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-info border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-boxes text-info" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-1 text-muted">Inventory Items</h6>
+                            <h3 class="mb-1 fw-bold">@Model.TotalInventoryItems</h3>
+                            <small class="text-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                @Model.LowStockItems low stock
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-success border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-currency-dollar text-success" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-1 text-muted">Asset Value</h6>
+                            <h3 class="mb-1 fw-bold">@Model.TotalAssetValue.ToString("C0")</h3>
+                            <small class="text-muted">Total estimated value</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-exclamation-octagon text-danger" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-1 text-muted">Active Alerts</h6>
+                            <h3 class="mb-1 fw-bold">@Model.ActiveAlerts.Count</h3>
+                            <small class="text-danger">Require attention</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs nav-fill" id="assetTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="equipment-tab" data-bs-toggle="tab" data-bs-target="#equipment" type="button" role="tab">
+                        <i class="bi bi-gear-wide-connected me-2"></i>Equipment
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab">
+                        <i class="bi bi-boxes me-2"></i>Inventory
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        <i class="bi bi-graph-up me-2"></i>Reports
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content mt-4" id="assetTabContent">
+        <!-- Dashboard Tab -->
+        <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+            <div class="row">
+                <!-- Recent Maintenance Activity -->
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-0 pb-0">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-tools text-primary me-2"></i>
+                                Recent Maintenance
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            @if (Model.RecentMaintenanceLogs.Any())
+                            {
+                                <div class="list-group list-group-flush">
+                                    @foreach (var log in Model.RecentMaintenanceLogs)
+                                    {
+                                        <div class="list-group-item border-0 px-0">
+                                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="mb-1">@log.Equipment?.EquipmentModel?.ModelName</h6>
+                                                    <p class="mb-1 text-muted small">@log.Description</p>
+                                                    <small class="text-muted">@log.Technician</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-muted">@log.LogDate.ToString("MMM dd")</small>
+                                                    <br>
+                                                    <span class="badge bg-primary">@log.MaintenanceType</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                    <p class="text-muted mt-2">No recent maintenance activities</p>
+                                </div>
+                            }
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <a asp-controller="MaintenanceLog" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                                View All Maintenance <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Alerts -->
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-0 pb-0">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                                Active Alerts
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            @if (Model.ActiveAlerts.Any())
+                            {
+                                <div class="list-group list-group-flush">
+                                    @foreach (var alert in Model.ActiveAlerts)
+                                    {
+                                        <div class="list-group-item border-0 px-0">
+                                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="mb-1">@alert.Title</h6>
+                                                    <p class="mb-1 small">@alert.Description</p>
+                                                    <small class="text-muted">
+                                                        @if (alert.EquipmentId.HasValue)
+                                                        {
+                                                            <span>Equipment ID: @alert.EquipmentId</span>
+                                                        }
+                                                    </small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-muted">@alert.CreatedDate.ToString("MMM dd")</small>
+                                                    <br>
+                                                    <span class="badge @(alert.Priority == AlertPriority.High ? "bg-danger" : alert.Priority == AlertPriority.Medium ? "bg-warning" : "bg-info")">
+                                                        @alert.Priority
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                                    <p class="text-muted mt-2">No active alerts</p>
+                                </div>
+                            }
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <a asp-controller="Alert" asp-action="Index" class="btn btn-outline-warning btn-sm">
+                                View All Alerts <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Low Stock Items -->
+            @if (Model.LowStockAssets.Any())
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-0 pb-0">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-exclamation-circle text-warning me-2"></i>
+                                    Low Stock Items
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @foreach (var item in Model.LowStockAssets)
+                                    {
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="card border-warning">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">@item.Name</h6>
+                                                    <p class="card-text small text-muted">@item.Description</p>
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <span class="badge bg-warning">@item.CurrentStock in stock</span>
+                                                        </div>
+                                                        <small class="text-muted">Min: @item.MinimumStock</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white border-0">
+                                <a asp-action="Inventory" class="btn btn-outline-warning btn-sm">
+                                    Manage Inventory <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Asset Categories Chart -->
+            @if (Model.AssetsByCategory.Any())
+            {
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-0 pb-0">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-pie-chart text-info me-2"></i>
+                                    Assets by Category
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @foreach (var category in Model.AssetsByCategory)
+                                    {
+                                        <div class="col-md-3 mb-3">
+                                            <div class="text-center">
+                                                <h4 class="text-primary mb-1">@category.Value</h4>
+                                                <p class="text-muted small mb-0">@category.Key</p>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Equipment Tab -->
+        <div class="tab-pane fade" id="equipment" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Equipment Assets</h5>
+                <a asp-action="CreateEquipment" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Add Equipment
+                </a>
+            </div>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div id="equipmentContent">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading equipment...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Tab -->
+        <div class="tab-pane fade" id="inventory" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Inventory Assets</h5>
+                <div class="btn-group">
+                    <a asp-action="CreateInventoryItem" class="btn btn-info">
+                        <i class="bi bi-plus-circle me-1"></i>Add Item
+                    </a>
+                    <a asp-action="CreateSparePart" class="btn btn-outline-info">
+                        <i class="bi bi-gear me-1"></i>Spare Part
+                    </a>
+                    <a asp-action="CreateConsumable" class="btn btn-outline-info">
+                        <i class="bi bi-droplet me-1"></i>Consumable
+                    </a>
+                </div>
+            </div>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div id="inventoryContent">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading inventory...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div class="tab-pane fade" id="reports" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Asset Reports</h5>
+                <a asp-action="Reports" class="btn btn-success">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i>Full Reports
+                </a>
+            </div>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-center py-5">
+                        <i class="bi bi-graph-up text-success" style="font-size: 4rem;"></i>
+                        <h5 class="mt-3">Asset Analytics</h5>
+                        <p class="text-muted">Comprehensive reports and analytics for all your assets</p>
+                        <a asp-action="Reports" class="btn btn-success mt-2">
+                            View Detailed Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Floating Button -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div class="btn-group-vertical">
+        <button type="button" class="btn btn-primary btn-lg rounded-circle mb-2" data-bs-toggle="dropdown">
+            <i class="bi bi-plus"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" asp-action="CreateEquipment"><i class="bi bi-gear me-2"></i>Add Equipment</a></li>
+            <li><a class="dropdown-item" asp-action="CreateInventoryItem"><i class="bi bi-box me-2"></i>Add Inventory</a></li>
+            <li><a class="dropdown-item" asp-action="CreateSparePart"><i class="bi bi-wrench me-2"></i>Add Spare Part</a></li>
+            <li><a class="dropdown-item" asp-action="CreateConsumable"><i class="bi bi-droplet me-2"></i>Add Consumable</a></li>
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Load equipment tab content when clicked
+            $('#equipment-tab').on('shown.bs.tab', function () {
+                if (!$('#equipmentContent').data('loaded')) {
+                    $('#equipmentContent').load('@Url.Action("Equipment", "Asset")', function() {
+                        $('#equipmentContent').data('loaded', true);
+                    });
+                }
+            });
+
+            // Load inventory tab content when clicked
+            $('#inventory-tab').on('shown.bs.tab', function () {
+                if (!$('#inventoryContent').data('loaded')) {
+                    $('#inventoryContent').load('@Url.Action("Inventory", "Asset")', function() {
+                        $('#inventoryContent').data('loaded', true);
+                    });
+                }
+            });
+
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+}
+
+<style>
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        background: none;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-bottom-color: #dee2e6;
+        color: #495057;
+    }
+    
+    .nav-tabs .nav-link.active {
+        border-bottom-color: #0d6efd;
+        color: #0d6efd;
+        background: none;
+    }
+    
+    .card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .border-start.border-4 {
+        border-left-width: 4px !important;
+    }
+</style>

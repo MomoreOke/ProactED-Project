@@ -8,6 +8,7 @@ namespace FEENALOoFINALE.Models
         [Key]
         public int PredictionId { get; set; }
 
+        [Display(Name = "Equipment")]
         public int EquipmentId { get; set; }
 
         public DateTime PredictedFailureDate { get; set; }

@@ -21,11 +21,10 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="EquipmentModelId" class="control-label">Equipment Model</label>
-                <select asp-for="EquipmentModelId" class="form-control select-chevron" asp-items="ViewBag.EquipmentModelId">
-                    <option value="">-- Select Equipment Model --</option>
-                </select>
-                <span asp-validation-for="EquipmentModelId" class="text-danger"></span>
+                <label asp-for="EquipmentModelName" class="control-label">Equipment Model</label>
+                <input asp-for="EquipmentModelName" class="form-control" placeholder="Enter equipment model (e.g., XP-2000, Model ABC-123)" />
+                <small class="form-text text-muted">Type the exact model name/number. If this model doesn't exist, it will be created automatically.</small>
+                <span asp-validation-for="EquipmentModelName" class="text-danger"></span>
             </div>
 
             <div class="form-group">

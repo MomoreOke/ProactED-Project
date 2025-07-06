@@ -50,7 +50,7 @@ builder.Services.AddSignalR();
 // Register Background Services
 // TODO: These services need to be fixed - commenting out for now
 // builder.Services.AddHostedService<PredictiveAnalyticsService>();
-// builder.Services.AddHostedService<AutomatedAlertService>();
+// builder.Services.AddHostedService<AutomatedAlertService>(); // Disabled - alerts should be condition-based
 // builder.Services.AddHostedService<EquipmentMonitoringService>();
 // builder.Services.AddHostedService<ScheduledMaintenanceService>();
 

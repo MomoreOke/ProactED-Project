@@ -591,6 +591,124 @@
     body.dark-mode .activity-item .activity-time {
         color: var(--text-secondary-dark);
     }
+    
+    /* Enhanced Workflow Status Styles */
+    .workflow-status {
+        padding: 1.5rem 0;
+    }
+    
+    .workflow-step {
+        padding: 1.5rem;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .workflow-step.active {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        border-color: #2196f3;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(33, 150, 243, 0.2);
+    }
+    
+    .step-number {
+        position: absolute;
+        top: -10px;
+        left: 15px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .step-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+        color: #6c757d;
+        transition: color 0.3s ease;
+    }
+    
+    .workflow-step.active .step-icon {
+        color: #2196f3;
+    }
+    
+    .step-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .step-count {
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+    
+    .workflow-progress {
+        margin-top: 2rem;
+        text-align: center;
+    }
+    
+    .progress-line {
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 3px;
+        transition: width 0.5s ease;
+    }
+    
+    .progress-text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    /* Dark mode workflow styles */
+    body.dark-mode .workflow-step {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        color: var(--text-primary-dark);
+    }
+    
+    body.dark-mode .workflow-step.active {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        border-color: #60a5fa;
+    }
+    
+    body.dark-mode .step-title {
+        color: var(--text-primary-dark);
+    }
+    
+    body.dark-mode .step-icon {
+        color: #94a3b8;
+    }
+    
+    body.dark-mode .workflow-step.active .step-icon {
+        color: #60a5fa;
+    }
+    
+    body.dark-mode .progress-line {
+        background: #374151;
+    }
 </style>
 
 <div class="dashboard-container">
@@ -737,6 +855,101 @@
                     </div>
                     <h3 class="metric-value">@Model.LowStockItems</h3>
                     <p class="metric-label">Low Stock</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Workflow Status -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h5 class="content-card-title">
+                            <i class="bi bi-arrow-right-circle text-primary"></i>
+                            Equipment Issue Workflow
+                        </h5>
+                        <small class="text-muted">Complete maintenance workflow from issue detection to resolution</small>
+                    </div>
+                    <div class="content-card-body">
+                        <div class="workflow-status">
+                            <div class="row text-center">
+                                <!-- Step 1: Active Alerts -->
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="workflow-step @(Model.ActiveAlerts > 0 ? "active" : "")">
+                                        <div class="step-number">1</div>
+                                        <div class="step-icon">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="step-title">Active Alerts</div>
+                                        <div class="step-count badge @(Model.ActiveAlerts > 0 ? "bg-danger" : "bg-secondary")">
+                                            @Model.ActiveAlerts
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 2: Pending Tasks -->
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="workflow-step @(Model.PendingTasks > 0 ? "active" : "")">
+                                        <div class="step-number">2</div>
+                                        <div class="step-icon">
+                                            <i class="bi bi-calendar-plus"></i>
+                                        </div>
+                                        <div class="step-title">Pending Tasks</div>
+                                        <div class="step-count badge @(Model.PendingTasks > 0 ? "bg-warning" : "bg-secondary")">
+                                            @Model.PendingTasks
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 3: In Progress -->
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="workflow-step @(Model.InProgressTasks > 0 ? "active" : "")">
+                                        <div class="step-number">3</div>
+                                        <div class="step-icon">
+                                            <i class="bi bi-gear-wide-connected"></i>
+                                        </div>
+                                        <div class="step-title">In Progress</div>
+                                        <div class="step-count badge @(Model.InProgressTasks > 0 ? "bg-info" : "bg-secondary")">
+                                            @Model.InProgressTasks
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 4: Resolved Today -->
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="workflow-step">
+                                        <div class="step-number">4</div>
+                                        <div class="step-icon">
+                                            <i class="bi bi-check-circle"></i>
+                                        </div>
+                                        <div class="step-title">Resolved Today</div>
+                                        <div class="step-count badge @(Model.ResolvedToday > 0 ? "bg-success" : "bg-secondary")">
+                                            @Model.ResolvedToday
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Workflow Progress Indicator -->
+                            <div class="workflow-progress mt-3">
+                                <div class="progress-line">
+                                    <div class="progress-bar" style="width: @(Model.ActiveAlerts > 0 ? (Model.ResolvedToday * 100.0 / (Model.ActiveAlerts + Model.ResolvedToday)) : 100)%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    <small class="text-muted">
+                                        @if (Model.AutoGeneratedTasks > 0)
+                                        {
+                                            <text><i class="bi bi-robot text-primary"></i> @Model.AutoGeneratedTasks auto-generated tasks</text>
+                                        }
+                                        else
+                                        {
+                                            <text><i class="bi bi-info-circle text-info"></i> No automated tasks generated</text>
+                                        }
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

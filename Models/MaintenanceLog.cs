@@ -10,6 +10,7 @@ namespace FEENALOoFINALE.Models
         public int LogId { get; set; }
         
         [Required]
+        [Display(Name = "Equipment")]
         public int EquipmentId { get; set; }
         
         [Required]
@@ -40,6 +41,10 @@ namespace FEENALOoFINALE.Models
 
         public int? AlertId { get; set; }
         public Alert? Alert { get; set; }
+
+        // New property for linking to maintenance task
+        public int? TaskId { get; set; }
+        public MaintenanceTask? Task { get; set; }
 
         // Navigation properties - explicitly exclude from validation
         [ValidateNever]

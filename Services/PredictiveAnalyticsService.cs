@@ -89,17 +89,19 @@ namespace FEENALOoFINALE.Services
         private async Task<FailurePrediction?> AnalyzeEquipmentFailureRisk(Equipment equipment, ApplicationDbContext dbContext)
         {
             // Simple predictive algorithm based on maintenance history and equipment age
-            var recentMaintenanceLogs = equipment.MaintenanceLogs
+            var recentMaintenanceLogs = equipment.MaintenanceLogs?
                 .Where(ml => ml.LogDate >= DateTime.Now.AddDays(-90))
                 .OrderByDescending(ml => ml.LogDate)
-                .ToList();
+                .ToList() ?? new List<MaintenanceLog>();
 
             // Calculate failure probability based on various factors
             double failureProbability = 0.0;
             string riskFactors = "";
 
             // Factor 1: Age of equipment (assuming InstallationDate represents when equipment was put into service)
-            var equipmentAge = (DateTime.Now - equipment.InstallationDate).TotalDays;
+            var equipmentAge = equipment.InstallationDate.HasValue 
+                ? (DateTime.Now - equipment.InstallationDate.Value).TotalDays 
+                : 0; // If no installation date, assume new equipment
             if (equipmentAge > 365 * 5) // Over 5 years old
             {
                 failureProbability += 0.2;

@@ -11,6 +11,7 @@ namespace FEENALOoFINALE.Data
         {
         }
 
+        // Main entities
         public DbSet<Equipment> Equipment { get; set; }
         public DbSet<MaintenanceLog> MaintenanceLogs { get; set; }
         public DbSet<FailurePrediction> FailurePredictions { get; set; }
@@ -63,30 +64,11 @@ namespace FEENALOoFINALE.Data
             modelBuilder.Entity<Alert>()
                 .HasKey(a => a.AlertId);
 
-            modelBuilder.Entity<MaintenanceLog>()
-                .HasOne(ml => ml.Equipment)
-                .WithMany(e => e.MaintenanceLogs)
-                .HasForeignKey(ml => ml.EquipmentId);
-
-            modelBuilder.Entity<FailurePrediction>()
-                .HasOne(fp => fp.Equipment)
-                .WithMany(e => e.FailurePredictions)
-                .HasForeignKey(fp => fp.EquipmentId);
-
-            modelBuilder.Entity<Alert>()
-                .HasOne(a => a.Equipment)
-                .WithMany(e => e.Alerts)
-                .HasForeignKey(a => a.EquipmentId);
-
+            // Legacy relationships (keep for migration compatibility)
             modelBuilder.Entity<InventoryStock>()
                 .HasOne(ist => ist.InventoryItem)
                 .WithMany(ii => ii.InventoryStocks)
                 .HasForeignKey(ist => ist.ItemId);
-
-            modelBuilder.Entity<MaintenanceInventoryLink>()
-                .HasOne(mil => mil.MaintenanceLog)
-                .WithMany(ml => ml.MaintenanceInventoryLinks)
-                .HasForeignKey(mil => mil.LogId);
 
             modelBuilder.Entity<MaintenanceInventoryLink>()
                 .HasOne(mil => mil.InventoryItem)
@@ -105,6 +87,19 @@ namespace FEENALOoFINALE.Data
                 .HasOne(m => m.AssignedTo)
                 .WithMany(u => u.MaintenanceTasks)
                 .HasForeignKey(m => m.AssignedToUserId);
+
+            // Enhanced workflow relationships
+            modelBuilder.Entity<MaintenanceTask>()
+                .HasOne(mt => mt.OriginatingAlert)
+                .WithMany()
+                .HasForeignKey(mt => mt.CreatedFromAlertId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<MaintenanceLog>()
+                .HasOne(ml => ml.Task)
+                .WithMany()
+                .HasForeignKey(ml => ml.TaskId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<InventoryStock>()
                 .Property(s => s.Quantity)

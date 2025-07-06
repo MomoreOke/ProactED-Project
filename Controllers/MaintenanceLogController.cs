@@ -52,7 +52,7 @@ namespace FEENALOoFINALE.Controllers
         // POST: MaintenanceLog/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeHours,AlertId")] MaintenanceLog maintenanceLog)
+        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeHours,AlertId,TaskId")] MaintenanceLog maintenanceLog)
         {
             // Remove any validation errors for DowntimeDuration since we're using DowntimeHours
             ModelState.Remove("DowntimeDuration");
@@ -74,6 +74,19 @@ namespace FEENALOoFINALE.Controllers
                     _context.Add(maintenanceLog);
                     await _context.SaveChangesAsync();
 
+                    // Enhanced workflow completion logic
+                    // Complete linked maintenance task
+                    if (maintenanceLog.TaskId.HasValue)
+                    {
+                        var task = await _context.MaintenanceTasks.FindAsync(maintenanceLog.TaskId.Value);
+                        if (task != null)
+                        {
+                            task.Status = MaintenanceStatus.Completed;
+                            task.CompletedDate = DateTime.Now;
+                            _context.Update(task);
+                        }
+                    }
+
                     // Mark alert as resolved if AlertId is present
                     if (maintenanceLog.AlertId.HasValue)
                     {
@@ -82,10 +95,10 @@ namespace FEENALOoFINALE.Controllers
                         {
                             alert.Status = AlertStatus.Resolved;
                             _context.Update(alert);
-                            await _context.SaveChangesAsync();
                         }
                     }
 
+                    await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)

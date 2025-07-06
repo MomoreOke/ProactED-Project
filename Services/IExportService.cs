@@ -8,7 +8,7 @@ namespace FEENALOoFINALE.Services
         Task<byte[]> ExportDashboardDataToPdf();
         Task<byte[]> ExportCustomReportToExcel(CustomReportTemplate template, DashboardFilterViewModel? filters = null);
         Task<byte[]> ExportCustomReportToPdf(CustomReportTemplate template, DashboardFilterViewModel? filters = null);
-        Task<byte[]> ExportAnalyticsDataToExcel(AdvancedAnalyticsViewModel analytics);
-        Task<byte[]> ExportAnalyticsDataToPdf(AdvancedAnalyticsViewModel analytics);
+        byte[] ExportAnalyticsDataToExcel(AdvancedAnalyticsViewModel analytics);
+        byte[] ExportAnalyticsDataToPdf(AdvancedAnalyticsViewModel analytics);
     }
 }

@@ -108,7 +108,7 @@ namespace FEENALOoFINALE.Services
                     DaysUntilPredictedFailure = (int)(prediction.PredictedFailureDate - DateTime.Now).TotalDays,
                     FinancialImpact = 5000.0, // Default estimated cost
                     RecommendedActions = GenerateRecommendedActions(prediction),
-                    FactorContributions = await GetFactorContributions(prediction.EquipmentId)
+                    FactorContributions = GetFactorContributions(prediction.EquipmentId)
                 };
 
                 analyticsData.Add(data);
@@ -589,7 +589,7 @@ namespace FEENALOoFINALE.Services
             return actions;
         }
 
-        private async Task<Dictionary<string, double>> GetFactorContributions(int equipmentId)
+        private Dictionary<string, double> GetFactorContributions(int equipmentId)
         {
             // This would analyze various factors contributing to failure prediction
             return new Dictionary<string, double>
@@ -648,7 +648,7 @@ namespace FEENALOoFINALE.Services
             return recentAlerts.Cast<object>().ToList();
         }
 
-        private async Task<List<object>> GetRecentEquipmentUpdates()
+        private List<object> GetRecentEquipmentUpdates()
         {
             // This would track recent equipment status changes
             // For now, return empty list

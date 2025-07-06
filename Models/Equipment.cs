@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FEENALOoFINALE.Models
 {
@@ -19,6 +20,11 @@ namespace FEENALOoFINALE.Models
         public int EquipmentModelId { get; set; }
         public EquipmentModel? EquipmentModel { get; set; }
         
+        // Add a non-mapped property for model name input
+        [Display(Name = "Equipment Model")]
+        [NotMapped]
+        public string? EquipmentModelName { get; set; }
+        
         // Remove Location property
         // public required string Location { get; set; }
         
@@ -29,7 +35,7 @@ namespace FEENALOoFINALE.Models
         public int RoomId { get; set; }
         public Room? Room { get; set; }
 
-        public DateTime InstallationDate { get; set; }
+        public DateTime? InstallationDate { get; set; }
         public int ExpectedLifespanMonths { get; set; }
         public EquipmentStatus Status { get; set; }
         public string? Notes { get; set; }

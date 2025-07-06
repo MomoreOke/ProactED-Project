@@ -62,7 +62,7 @@ namespace FEENALOoFINALE.Services
                 try
                 {
                     // Simulate equipment monitoring (in real world, this would connect to IoT sensors)
-                    var monitoringResult = await SimulateEquipmentMonitoring(item);
+                    var monitoringResult = SimulateEquipmentMonitoring(item);
                     
                     if (monitoringResult.StatusChanged)
                     {
@@ -113,7 +113,7 @@ namespace FEENALOoFINALE.Services
             }
         }
 
-        private async Task<EquipmentMonitoringResult> SimulateEquipmentMonitoring(Equipment equipment)
+        private EquipmentMonitoringResult SimulateEquipmentMonitoring(Equipment equipment)
         {
             var result = new EquipmentMonitoringResult
             {

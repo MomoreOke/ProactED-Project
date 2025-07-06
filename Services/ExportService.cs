@@ -18,9 +18,6 @@ namespace FEENALOoFINALE.Services
 
         public async Task<byte[]> ExportDashboardDataToExcel()
         {
-            // Set license context for EPPlus
-            OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-
             using var package = new ExcelPackage();
 
             // Dashboard Summary Sheet
@@ -162,7 +159,7 @@ namespace FEENALOoFINALE.Services
                 sheet.Cells[row, 4].Value = eq.Status.ToString();
                 sheet.Cells[row, 5].Value = eq.Building?.BuildingName ?? "N/A";
                 sheet.Cells[row, 6].Value = eq.Room?.RoomName ?? "N/A";
-                sheet.Cells[row, 7].Value = eq.InstallationDate.ToString("yyyy-MM-dd");
+                sheet.Cells[row, 7].Value = eq.InstallationDate?.ToString("yyyy-MM-dd") ?? "Not Set";
             }
 
             sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
@@ -419,8 +416,6 @@ namespace FEENALOoFINALE.Services
         // Advanced reporting methods for Step 9
         public async Task<byte[]> ExportCustomReportToExcel(CustomReportTemplate template, DashboardFilterViewModel? filters = null)
         {
-            OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add(template.Name);
 
@@ -526,36 +521,34 @@ namespace FEENALOoFINALE.Services
             return memoryStream.ToArray();
         }
 
-        public async Task<byte[]> ExportAnalyticsDataToExcel(AdvancedAnalyticsViewModel analytics)
+        public byte[] ExportAnalyticsDataToExcel(AdvancedAnalyticsViewModel analytics)
         {
-            OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-
             using var package = new ExcelPackage();
 
             // Performance Metrics Sheet
             var performanceSheet = package.Workbook.Worksheets.Add("Performance Metrics");
-            await CreatePerformanceMetricsSheet(performanceSheet, analytics.EquipmentPerformance);
+            CreatePerformanceMetricsSheet(performanceSheet, analytics.EquipmentPerformance);
 
             // KPIs Sheet
             var kpiSheet = package.Workbook.Worksheets.Add("KPIs");
-            await CreateKPISheet(kpiSheet, analytics.KPIProgress);
+            CreateKPISheet(kpiSheet, analytics.KPIProgress);
 
             // Predictive Analytics Sheet
             var predictiveSheet = package.Workbook.Worksheets.Add("Predictive Analytics");
-            await CreatePredictiveAnalyticsSheet(predictiveSheet, analytics.PredictiveInsights);
+            CreatePredictiveAnalyticsSheet(predictiveSheet, analytics.PredictiveInsights);
 
             // Trend Analysis Sheet
             var trendSheet = package.Workbook.Worksheets.Add("Trend Analysis");
-            await CreateTrendAnalysisSheet(trendSheet, analytics.MaintenanceTrends);
+            CreateTrendAnalysisSheet(trendSheet, analytics.MaintenanceTrends);
 
             // Cost Analysis Sheet
             var costSheet = package.Workbook.Worksheets.Add("Cost Analysis");
-            await CreateCostAnalysisSheet(costSheet, analytics.CostAnalysis);
+            CreateCostAnalysisSheet(costSheet, analytics.CostAnalysis);
 
             return package.GetAsByteArray();
         }
 
-        public async Task<byte[]> ExportAnalyticsDataToPdf(AdvancedAnalyticsViewModel analytics)
+        public byte[] ExportAnalyticsDataToPdf(AdvancedAnalyticsViewModel analytics)
         {
             using var memoryStream = new MemoryStream();
             var document = new Document(PageSize.A4, 25, 25, 30, 30);
@@ -582,11 +575,11 @@ namespace FEENALOoFINALE.Services
             document.Add(dateInfo);
 
             // Add analytics sections
-            await AddPerformanceMetricsToPdf(document, analytics.EquipmentPerformance);
-            await AddKPIsToPdf(document, analytics.KPIProgress);
-            await AddPredictiveAnalyticsToPdf(document, analytics.PredictiveInsights);
-            await AddTrendAnalysisToPdf(document, analytics.MaintenanceTrends);
-            await AddCostAnalysisToPdf(document, analytics.CostAnalysis);
+            AddPerformanceMetricsToPdf(document, analytics.EquipmentPerformance);
+            AddKPIsToPdf(document, analytics.KPIProgress);
+            AddPredictiveAnalyticsToPdf(document, analytics.PredictiveInsights);
+            AddTrendAnalysisToPdf(document, analytics.MaintenanceTrends);
+            AddCostAnalysisToPdf(document, analytics.CostAnalysis);
 
             document.Close();
             return memoryStream.ToArray();
@@ -807,7 +800,7 @@ namespace FEENALOoFINALE.Services
         }
 
         // Analytics sheet creation methods
-        private async Task CreatePerformanceMetricsSheet(ExcelWorksheet sheet, List<EquipmentPerformanceMetrics> metrics)
+        private void CreatePerformanceMetricsSheet(ExcelWorksheet sheet, List<EquipmentPerformanceMetrics> metrics)
         {
             sheet.Cells[1, 1].Value = "Equipment Performance Metrics";
             sheet.Cells[1, 1].Style.Font.Bold = true;
@@ -838,7 +831,7 @@ namespace FEENALOoFINALE.Services
             sheet.Cells.AutoFitColumns();
         }
 
-        private async Task CreateKPISheet(ExcelWorksheet sheet, List<KPIProgressIndicator> kpis)
+        private void CreateKPISheet(ExcelWorksheet sheet, List<KPIProgressIndicator> kpis)
         {
             sheet.Cells[1, 1].Value = "Key Performance Indicators";
             sheet.Cells[1, 1].Style.Font.Bold = true;
@@ -867,7 +860,7 @@ namespace FEENALOoFINALE.Services
             sheet.Cells.AutoFitColumns();
         }
 
-        private async Task CreatePredictiveAnalyticsSheet(ExcelWorksheet sheet, List<PredictiveAnalyticsData> analytics)
+        private void CreatePredictiveAnalyticsSheet(ExcelWorksheet sheet, List<PredictiveAnalyticsData> analytics)
         {
             sheet.Cells[1, 1].Value = "Predictive Analytics";
             sheet.Cells[1, 1].Style.Font.Bold = true;
@@ -896,7 +889,7 @@ namespace FEENALOoFINALE.Services
             sheet.Cells.AutoFitColumns();
         }
 
-        private async Task CreateTrendAnalysisSheet(ExcelWorksheet sheet, List<MaintenanceTrendData> trendData)
+        private void CreateTrendAnalysisSheet(ExcelWorksheet sheet, List<MaintenanceTrendData> trendData)
         {
             sheet.Cells[1, 1].Value = "Maintenance Trend Analysis";
             sheet.Cells[1, 1].Style.Font.Bold = true;
@@ -927,7 +920,7 @@ namespace FEENALOoFINALE.Services
             sheet.Cells.AutoFitColumns();
         }
 
-        private async Task CreateCostAnalysisSheet(ExcelWorksheet sheet, List<CostAnalysisData> costData)
+        private void CreateCostAnalysisSheet(ExcelWorksheet sheet, List<CostAnalysisData> costData)
         {
             sheet.Cells[1, 1].Value = "Cost Analysis";
             sheet.Cells[1, 1].Style.Font.Bold = true;
@@ -961,7 +954,7 @@ namespace FEENALOoFINALE.Services
         }
 
         // PDF analytics methods
-        private async Task AddPerformanceMetricsToPdf(Document document, List<EquipmentPerformanceMetrics> metrics)
+        private void AddPerformanceMetricsToPdf(Document document, List<EquipmentPerformanceMetrics> metrics)
         {
             var sectionTitle = new Paragraph("Equipment Performance Metrics", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 14))
             {
@@ -997,7 +990,7 @@ namespace FEENALOoFINALE.Services
             document.Add(new Paragraph(" ") { SpacingAfter = 10 });
         }
 
-        private async Task AddKPIsToPdf(Document document, List<KPIProgressIndicator> kpis)
+        private void AddKPIsToPdf(Document document, List<KPIProgressIndicator> kpis)
         {
             var sectionTitle = new Paragraph("Key Performance Indicators", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 14))
             {
@@ -1031,7 +1024,7 @@ namespace FEENALOoFINALE.Services
             document.Add(new Paragraph(" ") { SpacingAfter = 10 });
         }
 
-        private async Task AddPredictiveAnalyticsToPdf(Document document, List<PredictiveAnalyticsData> analytics)
+        private void AddPredictiveAnalyticsToPdf(Document document, List<PredictiveAnalyticsData> analytics)
         {
             var sectionTitle = new Paragraph("Predictive Analytics", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 14))
             {
@@ -1063,7 +1056,7 @@ namespace FEENALOoFINALE.Services
             document.Add(new Paragraph(" ") { SpacingAfter = 10 });
         }
 
-        private async Task AddTrendAnalysisToPdf(Document document, List<MaintenanceTrendData> trendData)
+        private void AddTrendAnalysisToPdf(Document document, List<MaintenanceTrendData> trendData)
         {
             var sectionTitle = new Paragraph("Maintenance Trend Analysis", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 14))
             {
@@ -1099,7 +1092,7 @@ namespace FEENALOoFINALE.Services
             document.Add(new Paragraph(" ") { SpacingAfter = 10 });
         }
 
-        private async Task AddCostAnalysisToPdf(Document document, List<CostAnalysisData> costData)
+        private void AddCostAnalysisToPdf(Document document, List<CostAnalysisData> costData)
         {
             var sectionTitle = new Paragraph("Cost Analysis", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 14))
             {

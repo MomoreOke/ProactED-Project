@@ -1,0 +1,64 @@
+@{
+    ViewData["Title"] = "Test Clear Criteria";
+    var testResults = ViewBag.TestResults as List<dynamic> ?? new List<dynamic>();
+}
+
+<h1>Test: What Would Be Cleared</h1>
+
+<div class="alert alert-info">
+    <h5>Analysis Results:</h5>
+    <ul>
+        <li><strong>Total Alerts:</strong> @ViewBag.TotalAlerts</li>
+        <li><strong>Would Be Cleared:</strong> @ViewBag.WouldClear</li>
+        <li><strong>Would Remain:</strong> @(ViewBag.TotalAlerts - ViewBag.WouldClear)</li>
+    </ul>
+</div>
+
+@if (testResults.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Created Date</th>
+                <th>Assigned To</th>
+                <th>Would Be Cleared?</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var result in testResults)
+            {
+                <tr class="@(result.WouldBeCleared ? "table-warning" : "table-light")">
+                    <td>@result.Id</td>
+                    <td>@result.Title</td>
+                    <td>@result.Description</td>
+                    <td>@result.CreatedDate</td>
+                    <td>@result.AssignedToUserId</td>
+                    <td>
+                        @if (result.WouldBeCleared)
+                        {
+                            <span class="badge bg-warning">YES - Would Clear</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">NO - Would Keep</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-warning">
+        <strong>No alerts found to analyze.</strong>
+    </div>
+}
+
+<div class="mt-3">
+    <a asp-action="DebugAlerts" class="btn btn-secondary me-2">Back to Debug</a>
+    <a asp-action="Index" class="btn btn-primary">Back to Alerts</a>
+</div>

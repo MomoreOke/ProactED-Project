@@ -70,6 +70,9 @@ namespace FEENALOoFINALE.Services
                 dbContext.Alerts.AddRange(newAlerts);
                 await dbContext.SaveChangesAsync();
 
+                // NEW: Auto-create maintenance tasks for critical alerts
+                await AutoCreateMaintenanceTasksFromAlerts(dbContext, newAlerts);
+
                 // Notify clients about new alerts
                 await _hubContext.Clients.All.SendAsync("NewAlerts", newAlerts.Count);
 
@@ -174,8 +177,10 @@ namespace FEENALOoFINALE.Services
 
                         newAlerts.Add(new Alert
                         {
+                            // For inventory alerts, we set InventoryItemId instead of EquipmentId
                             InventoryItemId = item.ItemId,
                             Priority = priority,
+                            Title = $"Inventory Alert - {item.Name}",
                             Description = $"Inventory item {item.Name} is {stockStatus} (Current: {currentStock}, Minimum: {item.MinimumStockLevel})",
                             CreatedDate = DateTime.Now,
                             Status = AlertStatus.Open
@@ -227,7 +232,7 @@ namespace FEENALOoFINALE.Services
 
             foreach (var item in equipment)
             {
-                var lastMaintenance = item.MaintenanceLogs
+                var lastMaintenance = item.MaintenanceLogs?
                     .OrderByDescending(ml => ml.LogDate)
                     .FirstOrDefault();
 
@@ -263,6 +268,83 @@ namespace FEENALOoFINALE.Services
                     }
                 }
             }
+        }
+
+        private async Task AutoCreateMaintenanceTasksFromAlerts(ApplicationDbContext dbContext, List<Alert> newAlerts)
+        {
+            var maintenanceTasks = new List<MaintenanceTask>();
+            
+            foreach (var alert in newAlerts.Where(a => a.Priority == AlertPriority.High || a.Priority == AlertPriority.Medium))
+            {
+                if (alert.EquipmentId.HasValue)
+                {
+                    // Check if we already have a pending task for this equipment
+                    var existingTask = await dbContext.MaintenanceTasks
+                        .Where(mt => mt.EquipmentId == alert.EquipmentId.Value && 
+                                    mt.Status == MaintenanceStatus.Pending)
+                        .FirstOrDefaultAsync();
+
+                    if (existingTask == null)
+                    {
+                        // Create corresponding maintenance task
+                        var task = new MaintenanceTask
+                        {
+                            EquipmentId = alert.EquipmentId.Value,
+                            Description = GenerateTaskDescription(alert),
+                            ScheduledDate = DateTime.Now.AddDays(GetMaintenanceUrgency(alert.Priority)),
+                            Status = MaintenanceStatus.Pending,
+                            CreatedFromAlertId = alert.AlertId,  // Link back to original alert
+                            Priority = MapAlertPriorityToTaskPriority(alert.Priority)  // Set task priority
+                        };
+                        
+                        maintenanceTasks.Add(task);
+                    }
+                }
+            }
+            
+            if (maintenanceTasks.Any())
+            {
+                dbContext.MaintenanceTasks.AddRange(maintenanceTasks);
+                await dbContext.SaveChangesAsync();
+                
+                // Notify dashboard of new pending tasks
+                await _hubContext.Clients.All.SendAsync("NewMaintenanceTasksFromAlerts", maintenanceTasks.Count);
+                _logger.LogInformation("Auto-created {Count} maintenance tasks from alerts", maintenanceTasks.Count);
+            }
+        }
+
+        private int GetMaintenanceUrgency(AlertPriority priority)
+        {
+            return priority switch
+            {
+                AlertPriority.High => 1,     // Schedule for tomorrow
+                AlertPriority.Medium => 3,   // Schedule for 3 days
+                AlertPriority.Low => 7,      // Schedule for 1 week
+                _ => 7
+            };
+        }
+
+        private string GenerateTaskDescription(Alert alert)
+        {
+            return alert.Description switch
+            {
+                var desc when desc.Contains("overdue maintenance") => "Perform overdue maintenance inspection",
+                var desc when desc.Contains("inactive") => "Investigate equipment status and restore operation",
+                var desc when desc.Contains("failure prediction") => "Conduct preventive maintenance to avoid failure",
+                var desc when desc.Contains("inventory") => "Check parts availability and restock if needed",
+                _ => $"Address equipment issue: {alert.Description}"
+            };
+        }
+
+        private TaskPriority MapAlertPriorityToTaskPriority(AlertPriority alertPriority)
+        {
+            return alertPriority switch
+            {
+                AlertPriority.High => TaskPriority.High,
+                AlertPriority.Medium => TaskPriority.Medium,
+                AlertPriority.Low => TaskPriority.Low,
+                _ => TaskPriority.Low
+            };
         }
     }
 }

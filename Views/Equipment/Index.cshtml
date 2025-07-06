@@ -18,8 +18,11 @@
         <p class="text-muted">Manage and monitor all equipment in your facility</p>
     </div>
     <div>
-        <a asp-action="Create" class="btn btn-primary btn-lg">
+        <a asp-action="Create" class="btn btn-primary btn-lg me-2">
             <i class="bi bi-plus-circle me-2"></i>Add New Equipment
+        </a>
+        <a asp-action="CheckMaintenanceOverdue" class="btn btn-warning btn-lg">
+            <i class="bi bi-exclamation-triangle me-2"></i>Check Maintenance
         </a>
     </div>
 </div>

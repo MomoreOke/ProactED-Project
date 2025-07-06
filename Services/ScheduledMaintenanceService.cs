@@ -83,7 +83,9 @@ namespace FEENALOoFINALE.Services
                         : 365; // Assume 1 year if no maintenance history
 
                     // Determine if maintenance is needed based on equipment age and last maintenance
-                    var equipmentAge = (DateTime.Now - item.InstallationDate).TotalDays;
+                    var equipmentAge = item.InstallationDate.HasValue 
+                        ? (DateTime.Now - item.InstallationDate.Value).TotalDays 
+                        : 0; // If no installation date, assume new equipment
                     var maintenanceInterval = DetermineMaintenanceInterval(equipmentAge);
 
                     if (daysSinceLastMaintenance >= maintenanceInterval)
@@ -203,7 +205,9 @@ namespace FEENALOoFINALE.Services
                         .OrderByDescending(ml => ml.LogDate)
                         .FirstOrDefault();
 
-                    var equipmentAge = (DateTime.Now - item.InstallationDate).TotalDays;
+                    var equipmentAge = item.InstallationDate.HasValue 
+                        ? (DateTime.Now - item.InstallationDate.Value).TotalDays 
+                        : 0; // If no installation date, assume new equipment
                     var maintenanceInterval = DetermineMaintenanceInterval(equipmentAge);
 
                     // Schedule next maintenance

@@ -84,6 +84,10 @@ namespace FEENALOoFINALE.Controllers
                         _context.InventoryStocks.Add(stock);
                         await _context.SaveChangesAsync();
                     }
+
+                    // Check if an alert should be generated for the new inventory item
+                    await GenerateInventoryAlert(item, model.InitialStock);
+
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -222,6 +226,55 @@ namespace FEENALOoFINALE.Controllers
         private bool InventoryItemExists(int id)
         {
             return _context.InventoryItems.Any(e => e.ItemId == id);
+        }
+
+        private async Task GenerateInventoryAlert(InventoryItem item, int initialStock)
+        {
+            string? alertTitle = null;
+            string? alertDescription = null;
+            AlertPriority priority = AlertPriority.Low;
+
+            // Check if the new inventory item needs an alert
+            if (initialStock <= item.MinimumStockLevel)
+            {
+                if (initialStock == 0)
+                {
+                    alertTitle = "New Inventory Item - Out of Stock";
+                    alertDescription = $"New inventory item '{item.Name}' has been added with zero stock. Please add inventory.";
+                    priority = AlertPriority.High;
+                }
+                else
+                {
+                    alertTitle = "New Inventory Item - Low Stock";
+                    alertDescription = $"New inventory item '{item.Name}' has been added with low stock. Current: {initialStock}, Minimum: {item.MinimumStockLevel}";
+                    priority = AlertPriority.High;
+                }
+            }
+            else
+            {
+                // Optional: Create a notification for new inventory items
+                alertTitle = "New Inventory Item Added";
+                alertDescription = $"New inventory item '{item.Name}' has been successfully added to the system with {initialStock} units in stock.";
+                priority = AlertPriority.Low;
+            }
+
+            // Create alert if one is needed
+            if (!string.IsNullOrEmpty(alertTitle) && !string.IsNullOrEmpty(alertDescription))
+            {
+                var alert = new Alert
+                {
+                    Title = alertTitle,
+                    Description = alertDescription,
+                    Priority = priority,
+                    Status = AlertStatus.Open,
+                    CreatedDate = DateTime.Now,
+                    InventoryItemId = item.ItemId,
+                    AssignedToUserId = null // Can be assigned later
+                };
+
+                _context.Alerts.Add(alert);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

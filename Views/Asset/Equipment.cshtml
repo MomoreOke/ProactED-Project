@@ -1,0 +1,214 @@
+@model IEnumerable<FEENALOoFINALE.Models.Equipment>
+@using FEENALOoFINALE.Models
+
+@{
+    ViewData["Title"] = "Equipment Assets";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Asset")">Assets</a></li>
+                    <li class="breadcrumb-item active">Equipment</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 mb-0">Equipment Assets</h1>
+                    <p class="text-muted">Manage all operational equipment</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Create", "Equipment")" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> Add Equipment
+                    </a>
+                    <a href="@Url.Action("Index", "Asset")" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Assets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Equipment Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-gear-wide-connected text-primary" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">@Model.Count()</h5>
+                    <p class="card-text text-muted">Total Equipment</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">@Model.Count(e => e.Status == EquipmentStatus.Active)</h5>
+                    <p class="card-text text-muted">Active</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-pause-circle text-warning" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">@Model.Count(e => e.Status == EquipmentStatus.Inactive)</h5>
+                    <p class="card-text text-muted">Inactive</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-x-circle text-secondary" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">@Model.Count(e => e.Status == EquipmentStatus.Retired)</h5>
+                    <p class="card-text text-muted">Retired</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Equipment Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Equipment List</h5>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm" placeholder="Search equipment..." id="equipmentSearch" style="width: 250px;">
+                            <select class="form-select form-select-sm" id="statusFilter" style="width: 150px;">
+                                <option value="">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="Retired">Retired</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="equipmentTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Equipment Type</th>
+                                        <th>Model</th>
+                                        <th>Location</th>
+                                        <th>Status</th>
+                                        <th>Installation Date</th>
+                                        <th>Last Maintenance</th>
+                                        <th>Alerts</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var equipment in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-gear-wide-connected text-primary me-2"></i>
+                                                    <strong>@equipment.EquipmentType?.EquipmentTypeName</strong>
+                                                </div>
+                                            </td>
+                                            <td>@equipment.EquipmentModel?.ModelName</td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    @equipment.Building?.BuildingName<br>
+                                                    @equipment.Room?.RoomName
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@(equipment.Status == EquipmentStatus.Active ? "success" : equipment.Status == EquipmentStatus.Inactive ? "warning" : "secondary")">
+                                                    @equipment.Status
+                                                </span>
+                                            </td>
+                                            <td>@(equipment.InstallationDate?.ToString("MM/dd/yyyy") ?? "Not Set")</td>
+                                            <td>
+                                                @if (equipment.MaintenanceLogs?.Any() == true)
+                                                {
+                                                    var lastMaintenance = equipment.MaintenanceLogs.OrderByDescending(m => m.LogDate).First();
+                                                    <span>@lastMaintenance.LogDate.ToString("MM/dd/yyyy")</span><br>
+                                                    <small class="text-muted">@lastMaintenance.MaintenanceType</small>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Never</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (equipment.Alerts?.Any(a => a.Status == AlertStatus.Open) == true)
+                                                {
+                                                    var openAlerts = equipment.Alerts.Where(a => a.Status == AlertStatus.Open).Count();
+                                                    <span class="badge bg-danger">@openAlerts</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">0</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="@Url.Action("Details", "Equipment", new { id = equipment.EquipmentId })" class="btn btn-outline-primary" title="View Details">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Edit", "Equipment", new { id = equipment.EquipmentId })" class="btn btn-outline-secondary" title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Create", "MaintenanceLog", new { equipmentId = equipment.EquipmentId })" class="btn btn-outline-success" title="Add Maintenance">
+                                                        <i class="bi bi-tools"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-gear-wide-connected text-muted" style="font-size: 4rem;"></i>
+                            <h5 class="text-muted mt-3">No Equipment Found</h5>
+                            <p class="text-muted">Start by adding your first piece of equipment.</p>
+                            <a href="@Url.Action("Create", "Equipment")" class="btn btn-primary">
+                                <i class="bi bi-plus"></i> Add Equipment
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Search and filter functionality
+        document.getElementById('equipmentSearch').addEventListener('input', filterTable);
+        document.getElementById('statusFilter').addEventListener('change', filterTable);
+
+        function filterTable() {
+            const searchText = document.getElementById('equipmentSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const table = document.getElementById('equipmentTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const text = row.textContent.toLowerCase();
+                const statusCell = row.cells[3].textContent.trim();
+                
+                const matchesSearch = text.includes(searchText);
+                const matchesStatus = !statusFilter || statusCell === statusFilter;
+                
+                row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+            }
+        }
+    </script>
+}

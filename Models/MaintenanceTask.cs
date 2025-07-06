@@ -27,6 +27,20 @@ namespace FEENALOoFINALE.Models
 
         [ForeignKey("AssignedToUserId")]
         public User? AssignedTo { get; set; } // Make nullable if it can be null
+
+        // New properties for enhanced workflow
+        public int? CreatedFromAlertId { get; set; }  // Link to originating alert
+        public Alert? OriginatingAlert { get; set; }  // Navigation property
+        public DateTime? CompletedDate { get; set; }  // When task was completed
+        public TaskPriority Priority { get; set; } = TaskPriority.Medium; // Task priority
+    }
+
+    public enum TaskPriority
+    {
+        Low,
+        Medium,
+        High,
+        Critical
     }
 
     public enum MaintenanceStatus

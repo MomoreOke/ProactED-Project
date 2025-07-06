@@ -6,13 +6,30 @@ namespace FEENALOoFINALE.Models
     {
         [Key]
         public int AlertId { get; set; }
+        
+        [Display(Name = "Equipment")]
         public int? EquipmentId { get; set; }
+        
+        [Display(Name = "Inventory Item")]
         public int? InventoryItemId { get; set; }
+        
+        [Display(Name = "Title")]
         public string? Title { get; set; }
+        
+        [Required]
+        [Display(Name = "Description")]
         public required string Description { get; set; }
+        
+        [Display(Name = "Priority")]
         public AlertPriority Priority { get; set; }
+        
+        [Display(Name = "Status")]
         public AlertStatus Status { get; set; }
+        
+        [Display(Name = "Created Date")]
         public DateTime CreatedDate { get; set; }
+        
+        [Display(Name = "Assigned To")]
         public string? AssignedToUserId { get; set; }
 
         // Navigation properties
