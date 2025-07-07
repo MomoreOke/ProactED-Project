@@ -46,8 +46,26 @@ namespace FEENALOoFINALE.Data
             modelBuilder.Entity<Room>()
                 .HasKey(r => r.RoomId);
 
-            modelBuilder.Entity<MaintenanceLog>()
-                .HasKey(ml => ml.LogId);
+            // MaintenanceLog configuration - consolidated
+            modelBuilder.Entity<MaintenanceLog>(entity =>
+            {
+                entity.HasKey(ml => ml.LogId);
+                
+                entity.HasOne(ml => ml.Equipment)
+                    .WithMany(e => e.MaintenanceLogs)
+                    .HasForeignKey(ml => ml.EquipmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(ml => ml.Task)
+                    .WithMany()
+                    .HasForeignKey(ml => ml.TaskId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(ml => ml.Alert)
+                    .WithMany()
+                    .HasForeignKey(ml => ml.AlertId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
 
             modelBuilder.Entity<FailurePrediction>()
                 .HasKey(fp => fp.PredictionId);
@@ -93,12 +111,6 @@ namespace FEENALOoFINALE.Data
                 .HasOne(mt => mt.OriginatingAlert)
                 .WithMany()
                 .HasForeignKey(mt => mt.CreatedFromAlertId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            modelBuilder.Entity<MaintenanceLog>()
-                .HasOne(ml => ml.Task)
-                .WithMany()
-                .HasForeignKey(ml => ml.TaskId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<InventoryStock>()
