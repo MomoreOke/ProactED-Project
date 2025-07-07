@@ -258,11 +258,26 @@ namespace FEENALOoFINALE.Controllers
             }
 
             var equipment = await _context.Equipment
+                .Include(e => e.EquipmentType)
+                .Include(e => e.EquipmentModel)
+                .Include(e => e.Building)
+                .Include(e => e.Room)
                 .FirstOrDefaultAsync(m => m.EquipmentId == id);
+            
             if (equipment == null)
             {
                 return NotFound();
             }
+
+            // Count related data that will be deleted
+            var relatedAlertsCount = await _context.Alerts.CountAsync(a => a.EquipmentId == id);
+            var relatedMaintenanceLogsCount = await _context.MaintenanceLogs.CountAsync(ml => ml.EquipmentId == id);
+            var relatedFailurePredictionsCount = await _context.FailurePredictions.CountAsync(fp => fp.EquipmentId == id);
+
+            ViewBag.RelatedAlertsCount = relatedAlertsCount;
+            ViewBag.RelatedMaintenanceLogsCount = relatedMaintenanceLogsCount;
+            ViewBag.RelatedFailurePredictionsCount = relatedFailurePredictionsCount;
+            ViewBag.HasRelatedData = relatedAlertsCount > 0 || relatedMaintenanceLogsCount > 0 || relatedFailurePredictionsCount > 0;
 
             return View(equipment);
         }
@@ -272,12 +287,70 @@ namespace FEENALOoFINALE.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var equipment = await _context.Equipment.FindAsync(id);
-            if (equipment != null)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
+                var equipment = await _context.Equipment.FindAsync(id);
+                if (equipment == null)
+                {
+                    TempData["ErrorMessage"] = "Equipment not found.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Delete related alerts first
+                var relatedAlerts = await _context.Alerts
+                    .Where(a => a.EquipmentId == id)
+                    .ToListAsync();
+                
+                if (relatedAlerts.Any())
+                {
+                    _context.Alerts.RemoveRange(relatedAlerts);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Delete related maintenance logs
+                var relatedMaintenanceLogs = await _context.MaintenanceLogs
+                    .Where(ml => ml.EquipmentId == id)
+                    .ToListAsync();
+                
+                if (relatedMaintenanceLogs.Any())
+                {
+                    _context.MaintenanceLogs.RemoveRange(relatedMaintenanceLogs);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Delete related failure predictions
+                var relatedFailurePredictions = await _context.FailurePredictions
+                    .Where(fp => fp.EquipmentId == id)
+                    .ToListAsync();
+                
+                if (relatedFailurePredictions.Any())
+                {
+                    _context.FailurePredictions.RemoveRange(relatedFailurePredictions);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Finally, delete the equipment
                 _context.Equipment.Remove(equipment);
                 await _context.SaveChangesAsync();
+                
+                await transaction.CommitAsync();
+                
+                TempData["SuccessMessage"] = $"Equipment '{equipment.EquipmentModel?.ModelName ?? "Unknown"}' and all related data have been successfully deleted.";
             }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            {
+                await transaction.RollbackAsync();
+                TempData["ErrorMessage"] = $"Database error while deleting equipment: {dbEx.InnerException?.Message ?? dbEx.Message}";
+                return RedirectToAction(nameof(Delete), new { id = id });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                TempData["ErrorMessage"] = $"Unexpected error deleting equipment: {ex.Message}";
+                return RedirectToAction(nameof(Delete), new { id = id });
+            }
+            
             return RedirectToAction(nameof(Index));
         }
 
@@ -636,6 +709,98 @@ namespace FEENALOoFINALE.Controllers
 
             TempData["SuccessMessage"] = $"Maintenance check completed. {alertsGenerated} alerts generated for overdue maintenance.";
             return RedirectToAction("Index", "Alert");
+        }
+
+        // TEST ACTION: Create test equipment for delete testing
+        // TODO: Remove this action in production
+        [HttpGet]
+        public async Task<IActionResult> CreateTestEquipment()
+        {
+            try
+            {
+                // Get first available equipment type, building, and room
+                var equipmentType = await _context.EquipmentTypes.FirstAsync();
+                var building = await _context.Buildings.FirstAsync();
+                var room = await _context.Rooms.FirstAsync();
+
+                // Create or get test equipment model
+                var testModel = await _context.EquipmentModels
+                    .FirstOrDefaultAsync(m => m.ModelName == "TEST-DELETE-MODEL");
+                
+                if (testModel == null)
+                {
+                    testModel = new EquipmentModel
+                    {
+                        ModelName = "TEST-DELETE-MODEL",
+                        EquipmentTypeId = equipmentType.EquipmentTypeId
+                    };
+                    _context.EquipmentModels.Add(testModel);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Create test equipment
+                var testEquipment = new Equipment
+                {
+                    EquipmentTypeId = equipmentType.EquipmentTypeId,
+                    EquipmentModelId = testModel.EquipmentModelId,
+                    BuildingId = building.BuildingId,
+                    RoomId = room.RoomId,
+                    Status = EquipmentStatus.Active,
+                    InstallationDate = DateTime.Now.AddDays(-30),
+                    ExpectedLifespanMonths = 60,
+                    Notes = "TEST EQUIPMENT - Safe to delete"
+                };
+
+                _context.Equipment.Add(testEquipment);
+                await _context.SaveChangesAsync();
+
+                // Create test alerts
+                var alert1 = new Alert
+                {
+                    EquipmentId = testEquipment.EquipmentId,
+                    Title = "Test Alert 1",
+                    Description = "Test alert for delete functionality - will be deleted with equipment",
+                    Priority = AlertPriority.Medium,
+                    Status = AlertStatus.Open,
+                    CreatedDate = DateTime.Now.AddDays(-5)
+                };
+
+                var alert2 = new Alert
+                {
+                    EquipmentId = testEquipment.EquipmentId,
+                    Title = "Test Alert 2",
+                    Description = "Another test alert - will be deleted with equipment",
+                    Priority = AlertPriority.High,
+                    Status = AlertStatus.InProgress,
+                    CreatedDate = DateTime.Now.AddDays(-3)
+                };
+
+                _context.Alerts.AddRange(alert1, alert2);
+
+                // Create test maintenance log
+                var maintenanceLog = new MaintenanceLog
+                {
+                    EquipmentId = testEquipment.EquipmentId,
+                    LogDate = DateTime.Now.AddDays(-10),
+                    MaintenanceType = MaintenanceType.Preventive,
+                    Description = "Test maintenance log - will be deleted with equipment",
+                    Cost = 150.00m,
+                    Technician = "Test Technician",
+                    Status = MaintenanceStatus.Completed
+                };
+
+                _context.MaintenanceLogs.Add(maintenanceLog);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Test equipment created successfully! Equipment ID: {testEquipment.EquipmentId} with 2 alerts and 1 maintenance log. You can now test the delete functionality.";
+                
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error creating test equipment: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }
