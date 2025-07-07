@@ -82,16 +82,27 @@ namespace FEENALOoFINALE.Data
             modelBuilder.Entity<Alert>()
                 .HasKey(a => a.AlertId);
 
+            // MaintenanceInventoryLink relationship configuration
+            modelBuilder.Entity<MaintenanceInventoryLink>(entity =>
+            {
+                entity.HasKey(mil => mil.LinkId);
+                
+                entity.HasOne(mil => mil.MaintenanceLog)
+                    .WithMany(ml => ml.MaintenanceInventoryLinks)
+                    .HasForeignKey(mil => mil.LogId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(mil => mil.InventoryItem)
+                    .WithMany(ii => ii.MaintenanceInventoryLinks)
+                    .HasForeignKey(mil => mil.ItemId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // Legacy relationships (keep for migration compatibility)
             modelBuilder.Entity<InventoryStock>()
                 .HasOne(ist => ist.InventoryItem)
                 .WithMany(ii => ii.InventoryStocks)
                 .HasForeignKey(ist => ist.ItemId);
-
-            modelBuilder.Entity<MaintenanceInventoryLink>()
-                .HasOne(mil => mil.InventoryItem)
-                .WithMany(ii => ii.MaintenanceInventoryLinks)
-                .HasForeignKey(mil => mil.ItemId);
 
             modelBuilder.Entity<Alert>()
                 .HasOne(a => a.AssignedTo)
