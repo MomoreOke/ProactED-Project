@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
 using FEENALOoFINALE.Models.ViewModels;
+using FEENALOoFINALE.Services;
 using System.Text.Json;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
@@ -14,9 +15,12 @@ namespace FEENALOoFINALE.Controllers
     public class EquipmentController : Controller
     {
         private readonly ApplicationDbContext _context;
-        public EquipmentController(ApplicationDbContext context)
+        private readonly MaintenanceSchedulingService _schedulingService;
+        
+        public EquipmentController(ApplicationDbContext context, MaintenanceSchedulingService schedulingService)
         {
             _context = context;
+            _schedulingService = schedulingService;
         }
 
         // GET: Equipment
@@ -374,8 +378,15 @@ namespace FEENALOoFINALE.Controllers
                 .Include(e => e.EquipmentModel)
                 .Include(e => e.Building)
                 .Include(e => e.Room)
-                .Include(e => e.MaintenanceLogs.OrderByDescending(ml => ml.LogDate))
+                .Include(e => e.MaintenanceLogs)
                 .FirstOrDefaultAsync(m => m.EquipmentId == id);
+
+            if (equipment != null && equipment.MaintenanceLogs != null)
+            {
+                equipment.MaintenanceLogs = equipment.MaintenanceLogs
+                    .OrderByDescending(ml => ml.LogDate)
+                    .ToList();
+            }
 
             if (equipment == null)
             {
@@ -1089,13 +1100,11 @@ namespace FEENALOoFINALE.Controllers
                         // Create maintenance tasks for selected equipment
                         foreach (var item in equipment)
                         {
-                            var maintenanceTask = new MaintenanceTask
-                            {
-                                EquipmentId = item.EquipmentId,
-                                ScheduledDate = DateTime.Now.AddDays(7),
-                                Status = MaintenanceStatus.Pending,
-                                Description = "Scheduled maintenance from bulk action"
-                            };
+                            var maintenanceTask = await _schedulingService.CreateMaintenanceTaskAsync(
+                                item.EquipmentId,
+                                "Scheduled maintenance from bulk action",
+                                TaskPriority.Medium
+                            );
                             _context.MaintenanceTasks.Add(maintenanceTask);
                         }
                         break;

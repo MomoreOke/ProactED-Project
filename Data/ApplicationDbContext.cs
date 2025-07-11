@@ -20,6 +20,7 @@ namespace FEENALOoFINALE.Data
         public DbSet<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; }
         public DbSet<Alert> Alerts { get; set; }
         public DbSet<MaintenanceTask> MaintenanceTasks { get; set; }
+        // public DbSet<EquipmentUsageLog> EquipmentUsageLogs { get; set; }
 
         public DbSet<EquipmentType> EquipmentTypes { get; set; }
         public DbSet<EquipmentModel> EquipmentModels { get; set; }
@@ -172,6 +173,40 @@ namespace FEENALOoFINALE.Data
                 .WithMany(b => b.Rooms)
                 .HasForeignKey(r => r.BuildingId)
                 .IsRequired();
+
+            // EquipmentUsageLog configuration - temporarily commented
+            /*
+            modelBuilder.Entity<EquipmentUsageLog>(entity =>
+            {
+                entity.HasKey(eul => eul.UsageId);
+                
+                entity.HasOne(eul => eul.Equipment)
+                    .WithMany()
+                    .HasForeignKey(eul => eul.EquipmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(eul => eul.HoursUsed)
+                    .HasPrecision(5, 2);
+                
+                entity.Property(eul => eul.TemperatureReading)
+                    .HasPrecision(5, 2);
+                
+                entity.Property(eul => eul.EfficiencyScore)
+                    .HasPrecision(5, 2);
+                
+                entity.Property(eul => eul.PowerConsumption)
+                    .HasPrecision(8, 2);
+                
+                entity.Property(eul => eul.VibrationLevel)
+                    .HasPrecision(3, 2);
+                
+                entity.Property(eul => eul.MemoryUsagePercent)
+                    .HasPrecision(5, 2);
+
+                entity.HasIndex(eul => new { eul.EquipmentId, eul.UsageDate })
+                    .HasDatabaseName("IX_EquipmentUsageLog_Equipment_Date");
+            });
+            */
 
             // Seed Equipment Types
             modelBuilder.Entity<EquipmentType>().HasData(

@@ -42,10 +42,23 @@ builder.Services.AddScoped<IExportService, ExportService>();
 // Register Advanced Analytics Service
 builder.Services.AddScoped<IAdvancedAnalyticsService, AdvancedAnalyticsService>();
 
+// Register Performance Optimization Services (commented out until implementations are ready)
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+// builder.Services.AddScoped<IOptimizedDashboardService, OptimizedDashboardService>();
+builder.Services.AddSingleton<IPerformanceMonitoringService, PerformanceMonitoringService>();
+
+// Register Maintenance Scheduling Service
+builder.Services.AddScoped<MaintenanceSchedulingService>();
+
 // Authentication is handled by ASP.NET Core Identity with cookie authentication
 
 // Add SignalR services
 builder.Services.AddSignalR();
+
+// Register Predictive Maintenance Services (Phase 2)
+// builder.Services.AddScoped<EquipmentUsageTrackingService>(); // Will be added after model integration
+// builder.Services.AddScoped<BasicPredictionService>(); // Will be added after model integration
 
 // Register Background Services
 // TODO: These services need to be fixed - commenting out for now
@@ -53,6 +66,9 @@ builder.Services.AddSignalR();
 // builder.Services.AddHostedService<AutomatedAlertService>(); // Disabled - alerts should be condition-based
 // builder.Services.AddHostedService<EquipmentMonitoringService>();
 // builder.Services.AddHostedService<ScheduledMaintenanceService>();
+
+// Register Enhanced Maintenance Scheduling Background Service (commented out until implementation is ready)
+// builder.Services.AddHostedService<MaintenanceSchedulingBackgroundService>();
 
 // Add Swagger/OpenAPI - TODO: Fix Swagger configuration
 /*

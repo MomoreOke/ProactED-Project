@@ -1,0 +1,478 @@
+@model FEENALOoFINALE.ViewModels.PredictiveMaintenanceViewModel
+@{
+    ViewData["Title"] = "Predictive Maintenance Dashboard";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">🔮 Predictive Maintenance Dashboard</h1>
+                    <p class="text-muted">AI-powered equipment health monitoring and maintenance planning</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary" onclick="refreshPredictions()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh Predictions
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="generateSchedule()">
+                        <i class="bi bi-calendar-plus"></i> Auto-Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Active Equipment
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalActiveEquipment</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-gear-fill text-gray-300" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                High Risk Equipment
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.HighRiskEquipmentCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-exclamation-triangle-fill text-gray-300" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Predicted Failures (30 days)
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PredictedFailuresNext30Days</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-x-fill text-gray-300" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Projected Savings
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">$@Model.ProjectedCostSavings.ToString("N2")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-piggy-bank-fill text-gray-300" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="predictiveTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                        📊 Overview
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="risk-tab" data-bs-toggle="tab" data-bs-target="#risk" type="button" role="tab">
+                        ⚠️ Risk Assessment
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="predictions-tab" data-bs-toggle="tab" data-bs-target="#predictions" type="button" role="tab">
+                        🔮 Predictions
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="planning-tab" data-bs-toggle="tab" data-bs-target="#planning" type="button" role="tab">
+                        📅 Maintenance Planning
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="predictiveTabContent">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+            <div class="row">
+                <!-- Maintenance Recommendations -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">🎯 Maintenance Recommendations</h6>
+                            <div class="dropdown no-arrow">
+                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
+                                    <a class="dropdown-item" href="#" onclick="exportRecommendations()">Export to Excel</a>
+                                    <a class="dropdown-item" href="#" onclick="printRecommendations()">Print Report</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            @if (Model.MaintenanceRecommendations.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Equipment</th>
+                                                <th>Type</th>
+                                                <th>Priority</th>
+                                                <th>Urgency</th>
+                                                <th>Est. Cost</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var recommendation in Model.MaintenanceRecommendations.Take(10))
+                                            {
+                                                <tr>
+                                                    <td>@recommendation.EquipmentName</td>
+                                                    <td>@recommendation.RecommendationType</td>
+                                                    <td>
+                                                        <span class="badge badge-@(recommendation.Priority == "High" ? "danger" : "warning")">
+                                                            @recommendation.Priority
+                                                        </span>
+                                                    </td>
+                                                    <td>@recommendation.Urgency</td>
+                                                    <td>$@recommendation.EstimatedCost.ToString("N2")</td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-primary" onclick="scheduleTask(@recommendation.EquipmentId)">
+                                                            Schedule
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3">All Equipment in Good Health!</h5>
+                                    <p class="text-muted">No immediate maintenance recommendations at this time.</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">📈 Quick Stats</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="small text-gray-500">Equipment Health Score</div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 78%" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="text-success">78% (Good)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="small text-gray-500">Maintenance Efficiency</div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="text-info">85% (Excellent)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="small text-gray-500">Prediction Accuracy</div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 72%" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="text-warning">72% (Improving)</div>
+                            </div>
+
+                            <hr>
+                            <div class="text-center">
+                                <small class="text-muted">
+                                    Last updated: @Model.LastUpdated.ToString("MMM dd, yyyy HH:mm")
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Assessment Tab -->
+        <div class="tab-pane fade" id="risk" role="tabpanel">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">⚠️ Equipment Risk Assessment</h6>
+                </div>
+                <div class="card-body">
+                    <div id="riskAssessmentTable">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading risk assessment data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictions Tab -->
+        <div class="tab-pane fade" id="predictions" role="tabpanel">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">🔮 Failure Predictions</h6>
+                </div>
+                <div class="card-body">
+                    <div id="predictionsTable">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading prediction data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Planning Tab -->
+        <div class="tab-pane fade" id="planning" role="tabpanel">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">📅 Maintenance Planning</h6>
+                </div>
+                <div class="card-body">
+                    <div id="planningData">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading planning data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Load data when tabs are clicked
+        document.getElementById('risk-tab').addEventListener('click', function () {
+            if (!this.dataset.loaded) {
+                loadRiskAssessment();
+                this.dataset.loaded = 'true';
+            }
+        });
+
+        document.getElementById('predictions-tab').addEventListener('click', function () {
+            if (!this.dataset.loaded) {
+                loadPredictions();
+                this.dataset.loaded = 'true';
+            }
+        });
+
+        document.getElementById('planning-tab').addEventListener('click', function () {
+            if (!this.dataset.loaded) {
+                loadPlanning();
+                this.dataset.loaded = 'true';
+            }
+        });
+
+        function loadRiskAssessment() {
+            fetch('/PredictiveMaintenance/GetEquipmentRiskScores')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayRiskAssessment(data.data);
+                    } else {
+                        document.getElementById('riskAssessmentTable').innerHTML = 
+                            '<div class="alert alert-danger">Error loading risk assessment: ' + data.error + '</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('riskAssessmentTable').innerHTML = 
+                        '<div class="alert alert-danger">Network error loading risk assessment</div>';
+                });
+        }
+
+        function loadPredictions() {
+            fetch('/PredictiveMaintenance/GetMaintenancePredictions')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayPredictions(data.data);
+                    } else {
+                        document.getElementById('predictionsTable').innerHTML = 
+                            '<div class="alert alert-danger">Error loading predictions: ' + data.error + '</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('predictionsTable').innerHTML = 
+                        '<div class="alert alert-danger">Network error loading predictions</div>';
+                });
+        }
+
+        function loadPlanning() {
+            // This would load planning data - placeholder for now
+            document.getElementById('planningData').innerHTML = 
+                '<div class="alert alert-info">Maintenance planning feature coming soon!</div>';
+        }
+
+        function displayRiskAssessment(riskData) {
+            let html = '<div class="table-responsive"><table class="table table-bordered"><thead><tr>' +
+                '<th>Equipment</th><th>Type</th><th>Location</th><th>Risk Score</th><th>Risk Level</th><th>Actions</th>' +
+                '</tr></thead><tbody>';
+            
+            riskData.forEach(item => {
+                const riskColor = item.riskLevel === 'High' ? 'danger' : item.riskLevel === 'Medium' ? 'warning' : 'success';
+                html += `<tr>
+                    <td>${item.equipmentName}</td>
+                    <td>${item.equipmentType}</td>
+                    <td>${item.location}</td>
+                    <td>${(item.riskScore * 100).toFixed(1)}%</td>
+                    <td><span class="badge badge-${riskColor}">${item.riskLevel}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewDetails(${item.equipmentId})">Details</button>
+                        <button class="btn btn-sm btn-success" onclick="scheduleTask(${item.equipmentId})">Schedule</button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table></div>';
+            document.getElementById('riskAssessmentTable').innerHTML = html;
+        }
+
+        function displayPredictions(predictions) {
+            let html = '<div class="table-responsive"><table class="table table-bordered"><thead><tr>' +
+                '<th>Equipment</th><th>Predicted Date</th><th>Type</th><th>Confidence</th><th>Est. Cost</th><th>Actions</th>' +
+                '</tr></thead><tbody>';
+            
+            predictions.forEach(item => {
+                const date = new Date(item.predictedMaintenanceDate).toLocaleDateString();
+                html += `<tr>
+                    <td>${item.equipmentName}</td>
+                    <td>${date}</td>
+                    <td>${item.maintenanceType}</td>
+                    <td>${item.confidence.toFixed(1)}%</td>
+                    <td>$${item.estimatedCost.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="scheduleTask(${item.equipmentId})">Schedule</button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table></div>';
+            document.getElementById('predictionsTable').innerHTML = html;
+        }
+
+        function refreshPredictions() {
+            location.reload();
+        }
+
+        function generateSchedule() {
+            if (confirm('Generate automatic maintenance schedule based on predictions?')) {
+                fetch('/PredictiveMaintenance/GenerateAutomaticSchedule', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(`Success! Generated ${data.tasksCreated} maintenance tasks.`);
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => alert('Network error generating schedule'));
+            }
+        }
+
+        function scheduleTask(equipmentId) {
+            // Redirect to maintenance task creation
+            window.location.href = `/MaintenanceLog/Create?equipmentId=${equipmentId}`;
+        }
+
+        function viewDetails(equipmentId) {
+            // Redirect to equipment details
+            window.location.href = `/Equipment/Details/${equipmentId}`;
+        }
+    </script>
+}
+
+<style>
+    .card {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+    }
+    
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    
+    .border-left-danger {
+        border-left: 0.25rem solid #e74a3b !important;
+    }
+    
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    
+    .badge-danger {
+        background-color: #e74a3b;
+    }
+    
+    .badge-warning {
+        background-color: #f6c23e;
+    }
+    
+    .badge-success {
+        background-color: #1cc88a;
+    }
+</style>

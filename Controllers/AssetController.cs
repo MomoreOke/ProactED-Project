@@ -290,7 +290,7 @@ namespace FEENALOoFINALE.Controllers
                     
                     inventoryQuery = inventoryQuery.Where(i => 
                         i.Name.Contains(search) ||
-                        i.Description.Contains(search));
+                        (i.Description != null && i.Description.Contains(search)));
                 }
 
                 // Apply type filter

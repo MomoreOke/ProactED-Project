@@ -93,10 +93,10 @@ namespace FEENALOoFINALE.Controllers
                 var currentUser = await _userManager.GetUserAsync(User);
                 
                 // Generate the report
-                var reportData = await GenerateReportData(model);
+                var reportData = GenerateReportData(model);
                 
                 // Save report metadata
-                var reportId = await SaveReportMetadata(model, currentUser?.Id ?? "", reportData);
+                var reportId = SaveReportMetadata(model, currentUser?.Id ?? "", reportData);
                 
                 return Json(new { 
                     success = true, 
@@ -118,7 +118,7 @@ namespace FEENALOoFINALE.Controllers
         {
             try
             {
-                var reportData = await GetReportData(reportId);
+                var reportData = GetReportData(reportId);
                 if (reportData == null)
                 {
                     return NotFound("Report not found");
@@ -476,19 +476,19 @@ namespace FEENALOoFINALE.Controllers
             };
         }
 
-        private async Task<object> GenerateReportData(ReportBuilderViewModel model)
+        private object GenerateReportData(ReportBuilderViewModel model)
         {
             // Mock implementation - would generate actual report data based on model configuration
             return new { Message = "Report data generated", Timestamp = DateTime.Now };
         }
 
-        private async Task<int> SaveReportMetadata(ReportBuilderViewModel model, string userId, object reportData)
+        private int SaveReportMetadata(ReportBuilderViewModel model, string userId, object reportData)
         {
             // Mock implementation - would save to database
             return new Random().Next(1000, 9999);
         }
 
-        private async Task<object> GetReportData(int reportId)
+        private object GetReportData(int reportId)
         {
             // Mock implementation - would retrieve from database
             return new { ReportId = reportId, Data = "Sample report data" };

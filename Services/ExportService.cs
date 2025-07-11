@@ -1244,26 +1244,26 @@ namespace FEENALOoFINALE.Services
                 switch (format.ToLower())
                 {
                     case "pdf":
-                        result.Data = await GenerateReportPdfAsync(jsonData, reportData);
+                        result.Data = await Task.Run(() => GenerateReportPdfAsync(jsonData, reportData));
                         result.ContentType = "application/pdf";
                         result.FileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                         break;
                         
                     case "excel":
                     case "xlsx":
-                        result.Data = await GenerateReportExcelAsync(jsonData, reportData);
+                        result.Data = await Task.Run(() => GenerateReportExcelAsync(jsonData, reportData));
                         result.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                         result.FileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                         break;
                         
                     case "csv":
-                        result.Data = await GenerateReportCsvAsync(jsonData, reportData);
+                        result.Data = await Task.Run(() => GenerateReportCsvAsync(jsonData, reportData));
                         result.ContentType = "text/csv";
                         result.FileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
                         break;
                         
                     case "json":
-                        result.Data = System.Text.Encoding.UTF8.GetBytes(jsonData);
+                        result.Data = await Task.Run(() => System.Text.Encoding.UTF8.GetBytes(jsonData));
                         result.ContentType = "application/json";
                         result.FileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.json";
                         break;
@@ -1285,7 +1285,7 @@ namespace FEENALOoFINALE.Services
             }
         }
 
-        private async Task<byte[]> GenerateReportPdfAsync(string jsonData, object reportData)
+        private byte[] GenerateReportPdfAsync(string jsonData, object reportData)
         {
             using var memoryStream = new MemoryStream();
             var document = new Document(PageSize.A4, 25, 25, 30, 30);
@@ -1328,7 +1328,7 @@ namespace FEENALOoFINALE.Services
             return memoryStream.ToArray();
         }
 
-        private async Task<byte[]> GenerateReportExcelAsync(string jsonData, object reportData)
+        private byte[] GenerateReportExcelAsync(string jsonData, object reportData)
         {
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Report Data");
@@ -1352,7 +1352,7 @@ namespace FEENALOoFINALE.Services
             return package.GetAsByteArray();
         }
 
-        private async Task<byte[]> GenerateReportCsvAsync(string jsonData, object reportData)
+        private byte[] GenerateReportCsvAsync(string jsonData, object reportData)
         {
             var csv = new System.Text.StringBuilder();
             csv.AppendLine("Field,Value");

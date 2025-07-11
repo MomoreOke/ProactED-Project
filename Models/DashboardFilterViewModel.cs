@@ -138,6 +138,7 @@ namespace FEENALOoFINALE.Models
         public List<SavedDashboardView> SavedViews { get; set; } = new();
         public bool IsFiltered => Filters.HasActiveFilters();
         public string CurrentViewName { get; set; } = "Default View";
+        public long LoadTimeMs { get; set; }
         
         // Additional analytics data for filtered results
         public new Dictionary<string, object> FilteredAnalytics { get; set; } = new();

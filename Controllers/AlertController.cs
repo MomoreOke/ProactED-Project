@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
+using FEENALOoFINALE.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Identity;
@@ -13,11 +14,13 @@ namespace FEENALOoFINALE.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly MaintenanceSchedulingService _schedulingService;
 
-        public AlertController(ApplicationDbContext context, UserManager<User> userManager)
+        public AlertController(ApplicationDbContext context, UserManager<User> userManager, MaintenanceSchedulingService schedulingService)
         {
             _context = context;
             _userManager = userManager;
+            _schedulingService = schedulingService;
         }
 
         // GET: Alert
@@ -227,18 +230,16 @@ namespace FEENALOoFINALE.Controllers
 
             var currentUser = await _userManager.GetUserAsync(User);
             
-            // Create a MaintenanceTask from the alert
-            var maintenanceTask = new MaintenanceTask
-            {
-                EquipmentId = alert.EquipmentId ?? 0, // Default to 0 if no equipment
-                ScheduledDate = DateTime.Now,
-                Status = MaintenanceStatus.Pending,
-                Description = $"Maintenance required: {alert.Title}",
-                AssignedToUserId = currentUser?.Id,
-                CreatedFromAlertId = alert.AlertId,
-                Priority = alert.Priority == AlertPriority.High ? TaskPriority.Critical :
-                          alert.Priority == AlertPriority.Medium ? TaskPriority.High : TaskPriority.Medium
-            };
+            // Create a properly scheduled and assigned MaintenanceTask from the alert
+            var priority = alert.Priority == AlertPriority.High ? TaskPriority.Critical :
+                          alert.Priority == AlertPriority.Medium ? TaskPriority.High : TaskPriority.Medium;
+
+            var maintenanceTask = await _schedulingService.CreateMaintenanceTaskAsync(
+                alert.EquipmentId ?? 0,
+                $"Maintenance required: {alert.Title}",
+                priority,
+                alert.AlertId
+            );
 
             _context.MaintenanceTasks.Add(maintenanceTask);
             await _context.SaveChangesAsync();
