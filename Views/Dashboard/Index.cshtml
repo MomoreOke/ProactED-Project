@@ -709,6 +709,102 @@
     body.dark-mode .progress-line {
         background: #374151;
     }
+
+    /* Analytics Cards Styles */
+    .analytics-card {
+        background: linear-gradient(135deg, #ffffff, #f8f9fa);
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+        padding: 1.5rem;
+    }
+    
+    .analytics-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 45px rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .analytics-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .analytics-content {
+        text-align: center;
+    }
+    
+    .analytics-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .analytics-metric {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .analytics-desc {
+        color: #6c757d;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .btn-analytics {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-analytics:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .analytics-actions {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .action-group {
+        margin-bottom: 1rem;
+    }
+    
+    .action-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: #2c3e50;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+    }
 </style>
 
 <div class="dashboard-container">
@@ -859,101 +955,6 @@
             </div>
         </div>
 
-        <!-- Enhanced Workflow Status -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h5 class="content-card-title">
-                            <i class="bi bi-arrow-right-circle text-primary"></i>
-                            Equipment Issue Workflow
-                        </h5>
-                        <small class="text-muted">Complete maintenance workflow from issue detection to resolution</small>
-                    </div>
-                    <div class="content-card-body">
-                        <div class="workflow-status">
-                            <div class="row text-center">
-                                <!-- Step 1: Active Alerts -->
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="workflow-step @(Model.ActiveAlerts > 0 ? "active" : "")">
-                                        <div class="step-number">1</div>
-                                        <div class="step-icon">
-                                            <i class="bi bi-exclamation-triangle"></i>
-                                        </div>
-                                        <div class="step-title">Active Alerts</div>
-                                        <div class="step-count badge @(Model.ActiveAlerts > 0 ? "bg-danger" : "bg-secondary")">
-                                            @Model.ActiveAlerts
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Step 2: Pending Tasks -->
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="workflow-step @(Model.PendingTasks > 0 ? "active" : "")">
-                                        <div class="step-number">2</div>
-                                        <div class="step-icon">
-                                            <i class="bi bi-calendar-plus"></i>
-                                        </div>
-                                        <div class="step-title">Pending Tasks</div>
-                                        <div class="step-count badge @(Model.PendingTasks > 0 ? "bg-warning" : "bg-secondary")">
-                                            @Model.PendingTasks
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Step 3: In Progress -->
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="workflow-step @(Model.InProgressTasks > 0 ? "active" : "")">
-                                        <div class="step-number">3</div>
-                                        <div class="step-icon">
-                                            <i class="bi bi-gear-wide-connected"></i>
-                                        </div>
-                                        <div class="step-title">In Progress</div>
-                                        <div class="step-count badge @(Model.InProgressTasks > 0 ? "bg-info" : "bg-secondary")">
-                                            @Model.InProgressTasks
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Step 4: Resolved Today -->
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="workflow-step">
-                                        <div class="step-number">4</div>
-                                        <div class="step-icon">
-                                            <i class="bi bi-check-circle"></i>
-                                        </div>
-                                        <div class="step-title">Resolved Today</div>
-                                        <div class="step-count badge @(Model.ResolvedToday > 0 ? "bg-success" : "bg-secondary")">
-                                            @Model.ResolvedToday
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Workflow Progress Indicator -->
-                            <div class="workflow-progress mt-3">
-                                <div class="progress-line">
-                                    <div class="progress-bar" style="width: @(Model.ActiveAlerts > 0 ? (Model.ResolvedToday * 100.0 / (Model.ActiveAlerts + Model.ResolvedToday)) : 100)%"></div>
-                                </div>
-                                <div class="progress-text">
-                                    <small class="text-muted">
-                                        @if (Model.AutoGeneratedTasks > 0)
-                                        {
-                                            <text><i class="bi bi-robot text-primary"></i> @Model.AutoGeneratedTasks auto-generated tasks</text>
-                                        }
-                                        else
-                                        {
-                                            <text><i class="bi bi-info-circle text-info"></i> No automated tasks generated</text>
-                                        }
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Quick Actions Row -->
         @if (Model.SuggestedActions?.Any() == true)
         {
@@ -995,157 +996,146 @@
             </div>
         }
 
-        <!-- Charts Row -->
-        <div class="row g-4 mb-4">
-            <!-- Equipment Status Chart -->
-            <div class="col-xl-3 col-lg-6">
+        <!-- Advanced Reports and Analytics -->
+        <div class="row mb-4">
+            <div class="col-12">
                 <div class="content-card">
                     <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-pie-chart text-info"></i>
-                            Equipment Status
-                        </h6>
-                    </div>
-                    <div class="content-card-body text-center">
-                        <canvas id="equipmentStatusChart" width="200" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Maintenance Trends Chart -->
-            <div class="col-xl-6 col-lg-6">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-graph-up text-success"></i>
-                            Maintenance Trends (Last 7 Days)
-                        </h6>
+                        <h5 class="content-card-title">
+                            <i class="bi bi-graph-up text-primary"></i>
+                            Advanced Reports and Analytics
+                        </h5>
+                        <small class="text-muted">Comprehensive reporting and data analysis for maintenance operations</small>
+                        <div class="update-status ms-auto">
+                            <small class="text-info" id="last-update-time">Last updated: Loading...</small>
+                        </div>
                     </div>
                     <div class="content-card-body">
-                        <canvas id="maintenanceTrendsChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
+                        <!-- Report Cards Row -->
+                        <div class="row g-3 mb-4">
+                            <!-- Equipment Analytics -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="analytics-card">
+                                    <div class="analytics-icon">
+                                        <i class="bi bi-gear text-primary"></i>
+                                    </div>
+                                    <div class="analytics-content">
+                                        <h6 class="analytics-title">Equipment Report</h6>
+                                        <div class="analytics-metric" id="analytics-equipment-count">@Model.TotalEquipment</div>
+                                        <p class="analytics-desc">Total equipment tracked</p>
+                                        <a asp-controller="Equipment" asp-action="Index" class="btn-analytics">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
 
-            <!-- Alert Priority Chart -->
-            <div class="col-xl-3 col-lg-6">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-exclamation-triangle text-warning"></i>
-                            Alert Priorities
-                        </h6>
-                    </div>
-                    <div class="content-card-body text-center">
-                        <canvas id="alertPriorityChart" width="200" height="200"></canvas>
+                            <!-- Alerts Analytics -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="analytics-card">
+                                    <div class="analytics-icon">
+                                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                                    </div>
+                                    <div class="analytics-content">
+                                        <h6 class="analytics-title">Alerts Report</h6>
+                                        <div class="analytics-metric" id="analytics-alerts-count">@Model.CriticalAlerts</div>
+                                        <p class="analytics-desc">Critical alerts requiring attention</p>
+                                        <a asp-controller="Alert" asp-action="Index" class="btn-analytics">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Maintenance Analytics -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="analytics-card">
+                                    <div class="analytics-icon">
+                                        <i class="bi bi-wrench text-info"></i>
+                                    </div>
+                                    <div class="analytics-content">
+                                        <h6 class="analytics-title">Maintenance Report</h6>
+                                        <div class="analytics-metric" id="analytics-maintenance-count">@Model.ActiveMaintenanceTasks</div>
+                                        <p class="analytics-desc">Active maintenance tasks</p>
+                                        <a asp-controller="MaintenanceLog" asp-action="Index" class="btn-analytics">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Performance Analytics -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="analytics-card">
+                                    <div class="analytics-icon">
+                                        <i class="bi bi-speedometer2 text-success"></i>
+                                    </div>
+                                    <div class="analytics-content">
+                                        <h6 class="analytics-title">Performance</h6>
+                                        <div class="analytics-metric" id="analytics-performance-rate">@(Model.TotalEquipment > 0 ? ((Model.TotalEquipment - Model.EquipmentNeedingAttention) * 100 / Model.TotalEquipment).ToString("F1") + "%" : "100%")</div>
+                                        <p class="analytics-desc">System efficiency</p>
+                                        <a asp-controller="Report" asp-action="Index" class="btn-analytics">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analytics Actions -->
+                        <div class="analytics-actions">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="action-group">
+                                        <h6 class="action-title">
+                                            <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                                            Generate Reports
+                                        </h6>
+                                        <div class="btn-group-sm">
+                                            <a asp-controller="Report" asp-action="Index" class="btn btn-outline-primary btn-sm me-2">
+                                                <i class="bi bi-file-earmark-pdf me-1"></i>Full Report
+                                            </a>
+                                            <a asp-controller="Report" asp-action="Equipment" class="btn btn-outline-info btn-sm me-2">
+                                                <i class="bi bi-gear me-1"></i>Equipment
+                                            </a>
+                                            <a asp-controller="Report" asp-action="Maintenance" class="btn btn-outline-warning btn-sm">
+                                                <i class="bi bi-wrench me-1"></i>Maintenance
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="action-group">
+                                        <h6 class="action-title">
+                                            <i class="bi bi-graph-up text-success me-2"></i>
+                                            Analytics Dashboard
+                                        </h6>
+                                        <div class="btn-group-sm">
+                                            <a asp-controller="Dashboard" asp-action="Analytics" class="btn btn-outline-success btn-sm me-2">
+                                                <i class="bi bi-bar-chart me-1"></i>Trends
+                                            </a>
+                                            <a asp-controller="Dashboard" asp-action="Performance" class="btn btn-outline-info btn-sm me-2">
+                                                <i class="bi bi-speedometer2 me-1"></i>Performance
+                                            </a>
+                                            <a asp-controller="Dashboard" asp-action="Predictions" class="btn btn-outline-warning btn-sm">
+                                                <i class="bi bi-graph-up-arrow me-1"></i>Predictions
+                                            </a>
+                                            <!-- Debug button for testing updates -->
+                                            <button onclick="refreshDashboardData()" class="btn btn-outline-secondary btn-sm ms-2">
+                                                <i class="bi bi-arrow-clockwise me-1"></i>Test Refresh
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Inventory Status Row -->
+        <!-- Actionable Content Row -->
         <div class="row g-4 mb-4">
-            <div class="col-xl-4 col-lg-6">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-box-seam text-primary"></i>
-                            Inventory Status
-                        </h6>
-                    </div>
-                    <div class="content-card-body text-center">
-                        <canvas id="inventoryStatusChart" width="200" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced Analytics Charts Row -->
-        <div class="row g-4 mb-4">
-            <!-- Maintenance Cost Analysis Chart -->
-            <div class="col-xl-6 col-lg-6">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-currency-dollar text-success"></i>
-                            Maintenance Cost Analysis
-                        </h6>
-                    </div>
-                    <div class="content-card-body">
-                        <canvas id="maintenanceCostChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Equipment Lifecycle Chart -->
-            <div class="col-xl-6 col-lg-6">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-gear text-info"></i>
-                            Equipment Lifecycle
-                        </h6>
-                    </div>
-                    <div class="content-card-body">
-                        <canvas id="equipmentLifecycleChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Predictive Analytics Row -->
-        <div class="row g-4 mb-4">
-            <!-- Failure Prediction Trends Chart -->
-            <div class="col-xl-6 col-lg-6">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-graph-down text-danger"></i>
-                            Failure Prediction Trends
-                        </h6>
-                    </div>
-                    <div class="content-card-body">
-                        <canvas id="failurePredictionChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KPI Dashboard Chart -->
-            <div class="col-xl-6 col-lg-6">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-speedometer2 text-primary"></i>
-                            Key Performance Indicators
-                        </h6>
-                    </div>
-                    <div class="content-card-body">
-                        <canvas id="kpiChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Efficiency Analysis Row -->
-        <div class="row g-4 mb-4">
-            <!-- Maintenance Efficiency Chart -->
-            <div class="col-xl-12">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h6 class="content-card-title">
-                            <i class="bi bi-bar-chart text-warning"></i>
-                            Maintenance Efficiency Analysis
-                        </h6>
-                    </div>
-                    <div class="content-card-body">
-                        <canvas id="maintenanceEfficiencyChart" width="800" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Content Row -->
-        <div class="row g-4">
             <!-- Recent Alerts -->
             <div class="col-xl-6">
                 <div class="content-card">
@@ -1158,7 +1148,7 @@
                             View All
                         </a>
                     </div>
-                    <div class="content-card-body">
+                    <div class="content-card-body" id="recent-alerts-container">
                         @if (Model.RecentAlerts?.Any() == true)
                         {
                             <div class="table-responsive">
@@ -1241,14 +1231,14 @@
                 <div class="content-card">
                     <div class="content-card-header d-flex justify-content-between align-items-center">
                         <h5 class="content-card-title">
-                            <i class="bi bi-calendar-check text-primary"></i>
+                            <i class="bi bi-calendar-event text-primary"></i>
                             Upcoming Maintenance
                         </h5>
                         <a asp-controller="MaintenanceLog" asp-action="Index" class="btn-view-all">
                             View All
                         </a>
                     </div>
-                    <div class="content-card-body">
+                    <div class="content-card-body" id="upcoming-maintenance-container">
                         @if (Model.UpcomingMaintenances?.Any() == true)
                         {
                             <div class="table-responsive">
@@ -1263,74 +1253,75 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var task in Model.UpcomingMaintenances)
+                                        @foreach (var maintenance in Model.UpcomingMaintenances)
                                         {
-                                            var isOverdue = task.ScheduledDate < DateTime.Now;
-                                            var isDueSoon = task.ScheduledDate < DateTime.Now.AddDays(7);
-                                            <tr class="@(isOverdue ? "table-row-critical" : isDueSoon ? "table-row-warning" : "")">
+                                            var isOverdue = maintenance.ScheduledDate < DateTime.Now;
+                                            var daysDiff = (maintenance.ScheduledDate.Date - DateTime.Now.Date).Days;
+                                            <tr class="@(isOverdue ? "table-row-critical" : daysDiff <= 2 ? "table-row-warning" : "")">
                                                 <td>
                                                     <div class="d-flex align-items-center">
-                                                        <i class="bi bi-tools me-2 text-muted"></i>
+                                                        <i class="bi bi-gear me-2 text-muted"></i>
                                                         <div>
-                                                            <strong>@(task.Equipment?.EquipmentModel?.ModelName ?? "Unknown")</strong>
+                                                            <strong>@(maintenance.Equipment?.EquipmentModel?.ModelName ?? "Unknown")</strong>
                                                             <br>
-                                                            <small class="text-muted">@(task.Equipment?.Building?.BuildingName) - @(task.Equipment?.Room?.RoomName)</small>
+                                                            <small class="text-muted">@(maintenance.Equipment?.Building?.BuildingName) - @(maintenance.Equipment?.Room?.RoomName)</small>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    @task.Description
-                                                    <br>
-                                                    <small class="text-muted">
-                                                        <span class="badge-modern @(task.Status == FEENALOoFINALE.Models.MaintenanceStatus.InProgress ? "badge-warning-modern" : task.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending ? "badge-info-modern" : "badge-secondary-modern")">
-                                                            @task.Status
-                                                        </span>
-                                                    </small>
-                                                </td>
-                                                <td>
-                                                    <span class="@(isOverdue ? "text-danger fw-bold" : isDueSoon ? "text-warning fw-bold" : "")">
-                                                        @task.ScheduledDate.ToString("MMM dd, yyyy")
-                                                    </span>
-                                                    <br>
-                                                    <small class="@(isOverdue ? "text-danger" : isDueSoon ? "text-warning" : "text-muted")">
-                                                        @if (isOverdue)
-                                                        {
-                                                            <text><i class="bi bi-exclamation-triangle me-1"></i>@((DateTime.Now - task.ScheduledDate).Days) days overdue</text>
-                                                        }
-                                                        else if (isDueSoon)
-                                                        {
-                                                            <text><i class="bi bi-clock me-1"></i>@((task.ScheduledDate - DateTime.Now).Days) days remaining</text>
-                                                        }
-                                                        else
-                                                        {
-                                                            <text>@((task.ScheduledDate - DateTime.Now).Days) days</text>
-                                                        }
-                                                    </small>
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-person me-2 text-muted"></i>
-                                                        @(task.AssignedTo?.FullName ?? "Unassigned")
+                                                    <div>
+                                                        <strong>@maintenance.Description</strong>
+                                                        <br>
+                                                        <small class="text-muted">Priority: @maintenance.Priority</small>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="btn-group-sm">
-                                                        @if (task.Equipment != null)
+                                                    @maintenance.ScheduledDate.ToString("MMM dd, yyyy")
+                                                    <br>
+                                                    <small class="@(isOverdue ? "text-danger" : daysDiff <= 2 ? "text-warning" : "text-muted")">
+                                                        @if (isOverdue)
                                                         {
-                                                            <a asp-controller="Equipment" asp-action="Details" asp-route-id="@task.Equipment.EquipmentId" 
+                                                            <text>@Math.Abs(daysDiff) days overdue</text>
+                                                        }
+                                                        else if (daysDiff == 0)
+                                                        {
+                                                            <text>Due today</text>
+                                                        }
+                                                        else if (daysDiff == 1)
+                                                        {
+                                                            <text>Due tomorrow</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>@daysDiff days remaining</text>
+                                                        }
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    @if (maintenance.AssignedTo != null)
+                                                    {
+                                                        <span class="badge badge-info">@maintenance.AssignedTo.UserName</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge badge-secondary">Unassigned</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group-sm">
+                                                        @if (maintenance.Equipment != null)
+                                                        {
+                                                            <a asp-controller="Equipment" asp-action="Details" asp-route-id="@maintenance.Equipment.EquipmentId" 
                                                                class="btn btn-outline-primary btn-sm" title="View Equipment">
                                                                 <i class="bi bi-eye"></i>
                                                             </a>
                                                         }
-                                                        <a asp-controller="MaintenanceLog" asp-action="Create" asp-route-taskId="@task.TaskId" 
-                                                           class="btn btn-outline-success btn-sm" title="Complete Task">
-                                                            <i class="bi bi-check-circle"></i>
-                                                        </a>
-                                                        @if (task.Status != FEENALOoFINALE.Models.MaintenanceStatus.InProgress)
+                                                        @if (maintenance.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending)
                                                         {
-                                                            <button class="btn btn-outline-warning btn-sm" title="Start Task">
-                                                                <i class="bi bi-play"></i>
-                                                            </button>
+                                                            <a asp-controller="MaintenanceLog" asp-action="Complete" asp-route-id="@maintenance.TaskId" 
+                                                               class="btn btn-outline-success btn-sm" title="Complete Task">
+                                                                <i class="bi bi-check"></i>
+                                                            </a>
                                                         }
                                                     </div>
                                                 </td>
@@ -1350,56 +1341,6 @@
                                 <small class="text-muted">All maintenance tasks are up to date</small>
                             </div>
                         }
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="row g-4 mt-2">
-            <div class="col-12">
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h5 class="content-card-title">
-                            <i class="bi bi-lightning text-warning"></i>
-                            Quick Actions
-                        </h5>
-                    </div>
-                    <div class="content-card-body">
-                        <div class="row g-3">
-                            <div class="col-lg-3 col-md-6">
-                                <a asp-controller="Equipment" asp-action="Index" class="action-card">
-                                    <div class="action-icon primary">
-                                        <i class="bi bi-gear-wide-connected"></i>
-                                    </div>
-                                    <h6 class="action-title">Manage Equipment</h6>
-                                </a>
-                            </div>
-                            <div class="col-lg-3 col-md-6">
-                                <a asp-controller="MaintenanceLog" asp-action="Create" class="action-card">
-                                    <div class="action-icon success">
-                                        <i class="bi bi-plus-circle"></i>
-                                    </div>
-                                    <h6 class="action-title">Add Maintenance Log</h6>
-                                </a>
-                            </div>
-                            <div class="col-lg-3 col-md-6">
-                                <a asp-controller="Inventory" asp-action="Index" class="action-card">
-                                    <div class="action-icon warning">
-                                        <i class="bi bi-boxes"></i>
-                                    </div>
-                                    <h6 class="action-title">Check Inventory</h6>
-                                </a>
-                            </div>
-                            <div class="col-lg-3 col-md-6">
-                                <a asp-controller="Report" asp-action="Index" class="action-card">
-                                    <div class="action-icon info">
-                                        <i class="bi bi-bar-chart"></i>
-                                    </div>
-                                    <h6 class="action-title">View Reports</h6>
-                                </a>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1499,8 +1440,7 @@
 <script src="~/lib/signalr/dist/browser/signalr.min.js"></script>
 <script>
     // Chart configurations and initialization
-    let equipmentStatusChart, maintenanceTrendsChart, alertPriorityChart, inventoryStatusChart;
-    let maintenanceCostChart, equipmentLifecycleChart, failurePredictionChart, kpiChart, maintenanceEfficiencyChart;
+    // Chart variables removed since chart sections were removed from the UI
 
     // SignalR connection
     window.maintenanceConnection = null;
@@ -1541,6 +1481,12 @@
 
     // Initialize all charts when page loads
     document.addEventListener('DOMContentLoaded', async function() {
+        // Set initial update time
+        const updateTimeElement = document.querySelector('#last-update-time');
+        if (updateTimeElement) {
+            updateTimeElement.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+        
         // Initialize SignalR first
         await initializeSignalR();
 
@@ -1553,103 +1499,37 @@
 
     async function initializeCharts() {
         try {
-            // Initialize Equipment Status Chart
-            await initEquipmentStatusChart();
-            
-            // Initialize Maintenance Trends Chart
-            await initMaintenanceTrendsChart();
-            
-            // Initialize Alert Priority Chart
-            await initAlertPriorityChart();
-            
-            // Initialize Inventory Status Chart
-            await initInventoryStatusChart();
-            
-            // Initialize Advanced Analytics Charts
-            await initMaintenanceCostChart();
-            await initEquipmentLifecycleChart();
-            await initFailurePredictionChart();
-            await initKpiChart();
-            await initMaintenanceEfficiencyChart();
-            
+            // Initialize only the charts that actually exist
+            await initializeAlertPriorityChart();
+            console.log('Charts initialized successfully');
         } catch (error) {
             console.error('Error initializing charts:', error);
         }
     }
 
-    async function initEquipmentStatusChart() {
-        const response = await fetch('/Dashboard/GetEquipmentStatusChart');
-        const data = await response.json();
+    function setupRealTimeUpdates() {
+        // Auto-refresh dashboard data every 15 seconds for more responsive updates
+        setInterval(refreshDashboardData, 15000);
         
-        const ctx = document.getElementById('equipmentStatusChart').getContext('2d');
-        equipmentStatusChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.label + ': ' + context.parsed + ' items';
-                            }
-                        }
-                    }
-                },
-                cutout: '60%'
-            }
+        // Initial refresh
+        refreshDashboardData();
+        
+        // Refresh when window comes back into focus (user returns to tab)
+        window.addEventListener('focus', function() {
+            console.log('Window focused, refreshing dashboard...');
+            refreshDashboardData();
+        });
+        
+        // Refresh when user navigates back to this page
+        window.addEventListener('pageshow', function() {
+            console.log('Page shown, refreshing dashboard...');
+            refreshDashboardData();
         });
     }
 
-    async function initMaintenanceTrendsChart() {
-        const response = await fetch('/Dashboard/GetMaintenanceTrendsChart');
-        const data = await response.json();
-        
-        const ctx = document.getElementById('maintenanceTrendsChart').getContext('2d');
-        maintenanceTrendsChart = new Chart(ctx, {
-            type: 'line',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                }
-            }
-        });
-    }
-
-    async function initAlertPriorityChart() {
+    // Chart functions have been removed as the corresponding chart sections were removed from the UI
+    
+    async function initializeAlertPriorityChart() {
         const response = await fetch('/Dashboard/GetAlertPriorityChart');
         const data = await response.json();
         
@@ -1950,14 +1830,6 @@
         });
     }
 
-    function setupRealTimeUpdates() {
-        // Auto-refresh charts every 5 minutes (real-time updates come via SignalR)
-        setInterval(refreshCharts, 300000);
-        
-        // Auto-refresh dashboard data every 2 minutes as backup
-        setInterval(refreshDashboardData, 120000);
-    }
-
     // Notification system for real-time alerts
     function showNotification(type, title, message) {
         // Create notification container if it doesn't exist
@@ -2064,33 +1936,11 @@
     }
 
     async function refreshCharts() {
-        try {
-            // Refresh all charts with new data
-            await Promise.all([
-                refreshEquipmentStatusChart(),
-                refreshMaintenanceTrendsChart(),
-                refreshAlertPriorityChart(),
-                refreshInventoryStatusChart(),
-                refreshMaintenanceCostChart(),
-                refreshEquipmentLifecycleChart(),
-                refreshFailurePredictionChart(),
-                refreshKpiChart(),
-                refreshMaintenanceEfficiencyChart()
-            ]);
-        } catch (error) {
-            console.error('Error refreshing charts:', error);
-        }
+        // Chart refresh functions have been removed since chart sections were removed from the UI
+        console.log('Charts refresh skipped - no charts to refresh');
     }
 
-    async function refreshEquipmentStatusChart() {
-        const response = await fetch('/Dashboard/GetEquipmentStatusChart');
-        const data = await response.json();
-        
-        if (equipmentStatusChart) {
-            equipmentStatusChart.data = data;
-            equipmentStatusChart.update('none');
-        }
-    }
+    // Chart refresh functions have been removed since chart sections were removed from the UI
 
     async function refreshMaintenanceTrendsChart() {
         const response = await fetch('/Dashboard/GetMaintenanceTrendsChart');
@@ -2174,9 +2024,15 @@
     }
 
     async function refreshDashboardData() {
+        console.log('Refreshing dashboard data...'); // Debug log
         try {
             const response = await fetch('/Dashboard/GetDashboardData');
+            if (!response.ok) {
+                console.error('Failed to fetch dashboard data:', response.status);
+                return;
+            }
             const data = await response.json();
+            console.log('Dashboard data received:', data); // Debug log
             updateDashboardMetrics(data);
         } catch (error) {
             console.error('Error refreshing dashboard data:', error);
@@ -2184,26 +2040,106 @@
     }
 
     function updateDashboardMetrics(data) {
+        console.log('Updating dashboard metrics with data:', data); // Debug log
+        
+        // Update last update time
+        const updateTimeElement = document.querySelector('#last-update-time');
+        if (updateTimeElement) {
+            updateTimeElement.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+        
         // Update metric cards with new data
         const updateMetric = (selector, value) => {
             const element = document.querySelector(selector);
             if (element) {
+                console.log(`Updating ${selector} with value:`, value); // Debug log
                 element.textContent = value;
                 // Add a subtle animation
                 element.style.transform = 'scale(1.1)';
+                element.style.backgroundColor = '#e8f5e8';
                 setTimeout(() => {
                     element.style.transform = 'scale(1)';
-                }, 200);
+                    element.style.backgroundColor = '';
+                }, 500);
+            } else {
+                console.warn(`Element not found for selector: ${selector}`); // Debug log
             }
         };
 
-        // Update each metric (you may need to adjust selectors based on your HTML)
+        // Update main metric cards (you may need to adjust selectors based on your HTML)
         updateMetric('.total-equipment-count', data.TotalEquipment);
         updateMetric('.active-maintenance-count', data.ActiveMaintenanceTasks);
         updateMetric('.low-stock-count', data.LowStockItems);
         updateMetric('.critical-alerts-count', data.CriticalAlerts);
         updateMetric('.overdue-maintenance-count', data.OverdueMaintenances);
         updateMetric('.equipment-attention-count', data.EquipmentNeedingAttention);
+
+        // Update analytics section metrics
+        updateMetric('#analytics-equipment-count', data.TotalEquipment);
+        updateMetric('#analytics-alerts-count', data.CriticalAlerts);
+        updateMetric('#analytics-maintenance-count', data.ActiveMaintenanceTasks);
+        
+        // Calculate and update performance rate
+        const performanceRate = data.TotalEquipment > 0 ? 
+            (((data.TotalEquipment - data.EquipmentNeedingAttention) * 100) / data.TotalEquipment).toFixed(1) + '%' : 
+            '100%';
+        updateMetric('#analytics-performance-rate', performanceRate);
+
+        // Update any recent alerts or maintenance tables if they exist
+        refreshRecentAlerts();
+        refreshUpcomingMaintenance();
+    }
+
+    // Functions to refresh dynamic content sections
+    async function refreshRecentAlerts() {
+        try {
+            const response = await fetch('/Dashboard/GetRecentAlerts');
+            if (response.ok) {
+                const alertsHtml = await response.text();
+                const alertsContainer = document.querySelector('#recent-alerts-container');
+                if (alertsContainer) {
+                    alertsContainer.innerHTML = alertsHtml;
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing recent alerts:', error);
+        }
+    }
+
+    async function refreshUpcomingMaintenance() {
+        try {
+            const response = await fetch('/Dashboard/GetUpcomingMaintenance');
+            if (response.ok) {
+                const maintenanceHtml = await response.text();
+                const maintenanceContainer = document.querySelector('#upcoming-maintenance-container');
+                if (maintenanceContainer) {
+                    maintenanceContainer.innerHTML = maintenanceHtml;
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing upcoming maintenance:', error);
+        }
+    }
+
+    // Enhanced notification system for real-time updates
+    function showNotification(type, title, message) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 350px;';
+        notification.innerHTML = `
+            <strong>${title}</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
     }
 
     // Advanced Filtering Functions

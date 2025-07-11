@@ -234,7 +234,7 @@ namespace FEENALOoFINALE.Controllers
             string? alertDescription = null;
             AlertPriority priority = AlertPriority.Low;
 
-            // Check if the new inventory item needs an alert
+            // Only generate alerts for actual problems (low stock or out of stock)
             if (initialStock <= item.MinimumStockLevel)
             {
                 if (initialStock == 0)
@@ -247,20 +247,10 @@ namespace FEENALOoFINALE.Controllers
                 {
                     alertTitle = "New Inventory Item - Low Stock";
                     alertDescription = $"New inventory item '{item.Name}' has been added with low stock. Current: {initialStock}, Minimum: {item.MinimumStockLevel}";
-                    priority = AlertPriority.High;
+                    priority = AlertPriority.Medium;
                 }
-            }
-            else
-            {
-                // Optional: Create a notification for new inventory items
-                alertTitle = "New Inventory Item Added";
-                alertDescription = $"New inventory item '{item.Name}' has been successfully added to the system with {initialStock} units in stock.";
-                priority = AlertPriority.Low;
-            }
 
-            // Create alert if one is needed
-            if (!string.IsNullOrEmpty(alertTitle) && !string.IsNullOrEmpty(alertDescription))
-            {
+                // Create alert only for problematic stock levels
                 var alert = new Alert
                 {
                     Title = alertTitle,
@@ -275,6 +265,7 @@ namespace FEENALOoFINALE.Controllers
                 _context.Alerts.Add(alert);
                 await _context.SaveChangesAsync();
             }
+            // No alert generated for new inventory items with adequate stock
         }
     }
 }

@@ -4,6 +4,7 @@ using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Identity;
 
 namespace FEENALOoFINALE.Controllers
 {
@@ -11,20 +12,53 @@ namespace FEENALOoFINALE.Controllers
     public class AlertController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public AlertController(ApplicationDbContext context)
+        public AlertController(ApplicationDbContext context, UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Alert
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Alerts
-                .Include(a => a.Equipment) // Changed from a.EquipmentName
+            var currentUser = await _userManager.GetUserAsync(User);
+            
+            // Auto-assign unassigned alerts to current user
+            var unassignedAlerts = await _context.Alerts
+                .Where(a => a.AssignedToUserId == null && a.Status == AlertStatus.Open)
+                .ToListAsync();
+                
+            if (currentUser != null && unassignedAlerts.Any())
+            {
+                foreach (var alert in unassignedAlerts)
+                {
+                    alert.AssignedToUserId = currentUser.Id;
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            // Get alerts excluding resolved ones (unless we want to show them)
+            var alerts = await _context.Alerts
+                .Include(a => a.Equipment!)
+                    .ThenInclude(e => e.EquipmentType)
+                .Include(a => a.Equipment!)
+                    .ThenInclude(e => e.EquipmentModel)
                 .Include(a => a.AssignedTo)
+                .Where(a => a.Status != AlertStatus.Resolved) // Hide resolved alerts
                 .OrderByDescending(a => a.CreatedDate)
-                .ToListAsync());
+                .ToListAsync();
+
+            // Get alert IDs that have completed maintenance logs
+            var completedMaintenanceAlertIds = await _context.MaintenanceLogs
+                .Where(ml => ml.AlertId != null && ml.Status == MaintenanceStatus.Completed)
+                .Select(ml => ml.AlertId!.Value)
+                .ToListAsync();
+
+            ViewBag.CompletedMaintenanceTasks = completedMaintenanceAlertIds;
+
+            return View(alerts);
         }
 
         // GET: Alert/Details/5
@@ -44,6 +78,107 @@ namespace FEENALOoFINALE.Controllers
             {
                 return NotFound();
             }
+
+            return View(alert);
+        }
+
+        // GET: Alert/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var alert = await _context.Alerts
+                .Include(a => a.Equipment)
+                    .ThenInclude(e => e!.EquipmentType)
+                .Include(a => a.Equipment)
+                    .ThenInclude(e => e!.EquipmentModel)
+                .Include(a => a.AssignedTo)
+                .FirstOrDefaultAsync(m => m.AlertId == id);
+
+            if (alert == null)
+            {
+                return NotFound();
+            }
+
+            // Prepare dropdown lists
+            ViewBag.EquipmentList = new SelectList(
+                await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .Select(e => new { 
+                        Value = e.EquipmentId, 
+                        Text = $"{e.EquipmentModel!.ModelName} ({e.EquipmentType!.EquipmentTypeName})" 
+                    })
+                    .ToListAsync(), 
+                "Value", "Text", alert.EquipmentId);
+
+            ViewBag.UserList = new SelectList(
+                await _context.Users
+                    .Select(u => new { 
+                        Value = u.Id, 
+                        Text = $"{u.FirstName} {u.LastName}" 
+                    })
+                    .ToListAsync(), 
+                "Value", "Text", alert.AssignedToUserId);
+
+            return View(alert);
+        }
+
+        // POST: Alert/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("AlertId,EquipmentId,InventoryItemId,Title,Description,Priority,Status,CreatedDate,AssignedToUserId")] Alert alert)
+        {
+            if (id != alert.AlertId)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(alert);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Alert updated successfully.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!AlertExists(alert.AlertId))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            // Repopulate dropdown lists if validation fails
+            ViewBag.EquipmentList = new SelectList(
+                await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .Select(e => new { 
+                        Value = e.EquipmentId, 
+                        Text = $"{e.EquipmentModel!.ModelName} ({e.EquipmentType!.EquipmentTypeName})" 
+                    })
+                    .ToListAsync(), 
+                "Value", "Text", alert.EquipmentId);
+
+            ViewBag.UserList = new SelectList(
+                await _context.Users
+                    .Select(u => new { 
+                        Value = u.Id, 
+                        Text = $"{u.FirstName} {u.LastName}" 
+                    })
+                    .ToListAsync(), 
+                "Value", "Text", alert.AssignedToUserId);
 
             return View(alert);
         }
@@ -82,16 +217,67 @@ namespace FEENALOoFINALE.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public IActionResult Resolve(int id)
+        public async Task<IActionResult> Resolve(int id)
         {
-            // Optionally, you can check if the alert exists and is unresolved
-            var alert = _context.Alerts.Find(id);
+            var alert = await _context.Alerts.FindAsync(id);
             if (alert == null)
             {
                 return NotFound();
             }
-            // Redirect to MaintenanceLog/Create, passing the EquipmentId (or AlertId if you want)
-            return RedirectToAction("Create", "MaintenanceLog", new { equipmentId = alert.EquipmentId, alertId = id });
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            
+            // Create a MaintenanceTask from the alert
+            var maintenanceTask = new MaintenanceTask
+            {
+                EquipmentId = alert.EquipmentId ?? 0, // Default to 0 if no equipment
+                ScheduledDate = DateTime.Now,
+                Status = MaintenanceStatus.Pending,
+                Description = $"Maintenance required: {alert.Title}",
+                AssignedToUserId = currentUser?.Id,
+                CreatedFromAlertId = alert.AlertId,
+                Priority = alert.Priority == AlertPriority.High ? TaskPriority.Critical :
+                          alert.Priority == AlertPriority.Medium ? TaskPriority.High : TaskPriority.Medium
+            };
+
+            _context.MaintenanceTasks.Add(maintenanceTask);
+            await _context.SaveChangesAsync();
+
+            // Redirect to MaintenanceLog/Create, passing the EquipmentId and AlertId
+            return RedirectToAction("Create", "MaintenanceLog", new { 
+                equipmentId = alert.EquipmentId, 
+                alertId = id,
+                taskId = maintenanceTask.TaskId
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkResolved(int id)
+        {
+            var alert = await _context.Alerts.FindAsync(id);
+            if (alert == null)
+            {
+                return NotFound();
+            }
+
+            // Check if there's a completed maintenance log for this alert
+            var hasCompletedMaintenance = await _context.MaintenanceLogs
+                .AnyAsync(ml => ml.AlertId == id && ml.Status == MaintenanceStatus.Completed);
+
+            if (hasCompletedMaintenance)
+            {
+                // Mark the alert as resolved
+                alert.Status = AlertStatus.Resolved;
+                await _context.SaveChangesAsync();
+                
+                TempData["SuccessMessage"] = "Alert has been resolved successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Cannot resolve alert. No completed maintenance found for this alert.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         public async Task<IActionResult> MarkInProgress(int id)
@@ -376,6 +562,81 @@ namespace FEENALOoFINALE.Controllers
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"Error during SQL cleanup: {ex.Message}";
+                return RedirectToAction("Index");
+            }
+        }
+
+        // Test method to add sample data
+        public async Task<IActionResult> AddTestData()
+        {
+            try
+            {
+                // Check if equipment exists, if not create some
+                if (!await _context.Equipment.AnyAsync())
+                {
+                    var equipment1 = new Equipment
+                    {
+                        EquipmentTypeId = 1, // Projectors
+                        EquipmentModelId = 1, // Projector Model A
+                        BuildingId = 1, // Petroleum Building
+                        RoomId = 1, // PB001
+                        InstallationDate = DateTime.Now.AddYears(-2),
+                        ExpectedLifespanMonths = 60,
+                        Status = EquipmentStatus.Active,
+                        Notes = "Classroom projector"
+                    };
+
+                    var equipment2 = new Equipment
+                    {
+                        EquipmentTypeId = 2, // Air Conditioners
+                        EquipmentModelId = 3, // Air Conditioner Model A
+                        BuildingId = 1, // Petroleum Building
+                        RoomId = 2, // PB012
+                        InstallationDate = DateTime.Now.AddYears(-1),
+                        ExpectedLifespanMonths = 120,
+                        Status = EquipmentStatus.Active,
+                        Notes = "Main classroom AC unit"
+                    };
+
+                    _context.Equipment.AddRange(equipment1, equipment2);
+                    await _context.SaveChangesAsync();
+                }
+                
+                // Check if alerts exist, if not create some
+                if (!await _context.Alerts.AnyAsync())
+                {
+                    var equipment = await _context.Equipment.FirstAsync();
+                    
+                    var alert1 = new Alert
+                    {
+                        EquipmentId = equipment.EquipmentId,
+                        Title = "Equipment Maintenance Required",
+                        Description = "Projector showing signs of overheating - bulb needs replacement",
+                        Priority = AlertPriority.High,
+                        Status = AlertStatus.Open,
+                        CreatedDate = DateTime.Now.AddDays(-2)
+                    };
+
+                    var alert2 = new Alert
+                    {
+                        EquipmentId = equipment.EquipmentId,
+                        Title = "Filter Replacement Due",
+                        Description = "Air conditioner filter needs to be replaced as per schedule",
+                        Priority = AlertPriority.Medium,
+                        Status = AlertStatus.Open,
+                        CreatedDate = DateTime.Now.AddDays(-1)
+                    };
+
+                    _context.Alerts.AddRange(alert1, alert2);
+                    await _context.SaveChangesAsync();
+                }
+
+                TempData["SuccessMessage"] = "Test data added successfully!";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error adding test data: {ex.Message}";
                 return RedirectToAction("Index");
             }
         }

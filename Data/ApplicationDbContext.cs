@@ -58,7 +58,7 @@ namespace FEENALOoFINALE.Data
 
                 entity.HasOne(ml => ml.Task)
                     .WithMany()
-                    .HasForeignKey(ml => ml.TaskId)
+                    .HasForeignKey(ml => ml.MaintenanceTaskId)
                     .OnDelete(DeleteBehavior.SetNull);
 
                 entity.HasOne(ml => ml.Alert)

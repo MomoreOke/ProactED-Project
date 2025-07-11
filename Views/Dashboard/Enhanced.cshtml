@@ -1,0 +1,851 @@
+@model FEENALOoFINALE.Models.ViewModels.EnhancedDashboardViewModel
+@using Microsoft.AspNetCore.Identity
+@using FEENALOoFINALE.Models
+@using FEENALOoFINALE.Models.ViewModels
+@inject UserManager<User> UserManager
+
+@{
+    ViewData["Title"] = Model.PageTitle ?? "Enhanced Dashboard";
+    var currentUser = await UserManager.GetUserAsync(User);
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            --info-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .dashboard-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        
+        .page-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 100%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            opacity: 0.3;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: none;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-card.primary::before { background: var(--primary-gradient); }
+        .metric-card.success::before { background: var(--success-gradient); }
+        .metric-card.warning::before { background: var(--warning-gradient); }
+        .metric-card.danger::before { background: var(--danger-gradient); }
+        .metric-card.info::before { background: var(--info-gradient); }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+        
+        .metric-icon {
+            font-size: 2rem;
+            opacity: 0.7;
+            margin-bottom: 1rem;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .activity-item {
+            padding: 1rem;
+            border-left: 4px solid transparent;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .activity-item:hover {
+            background-color: #f8f9fa;
+            border-left-color: #007bff;
+            transform: translateX(5px);
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        
+        .quick-action-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+        
+        .quick-action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .alert-card {
+            border-left: 4px solid;
+            background: white;
+            border-radius: 0 12px 12px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .alert-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .alert-card.priority-high { border-left-color: #dc3545; }
+        .alert-card.priority-medium { border-left-color: #ffc107; }
+        .alert-card.priority-low { border-left-color: #17a2b8; }
+        
+        .filter-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .btn-filter {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-filter:hover {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+        
+        .btn-filter.active {
+            border-color: #007bff;
+            background-color: #007bff;
+            color: white;
+        }
+        
+        @@keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+}
+
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+        </div>
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">@Model.PageTitle</h1>
+                    <p class="mb-0 opacity-75">@Model.PageDescription</p>
+                    <div class="mt-2">
+                        <small class="opacity-75">
+                            Welcome back, @currentUser?.FirstName! 
+                            Last updated: @Model.LastUpdated.ToString("MMM dd, yyyy - HH:mm")
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex gap-2 justify-content-md-end">
+                        <button type="button" class="btn btn-light btn-sm" onclick="refreshDashboard()">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                            <i class="bi bi-gear me-1"></i> Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filters Panel -->
+        @if (Model.Filters != null)
+        {
+            <div class="filter-panel">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn-filter @(Model.Filters.DateFrom == null ? "active" : "")" 
+                                    onclick="applyDateFilter('all')">All Time</button>
+                            <button type="button" class="btn-filter" onclick="applyDateFilter('today')">Today</button>
+                            <button type="button" class="btn-filter" onclick="applyDateFilter('week')">This Week</button>
+                            <button type="button" class="btn-filter" onclick="applyDateFilter('month')">This Month</button>
+                            <button type="button" class="btn-filter" onclick="applyDateFilter('quarter')">This Quarter</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#advancedFilters">
+                            <i class="bi bi-funnel me-1"></i> Advanced Filters
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="collapse mt-3" id="advancedFilters">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Date Range</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="date" class="form-control form-control-sm" id="dateFrom" value="@Model.Filters.DateFrom?.ToString("yyyy-MM-dd")">
+                                </div>
+                                <div class="col-6">
+                                    <input type="date" class="form-control form-control-sm" id="dateTo" value="@Model.Filters.DateTo?.ToString("yyyy-MM-dd")">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Building</label>
+                            <select class="form-select form-select-sm" id="buildingFilter" multiple>
+                                <!-- Options populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Equipment Type</label>
+                            <select class="form-select form-select-sm" id="equipmentTypeFilter" multiple>
+                                <!-- Options populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-secondary btn-sm me-2" onclick="clearFilters()">Clear</button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="applyFilters()">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="metric-card primary fade-in">
+                    <div class="metric-icon text-primary">
+                        <i class="bi bi-gear"></i>
+                    </div>
+                    <h2 class="metric-value">@Model.Metrics.TotalEquipment</h2>
+                    <div class="metric-label">Total Equipment</div>
+                    <div class="mt-2">
+                        <small class="text-success">
+                            <i class="bi bi-arrow-up"></i> @Model.Metrics.OperationalEquipment Operational
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="metric-card warning fade-in">
+                    <div class="metric-icon text-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <h2 class="metric-value">@Model.Metrics.CriticalAlerts</h2>
+                    <div class="metric-label">Critical Alerts</div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            @Model.Metrics.WarningAlerts warnings, @Model.Metrics.InfoAlerts info
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="metric-card success fade-in">
+                    <div class="metric-icon text-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <h2 class="metric-value">@Model.Metrics.CompletedTasksToday</h2>
+                    <div class="metric-label">Tasks Completed Today</div>
+                    <div class="mt-2">
+                        <small class="text-info">
+                            @Model.Metrics.ActiveMaintenanceTasks active tasks
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="metric-card info fade-in">
+                    <div class="metric-icon text-info">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <h2 class="metric-value">@Model.Metrics.SystemEfficiency.ToString("F1")%</h2>
+                    <div class="metric-label">System Efficiency</div>
+                    <div class="mt-2">
+                        <small class="text-success">
+                            <i class="bi bi-trending-up"></i> @Model.Metrics.EquipmentUtilization.ToString("F1")% utilization
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="chart-container">
+                    <h5 class="mb-3">Equipment Status Distribution</h5>
+                    <canvas id="equipmentStatusChart" height="300"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-3">
+                <div class="chart-container">
+                    <h5 class="mb-3">Maintenance Trend (30 Days)</h5>
+                    <canvas id="maintenanceTrendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="chart-container">
+                    <h5 class="mb-3">Cost Analysis (6 Months)</h5>
+                    <canvas id="costAnalysisChart" height="300"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-3">
+                <div class="chart-container">
+                    <h5 class="mb-3">Performance Metrics</h5>
+                    <canvas id="performanceChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content Row -->
+        <div class="row">
+            <!-- Recent Activities -->
+            <div class="col-lg-4 mb-4">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Recent Activities</h5>
+                        <a href="/Activity" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    
+                    @if (Model.RecentActivities.Any())
+                    {
+                        <div class="activity-list">
+                            @foreach (var activity in Model.RecentActivities.Take(5))
+                            {
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-start">
+                                        <div class="activity-icon bg-light me-3">
+                                            <i class="@activity.Icon @activity.IconColor"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@activity.Title</h6>
+                                            <p class="mb-1 text-muted small">@activity.Description</p>
+                                            <small class="text-muted">
+                                                @activity.Timestamp.ToString("MMM dd, HH:mm") 
+                                                @if (!string.IsNullOrEmpty(activity.UserName))
+                                                {
+                                                    <span>by @activity.UserName</span>
+                                                }
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-clock-history display-6"></i>
+                            <p class="mt-2">No recent activities</p>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Critical Alerts -->
+            <div class="col-lg-4 mb-4">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Critical Alerts</h5>
+                        <a href="/Alert" class="btn btn-sm btn-outline-danger">View All</a>
+                    </div>
+                    
+                    @if (Model.CriticalAlerts.Any())
+                    {
+                        @foreach (var alert in Model.CriticalAlerts.Take(5))
+                        {
+                            <div class="alert-card priority-@alert.Priority.ToString().ToLower() p-3 mb-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">@(alert.Title ?? "Alert")</h6>
+                                        <p class="mb-1 small">@alert.Description</p>
+                                        <small class="text-muted">@alert.CreatedDate.ToString("MMM dd, HH:mm")</small>
+                                    </div>
+                                    <span class="badge bg-@(alert.Priority == AlertPriority.High ? "danger" : alert.Priority == AlertPriority.Medium ? "warning" : "info")">
+                                        @alert.Priority
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-shield-check display-6 text-success"></i>
+                            <p class="mt-2">No critical alerts</p>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="col-lg-4 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3">Quick Actions</h5>
+                    
+                    <div class="row">
+                        @foreach (var action in Model.QuickActions.Take(4))
+                        {
+                            <div class="col-6 mb-3">
+                                <a href="/@action.Controller/@action.Action" class="quick-action-card">
+                                    <div class="text-center">
+                                        <div class="text-@action.Color mb-2">
+                                            <i class="@action.Icon" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <h6 class="mb-1">@action.Title</h6>
+                                        <small class="text-muted">@action.Description</small>
+                                        @if (!string.IsNullOrEmpty(action.Badge))
+                                        {
+                                            <div class="mt-2">
+                                                <span class="badge bg-@action.Color">@action.Badge</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dashboard Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Theme</label>
+                    <select class="form-select" id="themeSelect">
+                        <option value="light" selected="@(Model.UserPreferences.Theme == "light")">Light</option>
+                        <option value="dark" selected="@(Model.UserPreferences.Theme == "dark")">Dark</option>
+                        <option value="auto">Auto</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Refresh Interval (seconds)</label>
+                    <select class="form-select" id="refreshInterval">
+                        <option value="30" selected="@(Model.UserPreferences.RefreshInterval == 30)">30 seconds</option>
+                        <option value="60" selected="@(Model.UserPreferences.RefreshInterval == 60)">1 minute</option>
+                        <option value="300" selected="@(Model.UserPreferences.RefreshInterval == 300)">5 minutes</option>
+                        <option value="0">Manual only</option>
+                    </select>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="enableNotifications" checked="@Model.UserPreferences.EnableNotifications">
+                    <label class="form-check-label" for="enableNotifications">
+                        Enable real-time notifications
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Dashboard data
+        const dashboardData = {
+            equipmentStatus: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EquipmentStatusChart)),
+            maintenanceTrend: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MaintenanceTrendChart)),
+            costAnalysis: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CostAnalysisChart)),
+            performance: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PerformanceChart))
+        };
+        
+        // Chart instances
+        let charts = {};
+        
+        // Initialize dashboard
+        $(document).ready(function() {
+            initializeCharts();
+            setupAutoRefresh();
+            setupRealTimeUpdates();
+            
+            // Add fade-in animation
+            $('.fade-in').each(function(index) {
+                $(this).delay(index * 100).animate({opacity: 1}, 500);
+            });
+        });
+        
+        function initializeCharts() {
+            // Equipment Status Chart
+            const equipmentCtx = document.getElementById('equipmentStatusChart').getContext('2d');
+            charts.equipment = new Chart(equipmentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: dashboardData.equipmentStatus.map(d => d.label),
+                    datasets: [{
+                        data: dashboardData.equipmentStatus.map(d => d.value),
+                        backgroundColor: dashboardData.equipmentStatus.map(d => d.color),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Maintenance Trend Chart
+            const trendCtx = document.getElementById('maintenanceTrendChart').getContext('2d');
+            charts.trend = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: dashboardData.maintenanceTrend.map(d => d.label),
+                    datasets: [{
+                        label: 'Maintenance Tasks',
+                        data: dashboardData.maintenanceTrend.map(d => d.value),
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Cost Analysis Chart
+            const costCtx = document.getElementById('costAnalysisChart').getContext('2d');
+            charts.cost = new Chart(costCtx, {
+                type: 'bar',
+                data: {
+                    labels: dashboardData.costAnalysis.map(d => d.label),
+                    datasets: [{
+                        label: 'Maintenance Cost',
+                        data: dashboardData.costAnalysis.map(d => d.value),
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Performance Chart
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            charts.performance = new Chart(perfCtx, {
+                type: 'radar',
+                data: {
+                    labels: dashboardData.performance.map(d => d.label),
+                    datasets: [{
+                        label: 'Performance',
+                        data: dashboardData.performance.map(d => d.value),
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: '#667eea',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function refreshDashboard() {
+            showLoading();
+            
+            // Simulate API call
+            setTimeout(() => {
+                hideLoading();
+                window.location.reload();
+            }, 1000);
+        }
+        
+        function setupAutoRefresh() {
+            const interval = @Model.UserPreferences.RefreshInterval * 1000;
+            if (interval > 0) {
+                setInterval(() => {
+                    refreshDashboard();
+                }, interval);
+            }
+        }
+        
+        function setupRealTimeUpdates() {
+            // SignalR implementation would go here
+            if (@Model.IsRealTimeEnabled.ToString().ToLower()) {
+                console.log('Real-time updates enabled');
+            }
+        }
+        
+        function applyDateFilter(period) {
+            showLoading();
+            
+            let dateFrom, dateTo;
+            const now = new Date();
+            
+            switch(period) {
+                case 'today':
+                    dateFrom = dateTo = now.toISOString().split('T')[0];
+                    break;
+                case 'week':
+                    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+                    dateFrom = weekStart.toISOString().split('T')[0];
+                    dateTo = new Date().toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                    dateTo = new Date().toISOString().split('T')[0];
+                    break;
+                case 'quarter':
+                    const quarter = Math.floor(now.getMonth() / 3);
+                    dateFrom = new Date(now.getFullYear(), quarter * 3, 1).toISOString().split('T')[0];
+                    dateTo = new Date().toISOString().split('T')[0];
+                    break;
+                default:
+                    dateFrom = dateTo = null;
+            }
+            
+            const params = new URLSearchParams();
+            if (dateFrom) params.append('filters.DateFrom', dateFrom);
+            if (dateTo) params.append('filters.DateTo', dateTo);
+            
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+        
+        function applyFilters() {
+            const params = new URLSearchParams();
+            
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            
+            if (dateFrom) params.append('filters.DateFrom', dateFrom);
+            if (dateTo) params.append('filters.DateTo', dateTo);
+            
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+        
+        function clearFilters() {
+            window.location.href = window.location.pathname;
+        }
+        
+        function saveSettings() {
+            const settings = {
+                theme: document.getElementById('themeSelect').value,
+                refreshInterval: parseInt(document.getElementById('refreshInterval').value),
+                enableNotifications: document.getElementById('enableNotifications').checked
+            };
+            
+            // Save settings via API
+            fetch('/Dashboard/SaveSettings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings)
+            }).then(() => {
+                $('#settingsModal').modal('hide');
+                if (settings.theme !== '@Model.UserPreferences.Theme') {
+                    window.location.reload();
+                }
+            });
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+    </script>
+}

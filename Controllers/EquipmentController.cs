@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
+using FEENALOoFINALE.Models.ViewModels;
+using System.Text.Json;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -709,6 +712,471 @@ namespace FEENALOoFINALE.Controllers
 
             TempData["SuccessMessage"] = $"Maintenance check completed. {alertsGenerated} alerts generated for overdue maintenance.";
             return RedirectToAction("Index", "Alert");
+        }
+
+        // Enhanced Equipment Management
+        public async Task<IActionResult> Enhanced(
+            string searchTerm = "",
+            string sortBy = "Name",
+            string sortDirection = "asc",
+            int currentPage = 1,
+            int pageSize = 20,
+            string[]? statusFilter = null,
+            string maintenanceStatus = "",
+            string alertLevel = "",
+            int? buildingId = null,
+            int? equipmentTypeId = null)
+        {
+            var viewModel = new EquipmentManagementViewModel
+            {
+                PageTitle = "Equipment Management",
+                PageDescription = "Manage and monitor all equipment in your facility",
+                SearchTerm = searchTerm,
+                SortBy = sortBy,
+                SortDirection = sortDirection,
+                CurrentPage = currentPage,
+                PageSize = pageSize,
+                CanExport = true,
+                CanBulkEdit = true,
+                Breadcrumbs = new List<BreadcrumbItem>
+                {
+                    new BreadcrumbItem { Text = "Dashboard", Controller = "Dashboard", Action = "Index" },
+                    new BreadcrumbItem { Text = "Equipment Management", IsActive = true }
+                }
+            };
+
+            // Build query
+            var query = _context.Equipment
+                .Include(e => e.EquipmentType)
+                .Include(e => e.EquipmentModel)
+                .Include(e => e.Building)
+                .Include(e => e.Room)
+                .Include(e => e.MaintenanceLogs)
+                .Include(e => e.Alerts)
+                .AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(e => 
+                    (e.EquipmentType != null && e.EquipmentType.EquipmentTypeName.Contains(searchTerm)) ||
+                    (e.EquipmentModel != null && e.EquipmentModel.ModelName.Contains(searchTerm)) ||
+                    (e.Building != null && e.Building.BuildingName.Contains(searchTerm)) ||
+                    (e.Room != null && e.Room.RoomName.Contains(searchTerm)));
+            }
+
+            // Apply status filter
+            if (statusFilter != null && statusFilter.Any())
+            {
+                var statuses = statusFilter.Select(s => Enum.Parse<EquipmentStatus>(s)).ToList();
+                query = query.Where(e => statuses.Contains(e.Status));
+            }
+
+            // Apply building filter
+            if (buildingId.HasValue)
+            {
+                query = query.Where(e => e.BuildingId == buildingId.Value);
+            }
+
+            // Apply equipment type filter
+            if (equipmentTypeId.HasValue)
+            {
+                query = query.Where(e => e.EquipmentTypeId == equipmentTypeId.Value);
+            }
+
+            // Apply maintenance status filter
+            if (!string.IsNullOrEmpty(maintenanceStatus))
+            {
+                switch (maintenanceStatus.ToLower())
+                {
+                    case "overdue":
+                        // Equipment with overdue maintenance
+                        query = query.Where(e => e.MaintenanceLogs != null && e.MaintenanceLogs.Any() && 
+                            e.MaintenanceLogs.OrderByDescending(ml => ml.LogDate).First().LogDate < DateTime.Now.AddMonths(-6));
+                        break;
+                    case "due-soon":
+                        // Equipment due for maintenance soon
+                        query = query.Where(e => e.MaintenanceLogs != null && e.MaintenanceLogs.Any() && 
+                            e.MaintenanceLogs.OrderByDescending(ml => ml.LogDate).First().LogDate < DateTime.Now.AddMonths(-3) &&
+                            e.MaintenanceLogs.OrderByDescending(ml => ml.LogDate).First().LogDate >= DateTime.Now.AddMonths(-6));
+                        break;
+                    case "current":
+                        // Equipment with recent maintenance
+                        query = query.Where(e => e.MaintenanceLogs != null && e.MaintenanceLogs.Any() && 
+                            e.MaintenanceLogs.OrderByDescending(ml => ml.LogDate).First().LogDate >= DateTime.Now.AddMonths(-3));
+                        break;
+                }
+            }
+
+            // Apply alert level filter
+            if (!string.IsNullOrEmpty(alertLevel))
+            {
+                switch (alertLevel.ToLower())
+                {
+                    case "none":
+                        query = query.Where(e => e.Alerts == null || !e.Alerts.Any(a => a.Status == AlertStatus.Open));
+                        break;
+                    case "low":
+                        query = query.Where(e => e.Alerts != null && e.Alerts.Any(a => a.Status == AlertStatus.Open && a.Priority == AlertPriority.Low));
+                        break;
+                    case "medium":
+                        query = query.Where(e => e.Alerts != null && e.Alerts.Any(a => a.Status == AlertStatus.Open && a.Priority == AlertPriority.Medium));
+                        break;
+                    case "high":
+                        query = query.Where(e => e.Alerts != null && e.Alerts.Any(a => a.Status == AlertStatus.Open && a.Priority == AlertPriority.High));
+                        break;
+                }
+            }
+
+            // Get total count before pagination
+            viewModel.TotalRecords = await query.CountAsync();
+
+            // Apply sorting
+            query = sortBy.ToLower() switch
+            {
+                "name" => sortDirection == "desc" 
+                    ? query.OrderByDescending(e => e.EquipmentType != null ? e.EquipmentType.EquipmentTypeName : "")
+                    : query.OrderBy(e => e.EquipmentType != null ? e.EquipmentType.EquipmentTypeName : ""),
+                "type" => sortDirection == "desc" 
+                    ? query.OrderByDescending(e => e.EquipmentType != null ? e.EquipmentType.EquipmentTypeName : "")
+                    : query.OrderBy(e => e.EquipmentType != null ? e.EquipmentType.EquipmentTypeName : ""),
+                "location" => sortDirection == "desc" 
+                    ? query.OrderByDescending(e => e.Building != null ? e.Building.BuildingName : "")
+                    : query.OrderBy(e => e.Building != null ? e.Building.BuildingName : ""),
+                "status" => sortDirection == "desc" 
+                    ? query.OrderByDescending(e => e.Status)
+                    : query.OrderBy(e => e.Status),
+                _ => query.OrderBy(e => e.EquipmentType != null ? e.EquipmentType.EquipmentTypeName : "")
+            };
+
+            // Apply pagination
+            var equipment = await query
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Convert to view models
+            viewModel.Equipment = equipment.Select(e => new EquipmentItemViewModel
+            {
+                EquipmentId = e.EquipmentId,
+                Name = e.EquipmentType?.EquipmentTypeName ?? "Unknown",
+                Model = e.EquipmentModel?.ModelName ?? "Unknown",
+                TypeName = e.EquipmentType?.EquipmentTypeName ?? "Unknown",
+                Location = $"{e.Building?.BuildingName ?? "Unknown"} - {e.Room?.RoomName ?? "Unknown"}",
+                Building = e.Building?.BuildingName ?? "Unknown",
+                Room = e.Room?.RoomName ?? "Unknown",
+                Status = e.Status,
+                LastMaintenanceDate = e.MaintenanceLogs?.OrderByDescending(ml => ml.LogDate).FirstOrDefault()?.LogDate,
+                NextMaintenanceDate = e.MaintenanceLogs?.OrderByDescending(ml => ml.LogDate).FirstOrDefault()?.LogDate.AddMonths(6),
+                MaintenanceOverdueDays = CalculateOverdueDays(e.MaintenanceLogs?.OrderByDescending(ml => ml.LogDate).FirstOrDefault()?.LogDate),
+                AlertCount = e.Alerts?.Count(a => a.Status == AlertStatus.Open) ?? 0,
+                Notes = e.Notes ?? "",
+                AvailableActions = BuildEquipmentActions(e.EquipmentId)
+            }).ToList();
+
+            // Build statistics
+            await BuildEquipmentStatistics(viewModel);
+
+            // Build filter options
+            await BuildFilterOptions(viewModel);
+
+            // Build bulk actions
+            viewModel.BulkActions = BuildBulkActions();
+
+            return View(viewModel);
+        }
+
+        private int CalculateOverdueDays(DateTime? lastMaintenanceDate)
+        {
+            if (!lastMaintenanceDate.HasValue) return 0;
+            
+            var expectedNextMaintenance = lastMaintenanceDate.Value.AddMonths(6);
+            if (expectedNextMaintenance < DateTime.Now)
+            {
+                return (int)(DateTime.Now - expectedNextMaintenance).TotalDays;
+            }
+            return 0;
+        }
+
+        private List<QuickActionItem> BuildEquipmentActions(int equipmentId)
+        {
+            return new List<QuickActionItem>
+            {
+                new QuickActionItem
+                {
+                    Id = "view-history",
+                    Title = "View History",
+                    Description = "View maintenance history",
+                    Icon = "bi-clock-history",
+                    Color = "info",
+                    Controller = "MaintenanceLog",
+                    Action = "Index",
+                    RouteValues = new Dictionary<string, string> { { "equipmentId", equipmentId.ToString() } }
+                },
+                new QuickActionItem
+                {
+                    Id = "schedule-maintenance",
+                    Title = "Schedule Maintenance",
+                    Description = "Schedule new maintenance",
+                    Icon = "bi-calendar-plus",
+                    Color = "warning",
+                    Controller = "MaintenanceLog",
+                    Action = "Create",
+                    RouteValues = new Dictionary<string, string> { { "equipmentId", equipmentId.ToString() } }
+                },
+                new QuickActionItem
+                {
+                    Id = "view-alerts",
+                    Title = "View Alerts",
+                    Description = "View active alerts",
+                    Icon = "bi-bell",
+                    Color = "danger",
+                    Controller = "Alert",
+                    Action = "Index",
+                    RouteValues = new Dictionary<string, string> { { "equipmentId", equipmentId.ToString() } }
+                }
+            };
+        }
+
+        private async Task BuildEquipmentStatistics(EquipmentManagementViewModel viewModel)
+        {
+            var allEquipment = await _context.Equipment
+                .Include(e => e.MaintenanceLogs)
+                .Include(e => e.Alerts)
+                .ToListAsync();
+
+            viewModel.Statistics = new EquipmentStatistics
+            {
+                TotalEquipment = allEquipment.Count,
+                OperationalCount = allEquipment.Count(e => e.Status == EquipmentStatus.Active),
+                MaintenanceCount = allEquipment.Count(e => e.Status == EquipmentStatus.Inactive),
+                OutOfServiceCount = allEquipment.Count(e => e.Status == EquipmentStatus.Retired),
+                OverdueMaintenanceCount = allEquipment.Count(e => 
+                    e.MaintenanceLogs != null && e.MaintenanceLogs.Any() && 
+                    e.MaintenanceLogs.OrderByDescending(ml => ml.LogDate).First().LogDate < DateTime.Now.AddMonths(-6)),
+                AverageEfficiency = 92.5, // This would be calculated from actual performance data
+                TotalMaintenanceCost = allEquipment
+                    .SelectMany(e => e.MaintenanceLogs ?? new List<MaintenanceLog>())
+                    .Sum(ml => ml.Cost),
+                CriticalAlertsCount = allEquipment
+                    .SelectMany(e => e.Alerts ?? new List<Alert>())
+                    .Count(a => a.Status == AlertStatus.Open && a.Priority == AlertPriority.High)
+            };
+        }
+
+        private async Task BuildFilterOptions(EquipmentManagementViewModel viewModel)
+        {
+            viewModel.FilterOptions = new EquipmentFilterOptions
+            {
+                Buildings = await _context.Buildings
+                    .Select(b => new BuildingOption 
+                    { 
+                        Id = b.BuildingId, 
+                        Name = b.BuildingName,
+                        EquipmentCount = b.Equipments != null ? b.Equipments.Count : 0
+                    })
+                    .ToListAsync(),
+                
+                EquipmentTypes = await _context.EquipmentTypes
+                    .Select(et => new EquipmentTypeOption 
+                    { 
+                        Id = et.EquipmentTypeId, 
+                        Name = et.EquipmentTypeName,
+                        EquipmentCount = et.Equipments != null ? et.Equipments.Count : 0
+                    })
+                    .ToListAsync(),
+                
+                Statuses = Enum.GetValues<EquipmentStatus>()
+                    .Select(status => new StatusOption 
+                    { 
+                        Status = status, 
+                        Name = status.ToString(),
+                        Count = _context.Equipment.Count(e => e.Status == status)
+                    })
+                    .ToList(),
+                
+                MaintenanceStatuses = new List<MaintenanceStatusOption>
+                {
+                    new MaintenanceStatusOption { Status = "current", Display = "Up to Date", Count = 0 },
+                    new MaintenanceStatusOption { Status = "due-soon", Display = "Due Soon", Count = 0 },
+                    new MaintenanceStatusOption { Status = "overdue", Display = "Overdue", Count = 0 }
+                }
+            };
+        }
+
+        private List<EquipmentBulkAction> BuildBulkActions()
+        {
+            return new List<EquipmentBulkAction>
+            {
+                new EquipmentBulkAction
+                {
+                    Id = "activate",
+                    Name = "Activate",
+                    Icon = "bi-play-circle",
+                    Color = "success",
+                    RequiresConfirmation = false
+                },
+                new EquipmentBulkAction
+                {
+                    Id = "deactivate",
+                    Name = "Deactivate",
+                    Icon = "bi-pause-circle",
+                    Color = "warning",
+                    RequiresConfirmation = true,
+                    ConfirmationMessage = "Are you sure you want to deactivate the selected equipment?"
+                },
+                new EquipmentBulkAction
+                {
+                    Id = "schedule-maintenance",
+                    Name = "Schedule Maintenance",
+                    Icon = "bi-calendar-plus",
+                    Color = "info",
+                    RequiresConfirmation = false
+                },
+                new EquipmentBulkAction
+                {
+                    Id = "delete",
+                    Name = "Delete",
+                    Icon = "bi-trash",
+                    Color = "danger",
+                    RequiresConfirmation = true,
+                    ConfirmationMessage = "Are you sure you want to delete the selected equipment? This action cannot be undone."
+                }
+            };
+        }
+
+        // Bulk Actions API
+        [HttpPost]
+        public async Task<IActionResult> BulkAction(string actionId, [FromBody] BulkActionRequest request)
+        {
+            try
+            {
+                var equipmentIds = request.SelectedIds ?? new List<int>();
+                var equipment = await _context.Equipment
+                    .Where(e => equipmentIds.Contains(e.EquipmentId))
+                    .ToListAsync();
+
+                if (!equipment.Any())
+                {
+                    return Json(new { success = false, message = "No equipment found." });
+                }
+
+                switch (actionId.ToLower())
+                {
+                    case "activate":
+                        foreach (var item in equipment)
+                            item.Status = EquipmentStatus.Active;
+                        break;
+                    
+                    case "deactivate":
+                        foreach (var item in equipment)
+                            item.Status = EquipmentStatus.Inactive;
+                        break;
+                    
+                    case "delete":
+                        _context.Equipment.RemoveRange(equipment);
+                        break;
+                    
+                    case "schedule-maintenance":
+                        // Create maintenance tasks for selected equipment
+                        foreach (var item in equipment)
+                        {
+                            var maintenanceTask = new MaintenanceTask
+                            {
+                                EquipmentId = item.EquipmentId,
+                                ScheduledDate = DateTime.Now.AddDays(7),
+                                Status = MaintenanceStatus.Pending,
+                                Description = "Scheduled maintenance from bulk action"
+                            };
+                            _context.MaintenanceTasks.Add(maintenanceTask);
+                        }
+                        break;
+                    
+                    default:
+                        return Json(new { success = false, message = "Unknown action." });
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = $"Successfully processed {equipment.Count} equipment items." 
+                });
+            }
+            catch (Exception)
+            {
+                return Json(new { 
+                    success = false, 
+                    message = "An error occurred while processing the request." 
+                });
+            }
+        }
+
+        // Export functionality
+        public async Task<IActionResult> Export(string format = "csv", string searchTerm = "", string[]? statusFilter = null)
+        {
+            var query = _context.Equipment
+                .Include(e => e.EquipmentType)
+                .Include(e => e.EquipmentModel)
+                .Include(e => e.Building)
+                .Include(e => e.Room)
+                .AsQueryable();
+
+            // Apply filters (same as in Enhanced action)
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(e => 
+                    (e.EquipmentType != null && e.EquipmentType.EquipmentTypeName.Contains(searchTerm)) ||
+                    (e.EquipmentModel != null && e.EquipmentModel.ModelName.Contains(searchTerm)));
+            }
+
+            if (statusFilter != null && statusFilter.Any())
+            {
+                var statuses = statusFilter.Select(s => Enum.Parse<EquipmentStatus>(s)).ToList();
+                query = query.Where(e => statuses.Contains(e.Status));
+            }
+
+            var equipment = await query.ToListAsync();
+
+            switch (format.ToLower())
+            {
+                case "csv":
+                    return ExportToCsv(equipment);
+                case "excel":
+                    return ExportToExcel(equipment);
+                case "pdf":
+                    return ExportToPdf(equipment);
+                default:
+                    return ExportToCsv(equipment);
+            }
+        }
+
+        private IActionResult ExportToCsv(List<Equipment> equipment)
+        {
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Equipment Type,Model,Building,Room,Status,Installation Date");
+
+            foreach (var item in equipment)
+            {
+                csv.AppendLine($"\"{item.EquipmentType?.EquipmentTypeName ?? "N/A"}\",\"{item.EquipmentModel?.ModelName ?? "N/A"}\",\"{item.Building?.BuildingName ?? "N/A"}\",\"{item.Room?.RoomName ?? "N/A"}\",\"{item.Status}\",\"{item.InstallationDate?.ToString("yyyy-MM-dd") ?? "N/A"}\"");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            return File(bytes, "text/csv", $"equipment_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+        }
+
+        private IActionResult ExportToExcel(List<Equipment> equipment)
+        {
+            // Implementation for Excel export would go here
+            // For now, return CSV
+            return ExportToCsv(equipment);
+        }
+
+        private IActionResult ExportToPdf(List<Equipment> equipment)
+        {
+            // Implementation for PDF export would go here
+            // For now, return CSV
+            return ExportToCsv(equipment);
         }
 
         // TEST ACTION: Create test equipment for delete testing

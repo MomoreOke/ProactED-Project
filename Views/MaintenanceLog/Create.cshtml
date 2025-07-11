@@ -76,6 +76,12 @@
                 <span asp-validation-for="DowntimeHours" class="text-danger"></span>
             </div>
 
+            <div class="form-group">
+                <label asp-for="Cost" class="control-label">Cost ($)</label>
+                <input asp-for="Cost" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                <span asp-validation-for="Cost" class="text-danger"></span>
+            </div>
+
             <div class="form-group mt-3">
                 <input type="submit" value="Create" class="btn btn-primary" />
                 <a asp-action="Index" class="btn btn-secondary">Back to List</a>

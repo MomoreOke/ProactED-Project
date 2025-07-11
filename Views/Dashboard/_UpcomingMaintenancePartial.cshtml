@@ -1,0 +1,180 @@
+@model List<FEENALOoFINALE.Models.MaintenanceTask>
+
+@if (Model?.Any() == true)
+{
+    <div class="table-responsive">
+        <table class="table table-modern">
+            <thead>
+                <tr>
+                    <th>Equipment</th>
+                    <th>Task</th>
+                    <th>Scheduled Date</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var maintenance in Model.Take(5))
+                {
+                    <tr>
+                        <td>
+                            <span class="equipment-badge">
+                                @(maintenance.Equipment?.EquipmentModel?.ModelName ?? maintenance.Equipment?.EquipmentType?.EquipmentTypeName ?? "Unknown Equipment")
+                            </span>
+                        </td>
+                        <td>
+                            <div class="task-info">
+                                <div class="task-title">Maintenance Task</div>
+                                @if (!string.IsNullOrEmpty(maintenance.Description))
+                                {
+                                    <small class="text-muted">@maintenance.Description.Substring(0, Math.Min(50, maintenance.Description.Length))@(maintenance.Description.Length > 50 ? "..." : "")</small>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <span class="date-badge @(maintenance.ScheduledDate <= DateTime.Now ? "overdue" : "upcoming")">
+                                @maintenance.ScheduledDate.ToString("MMM dd, yyyy")
+                            </span>
+                        </td>
+                        <td>
+                            <span class="priority-badge priority-@maintenance.Priority.ToString().ToLower()">
+                                @maintenance.Priority
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-@maintenance.Status.ToString().ToLower()">
+                                @maintenance.Status
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a asp-controller="MaintenanceLog" asp-action="Details" asp-route-id="@maintenance.TaskId" 
+                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                @if (maintenance.Status != FEENALOoFINALE.Models.MaintenanceStatus.Completed)
+                                {
+                                    <a asp-controller="MaintenanceLog" asp-action="Edit" asp-route-id="@maintenance.TaskId" 
+                                       class="btn btn-sm btn-outline-warning" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="bi bi-calendar-check text-muted"></i>
+        </div>
+        <p class="text-muted">No upcoming maintenance tasks scheduled</p>
+        <a asp-controller="MaintenanceLog" asp-action="Create" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Schedule Maintenance
+        </a>
+    </div>
+}
+
+<style>
+    .table-modern {
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+
+    .equipment-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .task-info .task-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .date-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .date-badge.upcoming {
+        background-color: #e8f5e8;
+        color: #155724;
+    }
+
+    .date-badge.overdue {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .priority-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .priority-badge.priority-low {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .priority-badge.priority-medium {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .priority-badge.priority-high {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .status-badge.status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-badge.status-inprogress {
+        background-color: #cce7ff;
+        color: #004085;
+    }
+
+    .status-badge.status-completed {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+</style>

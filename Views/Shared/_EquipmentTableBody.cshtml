@@ -1,0 +1,125 @@
+@model IEnumerable<FEENALOoFINALE.Models.ViewModels.EquipmentItemViewModel>
+
+@foreach (var equipment in Model)
+{
+    <tr class="@(equipment.NeedsAttention ? "table-warning" : "")">
+        <td>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="@equipment.EquipmentId" id="equipment_@equipment.EquipmentId">
+            </div>
+        </td>
+        <td>
+            <div class="d-flex align-items-center">
+                <div class="equipment-icon me-3">
+                    <i class="bi bi-gear text-muted"></i>
+                </div>
+                <div>
+                    <h6 class="mb-1">@equipment.Name</h6>
+                    <small class="text-muted">Model: @equipment.Model</small>
+                    @if (equipment.NeedsAttention)
+                    {
+                        <br><small class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Needs Attention</small>
+                    }
+                </div>
+            </div>
+        </td>
+        <td>
+            <span class="badge bg-secondary">@equipment.TypeName</span>
+        </td>
+        <td>
+            <div>
+                <i class="bi bi-geo-alt me-1 text-muted"></i>
+                <strong>@equipment.Building</strong>
+                <br>
+                <small class="text-muted">@equipment.Room</small>
+            </div>
+        </td>
+        <td>
+            <span class="badge @equipment.StatusBadgeClass">
+                @equipment.StatusText
+            </span>
+            @if (equipment.AlertCount > 0)
+            {
+                <br><small class="text-danger mt-1 d-block">
+                    <i class="bi bi-exclamation-circle me-1"></i>@equipment.AlertCount alerts
+                </small>
+            }
+        </td>
+        <td>
+            @if (equipment.IsOverdue)
+            {
+                <span class="maintenance-overdue">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    @equipment.MaintenanceOverdueDays days overdue
+                </span>
+            }
+            else if (equipment.LastMaintenanceDate.HasValue)
+            {
+                <span class="maintenance-current">
+                    <i class="bi bi-check-circle me-1"></i>
+                    @equipment.LastMaintenanceDate.Value.ToString("MMM dd, yyyy")
+                </span>
+            }
+            else
+            {
+                <span class="text-muted">
+                    <i class="bi bi-dash-circle me-1"></i>
+                    No maintenance recorded
+                </span>
+            }
+        </td>
+        <td>
+            <div class="btn-group" role="group">
+                <!-- View Details -->
+                <a href="/Equipment/Details/@equipment.EquipmentId" 
+                   class="btn btn-outline-info btn-sm" 
+                   title="View Details">
+                    <i class="bi bi-eye"></i>
+                </a>
+                
+                <!-- Edit Equipment -->
+                <a href="/Equipment/Edit/@equipment.EquipmentId" 
+                   class="btn btn-outline-primary btn-sm" 
+                   title="Edit Equipment">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                
+                <!-- Maintenance Log -->
+                <a href="/MaintenanceLog/Create?equipmentId=@equipment.EquipmentId" 
+                   class="btn btn-outline-warning btn-sm" 
+                   title="Add Maintenance Log">
+                    <i class="bi bi-gear"></i>
+                </a>
+                
+                <!-- Quick Actions Dropdown -->
+                <div class="btn-group" role="group">
+                    <button type="button" 
+                            class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                            data-bs-toggle="dropdown" 
+                            aria-expanded="false">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        @foreach (var action in equipment.AvailableActions)
+                        {
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="/@action.Controller/@action.Action@(action.RouteValues.Any() ? "?" + string.Join("&", action.RouteValues.Select(kv => $"{kv.Key}={kv.Value}")) : "")">
+                                    <i class="@action.Icon me-2"></i> @action.Title
+                                </a>
+                            </li>
+                        }
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="/Equipment/Delete/@equipment.EquipmentId"
+                               onclick="return confirm('Are you sure you want to delete this equipment?')">
+                                <i class="bi bi-trash me-2"></i> Delete
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </td>
+    </tr>
+}

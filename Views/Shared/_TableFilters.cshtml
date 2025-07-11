@@ -1,0 +1,45 @@
+@model FEENALOoFINALE.Models.ViewModels.PaginatedViewModel
+
+<div class="col-md-3">
+    <label class="form-label">Status</label>
+    <select class="form-select form-select-sm" name="filters.status" multiple>
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+        <option value="Retired">Retired</option>
+    </select>
+</div>
+
+<div class="col-md-3">
+    <label class="form-label">Maintenance Status</label>
+    <select class="form-select form-select-sm" name="filters.maintenanceStatus">
+        <option value="">All</option>
+        <option value="current">Current</option>
+        <option value="overdue">Overdue</option>
+        <option value="due-soon">Due Soon</option>
+    </select>
+</div>
+
+<div class="col-md-3">
+    <label class="form-label">Alert Level</label>
+    <select class="form-select form-select-sm" name="filters.alertLevel">
+        <option value="">All</option>
+        <option value="none">No Alerts</option>
+        <option value="low">Low Priority</option>
+        <option value="medium">Medium Priority</option>
+        <option value="high">High Priority</option>
+    </select>
+</div>
+
+<div class="col-md-3">
+    <label class="form-label">Installation Year</label>
+    <select class="form-select form-select-sm" name="filters.installationYear">
+        <option value="">All Years</option>
+        @{
+            var currentYear = DateTime.Now.Year;
+            for (int year = currentYear; year >= currentYear - 20; year--)
+            {
+                <option value="@year">@year</option>
+            }
+        }
+    </select>
+</div>

@@ -43,7 +43,7 @@ namespace FEENALOoFINALE.Models
         public Alert? Alert { get; set; }
 
         // New property for linking to maintenance task
-        public int? TaskId { get; set; }
+        public int? MaintenanceTaskId { get; set; }
         public MaintenanceTask? Task { get; set; }
 
         // Navigation properties - explicitly exclude from validation

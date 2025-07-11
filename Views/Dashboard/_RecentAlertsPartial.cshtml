@@ -1,0 +1,75 @@
+@model List<FEENALOoFINALE.Models.Alert>
+
+@if (Model?.Any() == true)
+{
+    <div class="table-responsive">
+        <table class="table table-modern">
+            <thead>
+                <tr>
+                    <th>Equipment</th>
+                    <th>Priority</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var alert in Model)
+                {
+                    <tr class="@(alert.Priority == FEENALOoFINALE.Models.AlertPriority.High ? "table-row-critical" : "")">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-gear me-2 text-muted"></i>
+                                <div>
+                                    <strong>@(alert.Equipment?.EquipmentModel?.ModelName ?? "Unknown")</strong>
+                                    <br>
+                                    <small class="text-muted">@(alert.Equipment?.Building?.BuildingName) - @(alert.Equipment?.Room?.RoomName)</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge-modern @(alert.Priority == FEENALOoFINALE.Models.AlertPriority.High ? "badge-danger-modern" : alert.Priority == FEENALOoFINALE.Models.AlertPriority.Medium ? "badge-warning-modern" : "badge-info-modern")">
+                                @alert.Priority
+                            </span>
+                        </td>
+                        <td>
+                            @alert.CreatedDate.ToString("MMM dd, yyyy")
+                            <br>
+                            <small class="text-muted">@alert.CreatedDate.ToString("HH:mm")</small>
+                        </td>
+                        <td>
+                            <span class="badge-modern @(alert.Status == FEENALOoFINALE.Models.AlertStatus.Open ? "badge-warning-modern" : "badge-success-modern")">
+                                @alert.Status
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group-sm">
+                                @if (alert.Equipment != null)
+                                {
+                                    <a asp-controller="Equipment" asp-action="Details" asp-route-id="@alert.Equipment.EquipmentId" 
+                                       class="btn btn-outline-primary btn-sm" title="View Equipment">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-controller="MaintenanceLog" asp-action="Create" asp-route-equipmentId="@alert.Equipment.EquipmentId" 
+                                       class="btn btn-outline-success btn-sm" title="Schedule Maintenance">
+                                        <i class="bi bi-plus"></i>
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-bell-slash"></i>
+        </div>
+        <p>No recent alerts</p>
+        <small class="text-muted">All systems are running smoothly</small>
+    </div>
+}

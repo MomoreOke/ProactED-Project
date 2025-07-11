@@ -2,8 +2,10 @@ using OfficeOpenXml;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using FEENALOoFINALE.Models;
+using FEENALOoFINALE.Models.ViewModels;
 using FEENALOoFINALE.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace FEENALOoFINALE.Services
 {
@@ -800,7 +802,7 @@ namespace FEENALOoFINALE.Services
         }
 
         // Analytics sheet creation methods
-        private void CreatePerformanceMetricsSheet(ExcelWorksheet sheet, List<EquipmentPerformanceMetrics> metrics)
+        private void CreatePerformanceMetricsSheet(ExcelWorksheet sheet, List<FEENALOoFINALE.Models.EquipmentPerformanceMetrics> metrics)
         {
             sheet.Cells[1, 1].Value = "Equipment Performance Metrics";
             sheet.Cells[1, 1].Style.Font.Bold = true;
@@ -954,7 +956,7 @@ namespace FEENALOoFINALE.Services
         }
 
         // PDF analytics methods
-        private void AddPerformanceMetricsToPdf(Document document, List<EquipmentPerformanceMetrics> metrics)
+        private void AddPerformanceMetricsToPdf(Document document, List<FEENALOoFINALE.Models.EquipmentPerformanceMetrics> metrics)
         {
             var sectionTitle = new Paragraph("Equipment Performance Metrics", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 14))
             {
@@ -1224,6 +1226,142 @@ namespace FEENALOoFINALE.Services
             // Apply any relevant filters here if needed for inventory
 
             return await query.OrderBy(i => i.Name).ToListAsync(); // Use Name instead of ItemName
+        }
+
+        public async Task<ExportResult> ExportReportAsync(object reportData, string format)
+        {
+            try
+            {
+                var result = new ExportResult();
+                
+                // Serialize report data to JSON for processing
+                var jsonData = JsonSerializer.Serialize(reportData, new JsonSerializerOptions 
+                { 
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = true 
+                });
+
+                switch (format.ToLower())
+                {
+                    case "pdf":
+                        result.Data = await GenerateReportPdfAsync(jsonData, reportData);
+                        result.ContentType = "application/pdf";
+                        result.FileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                        break;
+                        
+                    case "excel":
+                    case "xlsx":
+                        result.Data = await GenerateReportExcelAsync(jsonData, reportData);
+                        result.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        result.FileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                        break;
+                        
+                    case "csv":
+                        result.Data = await GenerateReportCsvAsync(jsonData, reportData);
+                        result.ContentType = "text/csv";
+                        result.FileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                        break;
+                        
+                    case "json":
+                        result.Data = System.Text.Encoding.UTF8.GetBytes(jsonData);
+                        result.ContentType = "application/json";
+                        result.FileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+                        break;
+                        
+                    default:
+                        throw new ArgumentException($"Unsupported export format: {format}");
+                }
+
+                result.Success = true;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return new ExportResult 
+                { 
+                    Success = false, 
+                    ErrorMessage = ex.Message 
+                };
+            }
+        }
+
+        private async Task<byte[]> GenerateReportPdfAsync(string jsonData, object reportData)
+        {
+            using var memoryStream = new MemoryStream();
+            var document = new Document(PageSize.A4, 25, 25, 30, 30);
+            var writer = PdfWriter.GetInstance(document, memoryStream);
+
+            document.Open();
+
+            // Title
+            var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18);
+            var title = new Paragraph("Custom Report", titleFont)
+            {
+                Alignment = Element.ALIGN_CENTER,
+                SpacingAfter = 20
+            };
+            document.Add(title);
+
+            // Generated date
+            var dateFont = FontFactory.GetFont(FontFactory.HELVETICA, 10);
+            var dateInfo = new Paragraph($"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm:ss}", dateFont)
+            {
+                Alignment = Element.ALIGN_CENTER,
+                SpacingAfter = 30
+            };
+            document.Add(dateInfo);
+
+            // Report content
+            var contentFont = FontFactory.GetFont(FontFactory.HELVETICA, 12);
+            var content = new Paragraph("Report Data:", contentFont)
+            {
+                SpacingAfter = 15
+            };
+            document.Add(content);
+
+            // Add formatted JSON data
+            var dataFont = FontFactory.GetFont(FontFactory.COURIER, 9);
+            var dataParagraph = new Paragraph(jsonData, dataFont);
+            document.Add(dataParagraph);
+
+            document.Close();
+            return memoryStream.ToArray();
+        }
+
+        private async Task<byte[]> GenerateReportExcelAsync(string jsonData, object reportData)
+        {
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Report Data");
+
+            // Add header
+            worksheet.Cells[1, 1].Value = "Custom Report";
+            worksheet.Cells[1, 1].Style.Font.Bold = true;
+            worksheet.Cells[1, 1].Style.Font.Size = 16;
+
+            worksheet.Cells[2, 1].Value = $"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            worksheet.Cells[2, 1].Style.Font.Size = 10;
+
+            // Add data
+            worksheet.Cells[4, 1].Value = "Report Data (JSON):";
+            worksheet.Cells[4, 1].Style.Font.Bold = true;
+
+            worksheet.Cells[5, 1].Value = jsonData;
+            worksheet.Cells[5, 1].Style.WrapText = true;
+            worksheet.Column(1).Width = 100;
+
+            return package.GetAsByteArray();
+        }
+
+        private async Task<byte[]> GenerateReportCsvAsync(string jsonData, object reportData)
+        {
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Field,Value");
+            csv.AppendLine($"\"Report Generated\",\"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\"");
+            csv.AppendLine($"\"Report Type\",\"Custom Report\"");
+            csv.AppendLine($"\"Data Format\",\"JSON\"");
+            csv.AppendLine($"\"Report Data\",\"{jsonData.Replace("\"", "\"\"")}\"");
+
+            return System.Text.Encoding.UTF8.GetBytes(csv.ToString());
         }
     }
 }

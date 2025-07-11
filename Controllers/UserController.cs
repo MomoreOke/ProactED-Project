@@ -2,10 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
+using FEENALOoFINALE.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using FEENALOoFINALE.Services;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace FEENALOoFINALE.Controllers
 {
@@ -43,6 +45,120 @@ namespace FEENALOoFINALE.Controllers
                 .ToListAsync();
 
             return View(users);
+        }
+
+        // Enhanced User Management with Advanced Features
+        [Authorize]
+        public async Task<IActionResult> Enhanced(
+            int page = 1,
+            int pageSize = 20,
+            string searchTerm = "",
+            string[]? statusFilter = null,
+            string sortBy = "FullName",
+            string sortDirection = "asc")
+        {
+            var viewModel = new UserManagementViewModel
+            {
+                PageTitle = "User Management",
+                CurrentPage = page,
+                PageSize = pageSize,
+                SearchTerm = searchTerm,
+                SortBy = sortBy,
+                SortDirection = sortDirection,
+                CanCreateUsers = true,
+                CanManageRoles = true,
+                CanExport = true
+            };
+
+            // Build query
+            var query = _context.Users.AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(u => 
+                    u.FullName.Contains(searchTerm) ||
+                    (u.Email != null && u.Email.Contains(searchTerm)) ||
+                    (u.UserName != null && u.UserName.Contains(searchTerm)) ||
+                    u.WorkerId.Contains(searchTerm));
+            }
+
+            // Apply status filter
+            if (statusFilter != null && statusFilter.Any())
+            {
+                if (statusFilter.Contains("Active"))
+                    query = query.Where(u => u.EmailConfirmed && (u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow));
+                if (statusFilter.Contains("Unverified"))
+                    query = query.Where(u => !u.EmailConfirmed);
+                if (statusFilter.Contains("Locked"))
+                    query = query.Where(u => u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow);
+            }
+
+            // Apply sorting
+            query = sortBy.ToLower() switch
+            {
+                "fullname" => sortDirection == "desc" ? query.OrderByDescending(u => u.FullName) : query.OrderBy(u => u.FullName),
+                "email" => sortDirection == "desc" ? query.OrderByDescending(u => u.Email) : query.OrderBy(u => u.Email),
+                "workerid" => sortDirection == "desc" ? query.OrderByDescending(u => u.WorkerId) : query.OrderBy(u => u.WorkerId),
+                "lastlogin" => sortDirection == "desc" ? query.OrderByDescending(u => u.LastLogin) : query.OrderBy(u => u.LastLogin),
+                _ => query.OrderBy(u => u.FullName)
+            };
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var users = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new UserItemViewModel
+                {
+                    Id = u.Id,
+                    UserName = u.UserName ?? "",
+                    Email = u.Email ?? "",
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    PhoneNumber = u.PhoneNumber ?? "",
+                    EmailConfirmed = u.EmailConfirmed,
+                    IsActive = u.EmailConfirmed && (u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow),
+                    LastLoginDate = u.LastLogin == DateTime.MinValue ? null : u.LastLogin,
+                    CreatedDate = DateTime.UtcNow // Use current date as fallback since User model doesn't have CreatedDate
+                })
+                .ToListAsync();
+
+            // Calculate statistics
+            var totalUsers = await _context.Users.CountAsync();
+            var activeUsers = await _context.Users.CountAsync(u => u.EmailConfirmed && (u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow));
+            var unverifiedUsers = await _context.Users.CountAsync(u => !u.EmailConfirmed);
+            var lockedUsers = await _context.Users.CountAsync(u => u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow);
+
+            viewModel.Statistics = new UserStatistics
+            {
+                TotalUsers = totalUsers,
+                ActiveUsers = activeUsers,
+                InactiveUsers = totalUsers - activeUsers,
+                UnconfirmedUsers = unverifiedUsers,
+                UsersLoggedInToday = 0, // Would need additional tracking
+                NewUsersThisMonth = 0  // Would need CreatedDate field in User model
+            };
+
+            // Set up pagination
+            viewModel.TotalRecords = totalCount;
+
+            viewModel.Users = users;
+
+            // Set up filter options
+            viewModel.FilterOptions = new UserFilterOptions
+            {
+                Statuses = new List<UserStatusOption>
+                {
+                    new UserStatusOption { Status = "Active", Name = "Active", Count = activeUsers },
+                    new UserStatusOption { Status = "Unverified", Name = "Unverified", Count = unverifiedUsers },
+                    new UserStatusOption { Status = "Locked", Name = "Locked", Count = lockedUsers }
+                }
+            };
+
+            return View(viewModel);
         }
 
         // GET: Profile for current logged-in user (Protected)
@@ -842,6 +958,125 @@ namespace FEENALOoFINALE.Controllers
             }
 
             return RedirectToAction("Login");
+        }
+
+        // Bulk action for users
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> BulkUserAction(string actionId, [FromBody] BulkActionRequest request)
+        {
+            try
+            {
+                var userIds = request.SelectedIds.Select(id => id.ToString()).ToList();
+                var users = await _context.Users
+                    .Where(u => userIds.Contains(u.Id))
+                    .ToListAsync();
+
+                if (!users.Any())
+                {
+                    return Json(new { success = false, message = "No users found." });
+                }
+
+                switch (actionId.ToLower())
+                {
+                    case "verify":
+                        foreach (var user in users)
+                        {
+                            user.EmailConfirmed = true;
+                        }
+                        break;
+
+                    case "lock":
+                        foreach (var user in users)
+                        {
+                            user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100); // Effectively permanent
+                        }
+                        break;
+
+                    case "unlock":
+                        foreach (var user in users)
+                        {
+                            user.LockoutEnd = null;
+                        }
+                        break;
+
+                    case "delete":
+                        _context.Users.RemoveRange(users);
+                        break;
+
+                    default:
+                        return Json(new { success = false, message = "Unknown action." });
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = $"Successfully processed {users.Count} user(s)." 
+                });
+            }
+            catch (Exception)
+            {
+                return Json(new { 
+                    success = false, 
+                    message = "An error occurred while processing the request." 
+                });
+            }
+        }
+
+        // Export users
+        [Authorize]
+        public async Task<IActionResult> ExportUsers(string format = "csv", string searchTerm = "", string[]? statusFilter = null)
+        {
+            var query = _context.Users.AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(u => 
+                    u.FullName.Contains(searchTerm) ||
+                    (u.Email != null && u.Email.Contains(searchTerm)) ||
+                    (u.UserName != null && u.UserName.Contains(searchTerm)));
+            }
+
+            if (statusFilter != null && statusFilter.Any())
+            {
+                if (statusFilter.Contains("Active"))
+                    query = query.Where(u => u.EmailConfirmed && (u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow));
+                if (statusFilter.Contains("Unverified"))
+                    query = query.Where(u => !u.EmailConfirmed);
+                if (statusFilter.Contains("Locked"))
+                    query = query.Where(u => u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow);
+            }
+
+            var users = await query
+                .Select(u => new
+                {
+                    u.FullName,
+                    Email = u.Email ?? "",
+                    UserName = u.UserName ?? "",
+                    u.WorkerId,
+                    PhoneNumber = u.PhoneNumber ?? "",
+                    LastLoginDate = u.LastLogin.ToString("yyyy-MM-dd"),
+                    Status = u.EmailConfirmed ? (u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow ? "Locked" : "Active") : "Unverified"
+                })
+                .ToListAsync();
+
+            if (format.ToLower() == "csv")
+            {
+                var csv = new StringBuilder();
+                csv.AppendLine("Full Name,Email,Username,Worker ID,Phone Number,Last Login Date,Status");
+
+                foreach (var user in users)
+                {
+                    csv.AppendLine($"\"{user.FullName}\",\"{user.Email}\",\"{user.UserName}\",\"{user.WorkerId}\",\"{user.PhoneNumber}\",\"{user.LastLoginDate}\",\"{user.Status}\"");
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+                return File(bytes, "text/csv", $"users_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+            }
+
+            return BadRequest("Unsupported export format.");
         }
     }
 }

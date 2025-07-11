@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Maintenance Logs";
+    var pendingLogs = Model.Where(m => m.Status != FEENALOoFINALE.Models.MaintenanceStatus.Completed).ToList();
+    var completedLogs = Model.Where(m => m.Status == FEENALOoFINALE.Models.MaintenanceStatus.Completed).ToList();
 }
 
 <h1>Maintenance Logs</h1>
@@ -10,41 +12,144 @@
     <a asp-action="Create" class="btn btn-primary">Create New Log</a>
 </p>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Equipment</th>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Technician</th>
-            <th>Downtime (hrs)</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
+<!-- Pending Maintenance Logs -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h4><i class="bi bi-tools"></i> Logs to Attend To (@pendingLogs.Count)</h4>
+    </div>
+    <div class="card-body">
+        @if (pendingLogs.Any())
         {
-            <tr>
-                <td>@item.Equipment?.EquipmentType?.EquipmentTypeName</td>
-                <td>@item.LogDate.ToShortDateString()</td>
-                <td>@item.MaintenanceType</td>
-                <td>@item.Technician</td>
-                <td>@(item.DowntimeHours?.ToString("F1") ?? "N/A") hours</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@item.LogId" class="btn btn-info btn-sm">Details</a>
-                    <a asp-action="Edit" asp-route-id="@item.LogId" class="btn btn-warning btn-sm">Edit</a>
-                    <button type="button"
-                            class="btn btn-danger btn-sm"
-                            data-bs-toggle="modal"
-                            data-bs-target="#deleteModal"
-                            data-log-id="@item.LogId">
-                        Delete
-                    </button>
-                </td>
-            </tr>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Technician</th>
+                        <th>Downtime (hrs)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in pendingLogs)
+                    {
+                        <tr>
+                            <td>
+                                @if (item.Equipment?.EquipmentModel != null && item.Equipment?.EquipmentType != null)
+                                {
+                                    @($"{item.Equipment.EquipmentModel.ModelName} ({item.Equipment.EquipmentType.EquipmentTypeName})")
+                                }
+                                else if (item.Equipment != null)
+                                {
+                                    @($"Equipment ID: {item.Equipment.EquipmentId}")
+                                }
+                                else
+                                {
+                                    <em>No Equipment</em>
+                                }
+                            </td>
+                            <td>@item.LogDate.ToShortDateString()</td>
+                            <td>@item.MaintenanceType</td>
+                            <td>
+                                <span class="badge @(item.Status == FEENALOoFINALE.Models.MaintenanceStatus.InProgress ? "bg-primary" : "bg-secondary")">
+                                    @item.Status
+                                </span>
+                            </td>
+                            <td>@item.Technician</td>
+                            <td>@(item.DowntimeHours?.ToString("F1") ?? "N/A") hours</td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.LogId" class="btn btn-info btn-sm">Details</a>
+                                <a asp-action="Edit" asp-route-id="@item.LogId" class="btn btn-warning btn-sm">Edit</a>
+                                @if (item.Status != FEENALOoFINALE.Models.MaintenanceStatus.Completed)
+                                {
+                                    <form asp-action="MarkCompleted" method="post" style="display: inline;">
+                                        <input type="hidden" name="id" value="@item.LogId" />
+                                        <button type="submit" class="btn btn-success btn-sm" 
+                                                onclick="return confirm('Mark this maintenance as completed?')">
+                                            <i class="bi bi-check-circle"></i> Mark Completed
+                                        </button>
+                                    </form>
+                                }
+                                <button type="button"
+                                        class="btn btn-danger btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal"
+                                        data-log-id="@item.LogId">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         }
-    </tbody>
-</table>
+        else
+        {
+            <p class="text-muted">No pending maintenance logs.</p>
+        }
+    </div>
+</div>
+
+<!-- Completed Maintenance Logs -->
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h4><i class="bi bi-check-circle"></i> Completed Logs (@completedLogs.Count)</h4>
+    </div>
+    <div class="card-body">
+        @if (completedLogs.Any())
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Technician</th>
+                        <th>Downtime (hrs)</th>
+                        <th>Cost</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in completedLogs)
+                    {
+                        <tr>
+                            <td>
+                                @if (item.Equipment?.EquipmentModel != null && item.Equipment?.EquipmentType != null)
+                                {
+                                    @($"{item.Equipment.EquipmentModel.ModelName} ({item.Equipment.EquipmentType.EquipmentTypeName})")
+                                }
+                                else if (item.Equipment != null)
+                                {
+                                    @($"Equipment ID: {item.Equipment.EquipmentId}")
+                                }
+                                else
+                                {
+                                    <em>No Equipment</em>
+                                }
+                            </td>
+                            <td>@item.LogDate.ToShortDateString()</td>
+                            <td>@item.MaintenanceType</td>
+                            <td>@item.Technician</td>
+                            <td>@(item.DowntimeHours?.ToString("F1") ?? "N/A") hours</td>
+                            <td>@item.Cost.ToString("C")</td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.LogId" class="btn btn-info btn-sm">Details</a>
+                                <span class="badge bg-success">Completed</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted">No completed maintenance logs.</p>
+        }
+    </div>
+</div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">

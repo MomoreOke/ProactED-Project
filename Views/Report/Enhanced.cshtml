@@ -1,0 +1,600 @@
+@model FEENALOoFINALE.Models.ViewModels.EnhancedReportDashboardViewModel
+@{
+    ViewData["Title"] = "Advanced Reports & Analytics";
+}
+
+<style>
+    .enhanced-reports-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+    
+    .enhanced-reports-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .enhanced-reports-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .enhanced-reports-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .enhanced-report-card {
+        background: linear-gradient(135deg, #ffffff, #f8f9fa);
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    .enhanced-report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 50px rgba(102, 126, 234, 0.15);
+    }
+    
+    .enhanced-card-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 1.5rem;
+        margin: 0;
+    }
+    
+    .enhanced-card-body {
+        padding: 2rem;
+    }
+    
+    .enhanced-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .enhanced-stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .enhanced-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    .enhanced-stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #667eea;
+        margin: 0;
+    }
+    
+    .enhanced-stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .enhanced-chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .enhanced-filter-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .enhanced-filter-title {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .enhanced-quick-reports {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .enhanced-quick-report-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 1rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+        display: block;
+    }
+    
+    .enhanced-quick-report-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .enhanced-recent-reports {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .enhanced-table-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .enhanced-action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .enhanced-btn-sm {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .enhanced-btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+    }
+    
+    .enhanced-btn-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        color: white;
+    }
+    
+    .enhanced-btn-info {
+        background: linear-gradient(135deg, #17a2b8, #20c997);
+        border: none;
+        color: white;
+    }
+    
+    .enhanced-btn-warning {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+        border: none;
+        color: white;
+    }
+    
+    .enhanced-chart-legend {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .enhanced-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .enhanced-legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+</style>
+
+<div class="enhanced-reports-container">
+    <div class="container-fluid">
+        <!-- Header Section -->
+        <div class="enhanced-reports-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="enhanced-reports-title">@Model.PageTitle</h1>
+                    <p class="enhanced-reports-subtitle">@Model.PageDescription</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#reportBuilderModal">
+                        <i class="fas fa-plus"></i> Create New Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="enhanced-stats-grid">
+            <div class="enhanced-stat-card">
+                <h3 class="enhanced-stat-number">@Model.Statistics.TotalReports</h3>
+                <p class="enhanced-stat-label">Total Reports</p>
+            </div>
+            <div class="enhanced-stat-card">
+                <h3 class="enhanced-stat-number">@Model.Statistics.ReportsThisMonth</h3>
+                <p class="enhanced-stat-label">Reports This Month</p>
+            </div>
+            <div class="enhanced-stat-card">
+                <h3 class="enhanced-stat-number">@Model.Statistics.ScheduledReports</h3>
+                <p class="enhanced-stat-label">Scheduled Reports</p>
+            </div>
+            <div class="enhanced-stat-card">
+                <h3 class="enhanced-stat-number">@Model.Statistics.AutomatedReports</h3>
+                <p class="enhanced-stat-label">Automated Reports</p>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="enhanced-filter-section">
+            <h5 class="enhanced-filter-title">Report Filters</h5>
+            <form asp-action="Enhanced" method="get">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label">Date Range</label>
+                        <select name="Filters.DateRange" class="form-select">
+                            <option value="Today">Today</option>
+                            <option value="Yesterday">Yesterday</option>
+                            <option value="Last7Days" selected>Last 7 Days</option>
+                            <option value="Last30Days">Last 30 Days</option>
+                            <option value="ThisMonth">This Month</option>
+                            <option value="LastMonth">Last Month</option>
+                            <option value="Custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Report Type</label>
+                        <select name="Filters.ReportType" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="Equipment">Equipment Reports</option>
+                            <option value="Maintenance">Maintenance Reports</option>
+                            <option value="Inventory">Inventory Reports</option>
+                            <option value="Financial">Financial Reports</option>
+                            <option value="Predictive">Predictive Reports</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select name="Filters.Status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="Generated">Generated</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="InProgress">In Progress</option>
+                            <option value="Failed">Failed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="submit" class="btn enhanced-btn-primary">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="row">
+            <!-- Charts Section -->
+            <div class="col-lg-8">
+                <div class="enhanced-chart-container">
+                    <h5 class="enhanced-filter-title">Report Generation Trends</h5>
+                    <canvas id="reportsChart" width="400" height="200"></canvas>
+                    <div class="enhanced-chart-legend">
+                        <div class="enhanced-legend-item">
+                            <div class="enhanced-legend-color" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+                            <span>Reports Generated</span>
+                        </div>
+                        <div class="enhanced-legend-item">
+                            <div class="enhanced-legend-color" style="background: linear-gradient(135deg, #28a745, #20c997);"></div>
+                            <span>Automated Reports</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="enhanced-chart-container">
+                    <h5 class="enhanced-filter-title">Report Types Distribution</h5>
+                    <canvas id="reportTypesChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Quick Reports & Actions -->
+            <div class="col-lg-4">
+                <div class="enhanced-report-card">
+                    <div class="enhanced-card-header">
+                        <h5 class="mb-0">Quick Reports</h5>
+                    </div>
+                    <div class="enhanced-card-body">
+                        <div class="enhanced-quick-reports">
+                            @if (Model.QuickReports.Any())
+                            {                            @foreach (var quickReport in Model.QuickReports)
+                            {
+                                <a href="@Url.Action(quickReport.Action, quickReport.Controller)" class="enhanced-quick-report-btn">
+                                    <i class="@quickReport.Icon"></i>
+                                    <div>@quickReport.Name</div>
+                                </a>
+                            }
+                            }
+                            else
+                            {
+                                <a href="#" class="enhanced-quick-report-btn">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <div>Equipment Report</div>
+                                </a>
+                                <a href="#" class="enhanced-quick-report-btn">
+                                    <i class="fas fa-tools"></i>
+                                    <div>Maintenance Report</div>
+                                </a>
+                                <a href="#" class="enhanced-quick-report-btn">
+                                    <i class="fas fa-box"></i>
+                                    <div>Inventory Report</div>
+                                </a>
+                                <a href="#" class="enhanced-quick-report-btn">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    <div>Cost Analysis</div>
+                                </a>
+                                <a href="#" class="enhanced-quick-report-btn">
+                                    <i class="fas fa-brain"></i>
+                                    <div>Predictive Report</div>
+                                </a>
+                                <a href="#" class="enhanced-quick-report-btn">
+                                    <i class="fas fa-chart-line"></i>
+                                    <div>Performance Report</div>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="enhanced-report-card mt-3">
+                    <div class="enhanced-card-header">
+                        <h5 class="mb-0">Export Options</h5>
+                    </div>
+                    <div class="enhanced-card-body">
+                        @if (Model.ExportOptions.Any())
+                        {
+                            @foreach (var exportOption in Model.ExportOptions)
+                            {
+                                <button class="btn enhanced-btn-success mb-2 w-100">
+                                    <i class="@exportOption.Icon"></i> Export to @exportOption.DisplayName
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <button class="btn enhanced-btn-success mb-2 w-100">
+                                <i class="fas fa-file-pdf"></i> Export to PDF
+                            </button>
+                            <button class="btn enhanced-btn-success mb-2 w-100">
+                                <i class="fas fa-file-excel"></i> Export to Excel
+                            </button>
+                            <button class="btn enhanced-btn-success mb-2 w-100">
+                                <i class="fas fa-file-csv"></i> Export to CSV
+                            </button>
+                            <button class="btn enhanced-btn-success mb-2 w-100">
+                                <i class="fas fa-file-code"></i> Export to JSON
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reports Table -->
+        <div class="enhanced-recent-reports mt-4">
+            <div class="enhanced-card-header">
+                <h5 class="mb-0">Recent Reports</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="enhanced-table-header">
+                        <tr>
+                            <th>Report Name</th>
+                            <th>Type</th>
+                            <th>Generated</th>
+                            <th>Status</th>
+                            <th>Size</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentReports.Any())
+                        {
+                            @foreach (var report in Model.RecentReports)
+                            {
+                                <tr>
+                                    <td>@report.Name</td>
+                                    <td>@report.TypeDisplay</td>
+                                    <td>@report.GeneratedDate.ToString("MMM dd, yyyy HH:mm")</td>
+                                    <td>
+                                        <span class="badge bg-@report.StatusColor">
+                                            @report.StatusDisplay
+                                        </span>
+                                    </td>
+                                    <td>@report.FileSizeDisplay</td>
+                                    <td>
+                                        <div class="enhanced-action-buttons">
+                                            <button class="btn enhanced-btn-info enhanced-btn-sm" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn enhanced-btn-primary enhanced-btn-sm" title="Download">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="btn enhanced-btn-warning enhanced-btn-sm" title="Share">
+                                                <i class="fas fa-share"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>Equipment Status Report</td>
+                                <td>Equipment</td>
+                                <td>@DateTime.Now.ToString("MMM dd, yyyy HH:mm")</td>
+                                <td><span class="badge bg-success">Generated</span></td>
+                                <td>2.4 MB</td>
+                                <td>
+                                    <div class="enhanced-action-buttons">
+                                        <button class="btn enhanced-btn-info enhanced-btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn enhanced-btn-primary enhanced-btn-sm" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button class="btn enhanced-btn-warning enhanced-btn-sm" title="Share">
+                                            <i class="fas fa-share"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Maintenance Schedule Report</td>
+                                <td>Maintenance</td>
+                                <td>@DateTime.Now.AddHours(-2).ToString("MMM dd, yyyy HH:mm")</td>
+                                <td><span class="badge bg-success">Generated</span></td>
+                                <td>1.8 MB</td>
+                                <td>
+                                    <div class="enhanced-action-buttons">
+                                        <button class="btn enhanced-btn-info enhanced-btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn enhanced-btn-primary enhanced-btn-sm" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button class="btn enhanced-btn-warning enhanced-btn-sm" title="Share">
+                                            <i class="fas fa-share"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Inventory Stock Report</td>
+                                <td>Inventory</td>
+                                <td>@DateTime.Now.AddHours(-4).ToString("MMM dd, yyyy HH:mm")</td>
+                                <td><span class="badge bg-warning">Scheduled</span></td>
+                                <td>-</td>
+                                <td>
+                                    <div class="enhanced-action-buttons">
+                                        <button class="btn enhanced-btn-info enhanced-btn-sm" title="View" disabled>
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn enhanced-btn-primary enhanced-btn-sm" title="Download" disabled>
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button class="btn enhanced-btn-warning enhanced-btn-sm" title="Cancel">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Reports Trend Chart
+    const reportsCtx = document.getElementById('reportsChart').getContext('2d');
+    const reportsChart = new Chart(reportsCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Reports Generated',
+                data: [12, 19, 15, 25, 22, 18, 20],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Automated Reports',
+                data: [8, 12, 10, 15, 14, 12, 13],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Report Types Chart
+    const typesCtx = document.getElementById('reportTypesChart').getContext('2d');
+    const reportTypesChart = new Chart(typesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Equipment', 'Maintenance', 'Inventory', 'Financial', 'Predictive'],
+            datasets: [{
+                data: [30, 25, 20, 15, 10],
+                backgroundColor: [
+                    '#667eea',
+                    '#764ba2',
+                    '#28a745',
+                    '#17a2b8',
+                    '#ffc107'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Clear Filters Function
+    function clearFilters() {
+        document.querySelector('select[name="Filters.DateRange"]').value = '';
+        document.querySelector('select[name="Filters.ReportType"]').value = '';
+        document.querySelector('select[name="Filters.Status"]').value = '';
+    }
+</script>

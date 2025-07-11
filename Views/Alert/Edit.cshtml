@@ -1,0 +1,122 @@
+@model FEENALOoFINALE.Models.Alert
+
+@{
+    ViewData["Title"] = "Edit Alert";
+}
+
+<h1>Edit Alert</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="AlertId" />
+            <input type="hidden" asp-for="CreatedDate" />
+
+            <div class="card">
+                <div class="card-header">
+                    <h5>Alert Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label asp-for="Title" class="control-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="control-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="EquipmentId" class="control-label">Equipment</label>
+                        <select asp-for="EquipmentId" class="form-control" asp-items="ViewBag.EquipmentList">
+                            <option value="">-- Select Equipment (Optional) --</option>
+                        </select>
+                        <span asp-validation-for="EquipmentId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Priority" class="control-label"></label>
+                        <select asp-for="Priority" class="form-control" asp-items="Html.GetEnumSelectList<FEENALOoFINALE.Models.AlertPriority>()">
+                        </select>
+                        <span asp-validation-for="Priority" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Status" class="control-label"></label>
+                        <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<FEENALOoFINALE.Models.AlertStatus>()">
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="AssignedToUserId" class="control-label">Assigned To</label>
+                        <select asp-for="AssignedToUserId" class="form-control" asp-items="ViewBag.UserList">
+                            <option value="">-- Unassigned --</option>
+                        </select>
+                        <span asp-validation-for="AssignedToUserId" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Save Changes" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                <a asp-action="Details" asp-route-id="@Model.AlertId" class="btn btn-info">View Details</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6>Alert Information</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Alert ID:</strong> @Model.AlertId</p>
+                <p><strong>Created:</strong> @Model.CreatedDate.ToString("MMM dd, yyyy 'at' hh:mm tt")</p>
+                @if (Model.Equipment != null)
+                {
+                    <p><strong>Current Equipment:</strong><br>
+                    @if (Model.Equipment.EquipmentModel != null && Model.Equipment.EquipmentType != null)
+                    {
+                        @($"{Model.Equipment.EquipmentModel.ModelName} ({Model.Equipment.EquipmentType.EquipmentTypeName})")
+                    }
+                    else
+                    {
+                        @($"Equipment ID: {Model.EquipmentId}")
+                    }
+                    </p>
+                }
+                @if (Model.AssignedTo != null)
+                {
+                    <p><strong>Currently Assigned To:</strong><br>@($"{Model.AssignedTo.FirstName} {Model.AssignedTo.LastName}")</p>
+                }
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.Status == FEENALOoFINALE.Models.AlertStatus.Open)
+                {
+                    <a asp-action="MarkInProgress" asp-route-id="@Model.AlertId" class="btn btn-warning btn-sm">Mark In Progress</a>
+                }
+                @if (Model.Status != FEENALOoFINALE.Models.AlertStatus.Resolved)
+                {
+                    <a asp-action="Resolve" asp-route-id="@Model.AlertId" class="btn btn-success btn-sm">Start Resolution</a>
+                }
+                <a asp-action="Delete" asp-route-id="@Model.AlertId" class="btn btn-danger btn-sm">Delete Alert</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

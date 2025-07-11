@@ -16,6 +16,11 @@ namespace FEENALOoFINALE.Controllers
         {
             return View(await _context.MaintenanceLogs
                 .Include(m => m.Equipment)
+                    .ThenInclude(e => e!.EquipmentType)
+                .Include(m => m.Equipment)
+                    .ThenInclude(e => e!.EquipmentModel)
+                .Include(m => m.Task)
+                .Include(m => m.Alert)
                 .OrderByDescending(m => m.LogDate)
                 .ToListAsync());
         }
@@ -43,16 +48,35 @@ namespace FEENALOoFINALE.Controllers
         }
 
         // GET: MaintenanceLog/Create
-        public async Task<IActionResult> Create(int? equipmentId, int? alertId = null)
+        public async Task<IActionResult> Create(int? equipmentId, int? alertId = null, int? taskId = null)
         {
             await LoadEquipmentViewBag(equipmentId, alertId);
-            return View();
+            
+            // Pre-populate form if coming from alert
+            var model = new MaintenanceLog();
+            if (equipmentId.HasValue)
+            {
+                model.EquipmentId = equipmentId.Value;
+            }
+            if (alertId.HasValue)
+            {
+                model.AlertId = alertId.Value;
+            }
+            if (taskId.HasValue)
+            {
+                model.MaintenanceTaskId = taskId.Value;
+            }
+            
+            ViewBag.AlertId = alertId;
+            ViewBag.MaintenanceTaskId = taskId;
+            
+            return View(model);
         }
 
         // POST: MaintenanceLog/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeHours,AlertId,TaskId")] MaintenanceLog maintenanceLog)
+        public async Task<IActionResult> Create([Bind("EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeHours,Cost,AlertId,MaintenanceTaskId")] MaintenanceLog maintenanceLog)
         {
             // Remove any validation errors for DowntimeDuration since we're using DowntimeHours
             ModelState.Remove("DowntimeDuration");
@@ -68,37 +92,20 @@ namespace FEENALOoFINALE.Controllers
                     }
 
                     // Set default values for required properties
-                    maintenanceLog.Status = MaintenanceStatus.Completed;
-                    maintenanceLog.Cost = 0;
+                    maintenanceLog.Status = MaintenanceStatus.Pending; // Start as pending, not completed
+                    
+                    // Use the provided cost or default to 0
+                    if (maintenanceLog.Cost == 0 && !ModelState.ContainsKey("Cost"))
+                    {
+                        maintenanceLog.Cost = 0;
+                    }
 
                     _context.Add(maintenanceLog);
                     await _context.SaveChangesAsync();
 
-                    // Enhanced workflow completion logic
-                    // Complete linked maintenance task
-                    if (maintenanceLog.TaskId.HasValue)
-                    {
-                        var task = await _context.MaintenanceTasks.FindAsync(maintenanceLog.TaskId.Value);
-                        if (task != null)
-                        {
-                            task.Status = MaintenanceStatus.Completed;
-                            task.CompletedDate = DateTime.Now;
-                            _context.Update(task);
-                        }
-                    }
+                    // Note: Do not auto-complete tasks or resolve alerts here
+                    // That should only happen when maintenance is marked as completed
 
-                    // Mark alert as resolved if AlertId is present
-                    if (maintenanceLog.AlertId.HasValue)
-                    {
-                        var alert = await _context.Alerts.FindAsync(maintenanceLog.AlertId.Value);
-                        if (alert != null)
-                        {
-                            alert.Status = AlertStatus.Resolved;
-                            _context.Update(alert);
-                        }
-                    }
-
-                    await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -148,7 +155,7 @@ namespace FEENALOoFINALE.Controllers
         // POST: MaintenanceLog/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("LogId,EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeHours")] MaintenanceLog maintenanceLog)
+        public async Task<IActionResult> Edit(int id, [Bind("LogId,EquipmentId,LogDate,MaintenanceType,Description,Technician,DowntimeHours,Cost")] MaintenanceLog maintenanceLog)
         {
             if (id != maintenanceLog.LogId)
             {
@@ -230,6 +237,50 @@ namespace FEENALOoFINALE.Controllers
             }
 
             return View(equipment);
+        }
+
+        // POST: MaintenanceLog/MarkCompleted/5
+        [HttpPost]
+        public async Task<IActionResult> MarkCompleted(int id)
+        {
+            var maintenanceLog = await _context.MaintenanceLogs
+                .Include(m => m.Task)
+                .Include(m => m.Alert)
+                .FirstOrDefaultAsync(m => m.LogId == id);
+
+            if (maintenanceLog == null)
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                // Mark the maintenance log as completed
+                maintenanceLog.Status = MaintenanceStatus.Completed;
+
+                // If this maintenance log is linked to a task, mark the task as completed too
+                if (maintenanceLog.Task != null)
+                {
+                    maintenanceLog.Task.Status = MaintenanceStatus.Completed;
+                    maintenanceLog.Task.CompletedDate = DateTime.Now;
+                }
+
+                // If this maintenance log is linked to an alert, mark the alert as resolved
+                if (maintenanceLog.Alert != null)
+                {
+                    maintenanceLog.Alert.Status = AlertStatus.Resolved;
+                }
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Maintenance marked as completed successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error marking maintenance as completed: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         private bool MaintenanceLogExists(int id)

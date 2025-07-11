@@ -193,13 +193,20 @@
                                             <div class="d-flex w-100 justify-content-between align-items-start">
                                                 <div>
                                                     <h6 class="mb-1">@alert.Title</h6>
-                                                    <p class="mb-1 small">@alert.Description</p>
-                                                    <small class="text-muted">
-                                                        @if (alert.EquipmentId.HasValue)
-                                                        {
-                                                            <span>Equipment ID: @alert.EquipmentId</span>
-                                                        }
-                                                    </small>
+                                                    <p class="mb-1 small">@alert.Description</p>                                    <small class="text-muted">
+                                        @if (alert.EquipmentId.HasValue)
+                                        {
+                                            <span><i class="bi bi-gear me-1"></i>Equipment ID: @alert.EquipmentId</span>
+                                        }
+                                        else if (alert.InventoryItemId.HasValue)
+                                        {
+                                            <span><i class="bi bi-box me-1"></i>Inventory ID: @alert.InventoryItemId</span>
+                                        }
+                                        else
+                                        {
+                                            <span><i class="bi bi-exclamation-triangle me-1"></i>General System Alert</span>
+                                        }
+                                    </small>
                                                 </div>
                                                 <div class="text-end">
                                                     <small class="text-muted">@alert.CreatedDate.ToString("MMM dd")</small>
@@ -264,7 +271,7 @@
                                 </div>
                             </div>
                             <div class="card-footer bg-white border-0">
-                                <a asp-action="Inventory" class="btn btn-outline-warning btn-sm">
+                                <a asp-controller="Inventory" asp-action="Index" class="btn btn-outline-warning btn-sm">
                                     Manage Inventory <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             </div>
@@ -308,7 +315,7 @@
         <div class="tab-pane fade" id="equipment" role="tabpanel">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">Equipment Assets</h5>
-                <a asp-action="CreateEquipment" class="btn btn-primary">
+                <a asp-controller="Equipment" asp-action="Create" class="btn btn-primary">
                     <i class="bi bi-plus-circle me-1"></i>Add Equipment
                 </a>
             </div>
@@ -331,13 +338,13 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">Inventory Assets</h5>
                 <div class="btn-group">
-                    <a asp-action="CreateInventoryItem" class="btn btn-info">
+                    <a asp-controller="Inventory" asp-action="Create" class="btn btn-info">
                         <i class="bi bi-plus-circle me-1"></i>Add Item
                     </a>
-                    <a asp-action="CreateSparePart" class="btn btn-outline-info">
+                    <a asp-controller="Inventory" asp-action="Create" class="btn btn-outline-info">
                         <i class="bi bi-gear me-1"></i>Spare Part
                     </a>
-                    <a asp-action="CreateConsumable" class="btn btn-outline-info">
+                    <a asp-controller="Inventory" asp-action="Create" class="btn btn-outline-info">
                         <i class="bi bi-droplet me-1"></i>Consumable
                     </a>
                 </div>
@@ -387,10 +394,10 @@
             <i class="bi bi-plus"></i>
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" asp-action="CreateEquipment"><i class="bi bi-gear me-2"></i>Add Equipment</a></li>
-            <li><a class="dropdown-item" asp-action="CreateInventoryItem"><i class="bi bi-box me-2"></i>Add Inventory</a></li>
-            <li><a class="dropdown-item" asp-action="CreateSparePart"><i class="bi bi-wrench me-2"></i>Add Spare Part</a></li>
-            <li><a class="dropdown-item" asp-action="CreateConsumable"><i class="bi bi-droplet me-2"></i>Add Consumable</a></li>
+            <li><a class="dropdown-item" asp-controller="Equipment" asp-action="Create"><i class="bi bi-gear me-2"></i>Add Equipment</a></li>
+            <li><a class="dropdown-item" asp-controller="Inventory" asp-action="Create"><i class="bi bi-box me-2"></i>Add Inventory</a></li>
+            <li><a class="dropdown-item" asp-controller="Inventory" asp-action="Create"><i class="bi bi-wrench me-2"></i>Add Spare Part</a></li>
+            <li><a class="dropdown-item" asp-controller="Inventory" asp-action="Create"><i class="bi bi-droplet me-2"></i>Add Consumable</a></li>
         </ul>
     </div>
 </div>
