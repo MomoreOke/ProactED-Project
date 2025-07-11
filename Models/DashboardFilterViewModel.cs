@@ -101,33 +101,6 @@ namespace FEENALOoFINALE.Models
         }
     }
 
-    public class SavedDashboardView
-    {
-        public int Id { get; set; }
-
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; } = string.Empty;
-
-        [MaxLength(500)]
-        public string? Description { get; set; }
-
-        [Required]
-        public string UserId { get; set; } = string.Empty;
-
-        [Required]
-        public string FilterData { get; set; } = string.Empty; // JSON serialized filter
-
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
-
-        public bool IsDefault { get; set; } = false;
-        public bool IsPublic { get; set; } = false;
-
-        // Navigation property
-        public User? User { get; set; }
-    }
-
     public class DashboardFilterOptions
     {
         public List<Building> Buildings { get; set; } = new();

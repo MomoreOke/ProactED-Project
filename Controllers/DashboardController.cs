@@ -433,17 +433,21 @@ namespace FEENALOoFINALE.Controllers
             var data = new
             {
                 TotalEquipment = await _context.Equipment.CountAsync(),
-                ActiveMaintenanceTasks = await _context.MaintenanceTasks
-                    .Where(t => t.Status != MaintenanceStatus.Completed)
+                // Active maintenance tasks - only non-completed and non-cancelled
+                ActiveMaintenanceTasks = await _context.MaintenanceLogs
+                    .Where(t => t.Status == MaintenanceStatus.Pending || t.Status == MaintenanceStatus.InProgress)
                     .CountAsync(),
                 LowStockItems = await _context.InventoryItems
                     .Where(i => i.InventoryStocks != null && i.InventoryStocks.Sum(s => s.Quantity) <= i.MinStockLevel)
                     .CountAsync(),
+                // Critical alerts - only open alerts
                 CriticalAlerts = await _context.Alerts
                     .Where(a => a.Priority == AlertPriority.High && a.Status == AlertStatus.Open)
                     .CountAsync(),
+                // Overdue maintenances - only scheduled maintenance tasks that are past due and not completed
                 OverdueMaintenances = await _context.MaintenanceTasks
-                    .Where(m => m.ScheduledDate < DateTime.Now && m.Status != MaintenanceStatus.Completed)
+                    .Where(m => m.ScheduledDate < DateTime.Now && 
+                               (m.Status == MaintenanceStatus.Pending || m.Status == MaintenanceStatus.InProgress))
                     .CountAsync(),
                 EquipmentNeedingAttention = await _context.Equipment
                     .Where(e => e.Status == EquipmentStatus.Inactive || e.Status == EquipmentStatus.Retired)
@@ -477,17 +481,21 @@ namespace FEENALOoFINALE.Controllers
             return new
             {
                 TotalEquipment = await _context.Equipment.CountAsync(),
-                ActiveMaintenanceTasks = await _context.MaintenanceTasks
-                    .Where(t => t.Status != MaintenanceStatus.Completed)
+                // Active maintenance tasks - only non-completed and non-cancelled
+                ActiveMaintenanceTasks = await _context.MaintenanceLogs
+                    .Where(t => t.Status == MaintenanceStatus.Pending || t.Status == MaintenanceStatus.InProgress)
                     .CountAsync(),
                 LowStockItems = await _context.InventoryItems
                     .Where(i => i.InventoryStocks != null && i.InventoryStocks.Sum(s => s.Quantity) <= i.MinStockLevel)
                     .CountAsync(),
+                // Critical alerts - only open alerts
                 CriticalAlerts = await _context.Alerts
                     .Where(a => a.Priority == AlertPriority.High && a.Status == AlertStatus.Open)
                     .CountAsync(),
+                // Overdue maintenances - only scheduled maintenance tasks that are past due and not completed
                 OverdueMaintenances = await _context.MaintenanceTasks
-                    .Where(m => m.ScheduledDate < DateTime.Now && m.Status != MaintenanceStatus.Completed)
+                    .Where(m => m.ScheduledDate < DateTime.Now && 
+                               (m.Status == MaintenanceStatus.Pending || m.Status == MaintenanceStatus.InProgress))
                     .CountAsync(),
                 EquipmentNeedingAttention = await _context.Equipment
                     .Where(e => e.Status == EquipmentStatus.Inactive || e.Status == EquipmentStatus.Retired)
@@ -1337,9 +1345,9 @@ namespace FEENALOoFINALE.Controllers
                 if (existingView != null)
                 {
                     // Update existing view
-                    existingView.FilterData = JsonSerializer.Serialize(filters);
+                    existingView.FilterConfig = JsonSerializer.Serialize(filters);
                     existingView.IsPublic = isPublic;
-                    existingView.UpdatedAt = DateTime.Now;
+                    existingView.LastModified = DateTime.Now;
                 }
                 else
                 {
@@ -1348,10 +1356,10 @@ namespace FEENALOoFINALE.Controllers
                     {
                         Name = viewName,
                         UserId = currentUser.Id,
-                        FilterData = JsonSerializer.Serialize(filters),
+                        FilterConfig = JsonSerializer.Serialize(filters),
                         IsPublic = isPublic,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedDate = DateTime.Now,
+                        LastModified = DateTime.Now
                     };
                     _context.SavedDashboardViews.Add(savedView);
                 }
@@ -1383,10 +1391,10 @@ namespace FEENALOoFINALE.Controllers
                     .OrderBy(v => v.Name)
                     .Select(v => new
                     {
-                        id = v.Id,
+                        id = v.ViewId,
                         name = v.Name,
                         isPublic = v.IsPublic,
-                        createdDate = v.CreatedAt,
+                        createdDate = v.CreatedDate,
                         isOwner = v.UserId == currentUser.Id
                     })
                     .ToListAsync();
@@ -1412,14 +1420,14 @@ namespace FEENALOoFINALE.Controllers
                 }
 
                 var savedView = await _context.SavedDashboardViews
-                    .FirstOrDefaultAsync(v => v.Id == id && (v.UserId == currentUser.Id || v.IsPublic));
+                    .FirstOrDefaultAsync(v => v.ViewId == id && (v.UserId == currentUser.Id || v.IsPublic));
 
                 if (savedView == null)
                 {
                     return Json(new { success = false, error = "View not found or access denied" });
                 }
 
-                var filters = JsonSerializer.Deserialize<DashboardFilterViewModel>(savedView.FilterData ?? "{}");
+                var filters = JsonSerializer.Deserialize<DashboardFilterViewModel>(savedView.FilterConfig ?? "{}");
 
                 return Json(new { 
                     success = true, 
@@ -1446,7 +1454,7 @@ namespace FEENALOoFINALE.Controllers
                 }
 
                 var savedView = await _context.SavedDashboardViews
-                    .FirstOrDefaultAsync(v => v.Id == id && v.UserId == currentUser.Id);
+                    .FirstOrDefaultAsync(v => v.ViewId == id && v.UserId == currentUser.Id);
 
                 if (savedView == null)
                 {

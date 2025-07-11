@@ -42,6 +42,10 @@ namespace FEENALOoFINALE.Controllers
             }
 
             var equipment = await _context.Equipment
+                .Include(e => e.EquipmentType)
+                .Include(e => e.EquipmentModel)
+                .Include(e => e.Building)
+                .Include(e => e.Room)
                 .Include(e => e.MaintenanceLogs)
                 .Include(e => e.FailurePredictions)
                 .Include(e => e.Alerts)
@@ -366,7 +370,11 @@ namespace FEENALOoFINALE.Controllers
             }
 
             var equipment = await _context.Equipment
-                .Include(e => e.MaintenanceLogs)
+                .Include(e => e.EquipmentType)
+                .Include(e => e.EquipmentModel)
+                .Include(e => e.Building)
+                .Include(e => e.Room)
+                .Include(e => e.MaintenanceLogs.OrderByDescending(ml => ml.LogDate))
                 .FirstOrDefaultAsync(m => m.EquipmentId == id);
 
             if (equipment == null)
