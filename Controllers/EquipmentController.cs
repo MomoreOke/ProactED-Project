@@ -67,9 +67,8 @@ namespace FEENALOoFINALE.Controllers
         public async Task<IActionResult> Create()
         {
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName");
-            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName");
-            ViewData["RoomId"] = new SelectList(await _context.Rooms.ToListAsync(), "RoomId", "RoomName");
-            // No longer need EquipmentModelId dropdown since we'll use text input
+            ViewData["EquipmentModelId"] = new SelectList(await _context.EquipmentModels.ToListAsync(), "EquipmentModelId", "ModelName");
+            // ...other ViewData as needed
             return View();
         }
 
