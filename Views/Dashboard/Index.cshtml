@@ -956,45 +956,102 @@
         </div>
 
         <!-- Quick Actions Row -->
-        @if (Model.SuggestedActions?.Any() == true)
-        {
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="content-card">
-                        <div class="content-card-header">
-                            <h5 class="content-card-title">
-                                <i class="bi bi-lightning text-warning"></i>
-                                Suggested Actions
-                            </h5>
-                        </div>
-                        <div class="content-card-body">
-                            <div class="row g-3">
-                                @foreach (var action in Model.SuggestedActions)
-                                {
-                                    <div class="col-lg-3 col-md-4 col-sm-6">
-                                        <div class="quick-action-card @($"priority-{action.Priority}")">
-                                            <a asp-controller="@action.Controller" asp-action="@action.Action" asp-route-id="@action.RouteValue" class="quick-action-link">
-                                                <div class="quick-action-header">
-                                                    <i class="@action.Icon"></i>
-                                                    @if (!string.IsNullOrEmpty(action.BadgeText))
-                                                    {
-                                                        <span class="quick-action-badge">@action.BadgeText</span>
-                                                    }
-                                                </div>
-                                                <div class="quick-action-content">
-                                                    <h6 class="quick-action-title">@action.Title</h6>
-                                                    <p class="quick-action-description">@action.Description</p>
-                                                </div>
-                                            </a>
+        @* <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-lightning text-warning"></i>
+                            Quick Actions
+                        </h6>
+                    </div>
+                    <div class="content-card-body">
+                        <div class="row g-3">
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/Equipment" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon primary">
+                                                <i class="bi bi-gear-wide-connected"></i>
+                                            </div>
+                                            <h6 class="action-title">Manage Equipment</h6>
+                                            <p class="action-description">View and manage all equipment</p>
                                         </div>
                                     </div>
-                                }
+                                </a>
+                            </div>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/MaintenanceLog/Create" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon success">
+                                                <i class="bi bi-plus-circle"></i>
+                                            </div>
+                                            <h6 class="action-title">New Maintenance</h6>
+                                            <p class="action-description">Schedule maintenance task</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/Alert" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon warning">
+                                                <i class="bi bi-bell"></i>
+                                            </div>
+                                            <h6 class="action-title">View Alerts</h6>
+                                            <p class="action-description">Check system alerts</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/Inventory" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon primary">
+                                                <i class="bi bi-box-seam"></i>
+                                            </div>
+                                            <h6 class="action-title">Inventory</h6>
+                                            <p class="action-description">Manage inventory items</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/Report" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon danger">
+                                                <i class="bi bi-graph-up"></i>
+                                            </div>
+                                            <h6 class="action-title">Reports</h6>
+                                            <p class="action-description">Generate reports</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/FailurePrediction" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon warning">
+                                                <i class="bi bi-cpu"></i>
+                                            </div>
+                                            <h6 class="action-title">Predictions</h6>
+                                            <p class="action-description">View failure predictions</p>
+                                        </div>
+                                    </div>
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        }
+        </div> *@
+
+        
 
         <!-- Advanced Reports and Analytics -->
         <div class="row mb-4">
@@ -1346,93 +1403,106 @@
             </div>
         </div>
 
-        <!-- Advanced Filtering Panel -->
-        <div class="row mb-4">
+         <!-- Quick Actions Row -->
+        @* <div class="row g-4 mb-4">
             <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="bi bi-funnel me-2"></i>
-                            Advanced Filters
-                        </h5>
-                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false" aria-controls="filterPanel">
-                            <i class="bi bi-chevron-down"></i>
-                            Toggle Filters
-                        </button>
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h6 class="content-card-title">
+                            <i class="bi bi-lightning text-warning"></i>
+                            Quick Actions
+                        </h6>
                     </div>
-                    <div class="collapse" id="filterPanel">
-                        <div class="card-body">
-                            <form id="dashboardFilterForm" method="get">
-                                @Html.AntiForgeryToken()
-                                <div class="row g-3">
-                                    <!-- Date Range -->
-                                    <div class="col-md-3">
-                                        <label for="dateFrom" class="form-label">Date From</label>
-                                        <input type="date" class="form-control" id="dateFrom" name="DateFrom" value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="dateTo" class="form-label">Date To</label>
-                                        <input type="date" class="form-control" id="dateTo" name="DateTo" value="@DateTime.Now.ToString("yyyy-MM-dd")">
-                                    </div>
-                                    
-                                    <!-- Equipment Status -->
-                                    <div class="col-md-3">
-                                        <label for="equipmentStatus" class="form-label">Equipment Status</label>
-                                        <select class="form-select" id="equipmentStatus" name="EquipmentStatuses" multiple>
-                                            <option value="Active">Active</option>
-                                            <option value="Inactive">Inactive</option>
-                                            <option value="Retired">Retired</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Search Term -->
-                                    <div class="col-md-3">
-                                        <label for="searchTerm" class="form-label">Search</label>
-                                        <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Search equipment, alerts...">
-                                    </div>
-                                    
-                                    <!-- Quick Filters -->
-                                    <div class="col-md-12">
-                                        <div class="d-flex gap-3 flex-wrap">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="showOnlyCritical" name="ShowOnlyCritical">
-                                                <label class="form-check-label" for="showOnlyCritical">
-                                                    Show Only Critical Items
-                                                </label>
+                    <div class="content-card-body">
+                        <div class="row g-3">
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/Equipment" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon primary">
+                                                <i class="bi bi-gear-wide-connected"></i>
                                             </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="includeCompleted" name="IncludeCompleted" checked>
-                                                <label class="form-check-label" for="includeCompleted">
-                                                    Include Completed Items
-                                                </label>
-                                            </div>
+                                            <h6 class="action-title">Manage Equipment</h6>
+                                            <p class="action-description">View and manage all equipment</p>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Filter Actions -->
-                                    <div class="col-md-12">
-                                        <div class="d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="bi bi-search me-1"></i>
-                                                Apply Filters
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
-                                                <i class="bi bi-x-circle me-1"></i>
-                                                Clear All
-                                            </button>
-                                            <button type="button" class="btn btn-outline-info" onclick="saveCurrentView()">
-                                                <i class="bi bi-bookmark me-1"></i>
-                                                Save View
-                                            </button>
+                                </a>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/MaintenanceLog/Create" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon success">
+                                                <i class="bi bi-plus-circle"></i>
+                                            </div>
+                                            <h6 class="action-title">New Maintenance</h6>
+                                            <p class="action-description">Schedule maintenance task</p>
                                         </div>
                                     </div>
-                                </div>
-                            </form>
+                                </a>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/Alert" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon warning">
+                                                <i class="bi bi-bell"></i>
+                                            </div>
+                                            <h6 class="action-title">View Alerts</h6>
+                                            <p class="action-description">Check system alerts</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/Inventory" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon primary">
+                                                <i class="bi bi-box-seam"></i>
+                                            </div>
+                                            <h6 class="action-title">Inventory</h6>
+                                            <p class="action-description">Manage inventory items</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/Report" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon danger">
+                                                <i class="bi bi-graph-up"></i>
+                                            </div>
+                                            <h6 class="action-title">Reports</h6>
+                                            <p class="action-description">Generate reports</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <a href="/FailurePrediction" class="text-decoration-none">
+                                    <div class="action-card">
+                                        <div class="action-card-body text-center">
+                                            <div class="action-icon warning">
+                                                <i class="bi bi-cpu"></i>
+                                            </div>
+                                            <h6 class="action-title">Predictions</h6>
+                                            <p class="action-description">View failure predictions</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div> *@
     </div>
 </div>
 

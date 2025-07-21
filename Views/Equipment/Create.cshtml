@@ -21,15 +21,17 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="EquipmentModelName" class="control-label">Equipment Model</label>
-                <input asp-for="EquipmentModelName" class="form-control" placeholder="Enter equipment model (e.g., XP-2000, Model ABC-123)" />
-                <small class="form-text text-muted">Type the exact model name/number. If this model doesn't exist, it will be created automatically.</small>
-                <span asp-validation-for="EquipmentModelName" class="text-danger"></span>
+                <label asp-for="EquipmentModelId" class="control-label">Equipment Model</label>
+                <select asp-for="EquipmentModelId" class="form-control select-chevron" asp-items="ViewBag.EquipmentModelId" id="EquipmentModelId">
+                    <option value="">-- Select Equipment Model --</option>
+                </select>
+                <span asp-validation-for="EquipmentModelId" class="text-danger"></span>
             </div>
+
 
             <div class="form-group">
                 <label asp-for="BuildingId" class="control-label">Building</label>
-                <select asp-for="BuildingId" class="form-control select-chevron" asp-items="ViewBag.BuildingId">
+                <select asp-for="BuildingId" class="form-control select-chevron" asp-items="ViewBag.BuildingId" id="BuildingId">
                     <option value="">-- Select Building --</option>
                 </select>
                 <span asp-validation-for="BuildingId" class="text-danger"></span>
@@ -37,7 +39,7 @@
 
             <div class="form-group">
                 <label asp-for="RoomId" class="control-label">Room</label>
-                <select asp-for="RoomId" class="form-control select-chevron" asp-items="ViewBag.RoomId">
+                <select asp-for="RoomId" class="form-control select-chevron" asp-items="ViewBag.RoomId" id="RoomId">
                     <option value="">-- Select Room --</option>
                 </select>
                 <span asp-validation-for="RoomId" class="text-danger"></span>
@@ -245,35 +247,46 @@
                 refreshSelectList($('#EquipmentModelId'), url, 'equipmentModelId', 'modelName', selectedValue);
             }
 
-            // Load Equipment Models on page load based on selected Equipment Type
+            // Initial Load - Load Rooms based on selected Building
+            function loadRooms(buildingId, selectedValue) {
+                var url = '@Url.Action("GetRoomsByBuilding", "Equipment")';
+                var $roomSelect = $('#RoomId');
+                $roomSelect.empty();
+                $roomSelect.append('<option value="">-- Select Room --</option>');
+                if (buildingId) {
+                    url += '?buildingId=' + buildingId;
+                    $.get(url, function (data) {
+                        $.each(data, function (i, item) {
+                            $roomSelect.append($('<option>', {
+                                value: item.roomId,
+                                text: item.roomName,
+                                selected: item.roomId == selectedValue
+                            }));
+                        });
+                    });
+                }
+            }
+
+            // Load Equipment Models and Rooms on page load based on selected values
             var initialEquipmentTypeId = $('#EquipmentTypeId').val();
             loadEquipmentModels(initialEquipmentTypeId);
 
-            // Load Buildings and Rooms on page load
-            refreshSelectList($('#BuildingId'), '@Url.Action("GetBuildings", "Equipment")', 'buildingId', 'buildingName');
-            refreshSelectList($('#RoomId'), '@Url.Action("GetRooms", "Equipment")', 'roomId', 'roomName');
+            var initialBuildingId = $('#BuildingId').val();
+            loadRooms(initialBuildingId);
 
+            // Load Buildings on page load
+            refreshSelectList($('#BuildingId'), '@Url.Action("GetBuildings", "Equipment")', 'buildingId', 'buildingName');
+
+            // When Equipment Type changes, update Equipment Models
             $('#EquipmentTypeId').change(function () {
                 var equipmentTypeId = $(this).val();
                 loadEquipmentModels(equipmentTypeId);
             });
 
+            // When Building changes, update Rooms
             $('#BuildingId').change(function () {
                 var buildingId = $(this).val();
-                $('#RoomId').empty();
-                $('#RoomId').append('<option value="">-- Select Room --</option>');
-                if (buildingId) {
-                    $.ajax({
-                        url: '@Url.Action("GetRoomsByBuilding", "Equipment")',
-                        type: "GET",
-                        data: { buildingId: buildingId },
-                        success: function (data) {
-                            $.each(data, function (index, room) {
-                                $('#RoomId').append('<option value="' + room.roomId + '">' + room.roomName + '</option>');
-                            });
-                        }
-                    });
-                }
+                loadRooms(buildingId);
             });
         });
     </script>

@@ -68,7 +68,8 @@ namespace FEENALOoFINALE.Controllers
         {
             ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName");
             ViewData["EquipmentModelId"] = new SelectList(await _context.EquipmentModels.ToListAsync(), "EquipmentModelId", "ModelName");
-            // ...other ViewData as needed
+            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName");
+            ViewData["RoomId"] = new SelectList(new List<Room>(), "RoomId", "RoomName");
             return View();
         }
 

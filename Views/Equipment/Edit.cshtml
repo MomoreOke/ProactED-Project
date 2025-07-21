@@ -75,9 +75,8 @@
             <div class="form-group">
                 <label asp-for="Status" class="control-label"></label>
                 <select asp-for="Status" class="form-control">
-                    <option value="Operational">Operational</option>
-                    <option value="UnderMaintenance">Under Maintenance</option>
-                    <option value="Faulty">Faulty</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
                     <option value="Retired">Retired</option>
                 </select>
                 <span asp-validation-for="Status" class="text-danger"></span>
