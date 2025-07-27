@@ -4,6 +4,7 @@ using FEENALOoFINALE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FEENALOoFINALE.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250726113616_TimeTables")]
+    partial class TimeTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -625,107 +628,6 @@ namespace FEENALOoFINALE.Migrations
                     b.ToTable("SavedDashboardViews");
                 });
 
-            modelBuilder.Entity("FEENALOoFINALE.Models.Semester", b =>
-                {
-                    b.Property<int>("SemesterId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SemesterId"));
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EquipmentUsageDataJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("FileSizeBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("LastModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("NumberOfWeeks")
-                        .HasColumnType("int");
-
-                    b.Property<string>("OriginalFileName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProcessingMessage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProcessingStatus")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SemesterName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TimetableFilePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("TotalEquipmentHours")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("float(10)");
-
-                    b.Property<DateTime>("UploadDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UploadedByUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("SemesterId");
-
-                    b.HasIndex("UploadedByUserId");
-
-                    b.ToTable("Semesters");
-                });
-
-            modelBuilder.Entity("FEENALOoFINALE.Models.SemesterEquipmentUsage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EquipmentId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("LastUpdated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RoomName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("SemesterId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsagePatternJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("WeeklyUsageHours")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("float(8)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EquipmentId");
-
-                    b.HasIndex("SemesterId", "EquipmentId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_SemesterEquipmentUsage_Semester_Equipment");
-
-                    b.ToTable("SemesterEquipmentUsages");
-                });
-
             modelBuilder.Entity("FEENALOoFINALE.Models.User", b =>
                 {
                     b.Property<string>("Id")
@@ -1145,35 +1047,6 @@ namespace FEENALOoFINALE.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FEENALOoFINALE.Models.Semester", b =>
-                {
-                    b.HasOne("FEENALOoFINALE.Models.User", "UploadedBy")
-                        .WithMany()
-                        .HasForeignKey("UploadedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("UploadedBy");
-                });
-
-            modelBuilder.Entity("FEENALOoFINALE.Models.SemesterEquipmentUsage", b =>
-                {
-                    b.HasOne("FEENALOoFINALE.Models.Equipment", "Equipment")
-                        .WithMany()
-                        .HasForeignKey("EquipmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FEENALOoFINALE.Models.Semester", "Semester")
-                        .WithMany("SemesterEquipmentUsages")
-                        .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Equipment");
-
-                    b.Navigation("Semester");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1270,11 +1143,6 @@ namespace FEENALOoFINALE.Migrations
             modelBuilder.Entity("FEENALOoFINALE.Models.Room", b =>
                 {
                     b.Navigation("Equipments");
-                });
-
-            modelBuilder.Entity("FEENALOoFINALE.Models.Semester", b =>
-                {
-                    b.Navigation("SemesterEquipmentUsages");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.User", b =>

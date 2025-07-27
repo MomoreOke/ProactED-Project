@@ -20,13 +20,17 @@ namespace FEENALOoFINALE.Data
         public DbSet<MaintenanceInventoryLink> MaintenanceInventoryLinks { get; set; }
         public DbSet<Alert> Alerts { get; set; }
         public DbSet<MaintenanceTask> MaintenanceTasks { get; set; }
-        // public DbSet<EquipmentUsageLog> EquipmentUsageLogs { get; set; }
+        public DbSet<EquipmentUsageHistory> EquipmentUsageHistories { get; set; }
 
         public DbSet<EquipmentType> EquipmentTypes { get; set; }
         public DbSet<EquipmentModel> EquipmentModels { get; set; }
         public DbSet<Building> Buildings { get; set; }
         public DbSet<Room> Rooms { get; set; }
         public DbSet<SavedDashboardView> SavedDashboardViews { get; set; }
+        
+        // Semester management
+        public DbSet<Semester> Semesters { get; set; }
+        public DbSet<SemesterEquipmentUsage> SemesterEquipmentUsages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -173,6 +177,47 @@ namespace FEENALOoFINALE.Data
                 .WithMany(b => b.Rooms)
                 .HasForeignKey(r => r.BuildingId)
                 .IsRequired();
+
+            // Semester configuration
+            modelBuilder.Entity<Semester>(entity =>
+            {
+                entity.HasKey(s => s.SemesterId);
+                
+                entity.HasOne(s => s.UploadedBy)
+                    .WithMany()
+                    .HasForeignKey(s => s.UploadedByUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.Property(s => s.SemesterName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(s => s.TotalEquipmentHours)
+                    .HasPrecision(10, 2);
+            });
+
+            // SemesterEquipmentUsage configuration
+            modelBuilder.Entity<SemesterEquipmentUsage>(entity =>
+            {
+                entity.HasKey(seu => seu.Id);
+                
+                entity.HasOne(seu => seu.Semester)
+                    .WithMany(s => s.SemesterEquipmentUsages)
+                    .HasForeignKey(seu => seu.SemesterId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(seu => seu.Equipment)
+                    .WithMany()
+                    .HasForeignKey(seu => seu.EquipmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(seu => seu.WeeklyUsageHours)
+                    .HasPrecision(8, 2);
+
+                entity.HasIndex(seu => new { seu.SemesterId, seu.EquipmentId })
+                    .IsUnique()
+                    .HasDatabaseName("IX_SemesterEquipmentUsage_Semester_Equipment");
+            });
 
             // EquipmentUsageLog configuration - temporarily commented
             /*

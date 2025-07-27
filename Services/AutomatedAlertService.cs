@@ -27,6 +27,9 @@ namespace FEENALOoFINALE.Services
         {
             _logger.LogInformation("Automated Alert Service started");
 
+            // Wait 5 minutes before first check to avoid generating alerts on startup
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -97,16 +100,17 @@ namespace FEENALOoFINALE.Services
 
             foreach (var task in overdueTasks)
             {
-                // Check if we already have a recent alert for this task
+                // Check if we already have a recent alert for this task (within last 7 days)
                 var existingAlert = await dbContext.Alerts
-                    .Where(a => a.Description.Contains($"Task {task.TaskId}") && 
-                               a.CreatedDate >= DateTime.Now.AddDays(-1))
+                    .Where(a => a.EquipmentId == task.EquipmentId && 
+                               a.Description.Contains($"Task {task.TaskId}") && 
+                               a.CreatedDate >= DateTime.Now.AddDays(-7))
                     .FirstOrDefaultAsync();
 
                 if (existingAlert == null)
                 {
                     var daysOverdue = (DateTime.Now - task.ScheduledDate).TotalDays;
-                    var priority = daysOverdue > 7 ? AlertPriority.High : daysOverdue > 3 ? AlertPriority.High : AlertPriority.Medium;
+                    var priority = daysOverdue > 7 ? AlertPriority.High : daysOverdue > 3 ? AlertPriority.Medium : AlertPriority.Low;
 
                     newAlerts.Add(new Alert
                     {
@@ -128,16 +132,16 @@ namespace FEENALOoFINALE.Services
 
             foreach (var equipment in problematicEquipment)
             {
-                // Check if we already have a recent alert for this equipment status
+                // Check if we already have a recent alert for this equipment status (within last 24 hours)
                 var existingAlert = await dbContext.Alerts
                     .Where(a => a.EquipmentId == equipment.EquipmentId && 
                                a.Description.Contains("status") && 
-                               a.CreatedDate >= DateTime.Now.AddHours(-4))
+                               a.CreatedDate >= DateTime.Now.AddHours(-24))
                     .FirstOrDefaultAsync();
 
                 if (existingAlert == null)
                 {
-                    var priority = equipment.Status == EquipmentStatus.Inactive ? AlertPriority.High : AlertPriority.Medium;
+                    var priority = equipment.Status == EquipmentStatus.Inactive ? AlertPriority.Medium : AlertPriority.Low;
                     var statusMessage = equipment.Status == EquipmentStatus.Inactive ? "inactive" : "under maintenance";
 
                     newAlerts.Add(new Alert

@@ -16,11 +16,13 @@ namespace FEENALOoFINALE.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly MaintenanceSchedulingService _schedulingService;
-        
-        public EquipmentController(ApplicationDbContext context, MaintenanceSchedulingService schedulingService)
+        private readonly ICacheService _cacheService;
+
+        public EquipmentController(ApplicationDbContext context, MaintenanceSchedulingService schedulingService, ICacheService cacheService)
         {
             _context = context;
             _schedulingService = schedulingService;
+            _cacheService = cacheService;
         }
 
         // GET: Equipment
@@ -73,7 +75,7 @@ namespace FEENALOoFINALE.Controllers
             return View();
         }
 
-        // POST: Equipment/Create
+        // POST: Equipment/
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("EquipmentId,EquipmentTypeId,EquipmentModelName,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
@@ -467,6 +469,7 @@ namespace FEENALOoFINALE.Controllers
             var newEquipmentType = new EquipmentType { EquipmentTypeName = name };
             _context.EquipmentTypes.Add(newEquipmentType);
             await _context.SaveChangesAsync();
+            await _cacheService.RemoveAsync("equipment_types");
 
             return Json(new { success = true, newId = newEquipmentType.EquipmentTypeId });
         }
@@ -512,6 +515,7 @@ namespace FEENALOoFINALE.Controllers
             var newBuilding = new Building { BuildingName = name };
             _context.Buildings.Add(newBuilding);
             await _context.SaveChangesAsync();
+            await _cacheService.RemoveAsync("buildings");
 
             return Json(new { success = true, newId = newBuilding.BuildingId });
         }
@@ -541,19 +545,31 @@ namespace FEENALOoFINALE.Controllers
         [HttpGet]
         public async Task<JsonResult> GetEquipmentTypes()
         {
-            var equipmentTypes = await _context.EquipmentTypes
-                .Select(et => new { et.EquipmentTypeId, et.EquipmentTypeName })
-                .ToListAsync();
-            return Json(equipmentTypes);
+            var cacheKey = "equipment_types";
+            var equipmentTypes = await _cacheService.GetAsync<List<EquipmentType>>(cacheKey);
+            if (equipmentTypes == null)
+            {
+                equipmentTypes = await _context.EquipmentTypes
+                    .Select(et => new EquipmentType { EquipmentTypeId = et.EquipmentTypeId, EquipmentTypeName = et.EquipmentTypeName })
+                    .ToListAsync();
+                await _cacheService.SetAsync(cacheKey, equipmentTypes, TimeSpan.FromMinutes(30));
+            }
+            return Json(equipmentTypes.Select(et => new { et.EquipmentTypeId, et.EquipmentTypeName }));
         }
 
         [HttpGet]
         public async Task<JsonResult> GetBuildings()
         {
-            var buildings = await _context.Buildings
-                .Select(b => new { b.BuildingId, b.BuildingName })
-                .ToListAsync();
-            return Json(buildings);
+            var cacheKey = "buildings";
+            var buildings = await _cacheService.GetAsync<List<Building>>(cacheKey);
+            if (buildings == null)
+            {
+                buildings = await _context.Buildings
+                    .Select(b => new Building { BuildingId = b.BuildingId, BuildingName = b.BuildingName })
+                    .ToListAsync();
+                await _cacheService.SetAsync(cacheKey, buildings, TimeSpan.FromMinutes(30));
+            }
+            return Json(buildings.Select(b => new { b.BuildingId, b.BuildingName }));
         }    
 
         // Generate condition-based alerts when equipment status changes

@@ -3,13 +3,15 @@ using Microsoft.EntityFrameworkCore;
 using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
 using Microsoft.AspNetCore.Authorization;
+using FEENALOoFINALE.Services;
 
 namespace FEENALOoFINALE.Controllers
 {
     [Authorize]
-    public class MaintenanceLogController(ApplicationDbContext context) : Controller
+    public class MaintenanceLogController(ApplicationDbContext context, PredictiveAnalyticsService predictiveAnalyticsService) : Controller
     {
         private readonly ApplicationDbContext _context = context;
+        private readonly PredictiveAnalyticsService _predictiveAnalyticsService = predictiveAnalyticsService;
 
         // GET: MaintenanceLog
         public async Task<IActionResult> Index()
@@ -103,8 +105,8 @@ namespace FEENALOoFINALE.Controllers
                     _context.Add(maintenanceLog);
                     await _context.SaveChangesAsync();
 
-                    // Note: Do not auto-complete tasks or resolve alerts here
-                    // That should only happen when maintenance is marked as completed
+                    // Update AI model with new maintenance log
+                    await _predictiveAnalyticsService.UpdateModelWithMaintenanceLogAsync(maintenanceLog);
 
                     return RedirectToAction(nameof(Index));
                 }

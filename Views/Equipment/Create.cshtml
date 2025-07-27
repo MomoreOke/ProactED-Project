@@ -14,34 +14,45 @@
 
             <div class="form-group">
                 <label asp-for="EquipmentTypeId" class="control-label">Equipment Type</label>
-                <select asp-for="EquipmentTypeId" class="form-control select-chevron" asp-items="ViewBag.EquipmentTypeId">
-                    <option value="">-- Select Equipment Type --</option>
-                </select>
+                <div class="input-group">
+                    <select asp-for="EquipmentTypeId" class="form-control select-chevron" asp-items="ViewBag.EquipmentTypeId" id="EquipmentTypeId">
+                        <option value="">-- Select Equipment Type --</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addEquipmentTypeModal">Add New</button>
+                </div>
                 <span asp-validation-for="EquipmentTypeId" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="EquipmentModelId" class="control-label">Equipment Model</label>
-                <select asp-for="EquipmentModelId" class="form-control select-chevron" asp-items="ViewBag.EquipmentModelId" id="EquipmentModelId">
-                    <option value="">-- Select Equipment Model --</option>
-                </select>
+                <div class="input-group">
+                    <select asp-for="EquipmentModelId" class="form-control select-chevron" asp-items="ViewBag.EquipmentModelId" id="EquipmentModelId">
+                        <option value="">-- Select Equipment Model --</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addEquipmentModelModal">Add New</button>
+                </div>
                 <span asp-validation-for="EquipmentModelId" class="text-danger"></span>
             </div>
 
-
             <div class="form-group">
                 <label asp-for="BuildingId" class="control-label">Building</label>
-                <select asp-for="BuildingId" class="form-control select-chevron" asp-items="ViewBag.BuildingId" id="BuildingId">
-                    <option value="">-- Select Building --</option>
-                </select>
+                <div class="input-group">
+                    <select asp-for="BuildingId" class="form-control select-chevron" asp-items="ViewBag.BuildingId" id="BuildingId">
+                        <option value="">-- Select Building --</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addBuildingModal">Add New</button>
+                </div>
                 <span asp-validation-for="BuildingId" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="RoomId" class="control-label">Room</label>
-                <select asp-for="RoomId" class="form-control select-chevron" asp-items="ViewBag.RoomId" id="RoomId">
-                    <option value="">-- Select Room --</option>
-                </select>
+                <div class="input-group">
+                    <select asp-for="RoomId" class="form-control select-chevron" id="RoomId">
+                        <option value="">-- Select Room --</option>
+                    </select>
+                     <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addRoomModal">Add New</button>
+                </div>
                 <span asp-validation-for="RoomId" class="text-danger"></span>
             </div>
 
@@ -93,7 +104,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveNewEquipmentType">Save</button>
+                <button type="button" class="btn btn-primary" id="saveNew">Save</button>
             </div>
         </div>
     </div>
@@ -114,7 +125,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveNewEquipmentModel">Save</button>
+                <button type="button" class="btn btn-primary" id="saveNew">Save</button>
             </div>
         </div>
     </div>
@@ -135,7 +146,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveNewBuilding">Save</button>
+                <button type="button" class="btn btn-primary" id="saveNew">Save</button>
             </div>
         </div>
     </div>
@@ -156,7 +167,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveNewRoom">Save</button>
+                <button type="button" class="btn btn-primary" id="saveNew">Save</button>
             </div>
         </div>
     </div>
@@ -181,62 +192,27 @@
                 });
             }
 
-            // Equipment Type
-            $('#saveNewEquipmentType').click(function () {
-                var name = $('#newEquipmentTypeName').val();
-                $.post('@Url.Action("AddEquipmentType", "Equipment")', { name: name }, function (data) {
-                    if (data.success) {
-                        $('#addEquipmentTypeModal').modal('hide');
-                        $('#newEquipmentTypeName').val('');
-                        refreshSelectList($('#EquipmentTypeId'), '@Url.Action("GetEquipmentTypes", "Equipment")', 'equipmentTypeId', 'equipmentTypeName', data.newId);
-                    } else {
-                        alert('Error adding equipment type.');
-                    }
+            // Generic function to handle adding new items
+            function addNewItem(modalId, inputId, actionUrl, selectElementId, valueField, textField) {
+                $(modalId + ' #saveNew').click(function () {
+                    var name = $(modalId + ' ' + inputId).val();
+                    $.post(actionUrl, { name: name }, function (data) {
+                        if (data.success) {
+                            $(modalId).modal('hide');
+                            $(modalId + ' ' + inputId).val('');
+                            refreshSelectList($(selectElementId), $(selectElementId).data('url'), valueField, textField, data.newId);
+                        } else {
+                            alert('Error adding item.');
+                        }
+                    });
                 });
-            });
+            }
 
-            // Equipment Model
-            $('#saveNewEquipmentModel').click(function () {
-                var name = $('#newEquipmentModelName').val();
-                var equipmentTypeId = $('#EquipmentTypeId').val(); // Get selected EquipmentTypeId
-                $.post('@Url.Action("AddEquipmentModel", "Equipment")', { equipmentTypeId: equipmentTypeId, name: name }, function (data) {
-                    if (data.success) {
-                        $('#addEquipmentModelModal').modal('hide');
-                        $('#newEquipmentModelName').val('');
-                        refreshSelectList($('#EquipmentModelId'), '@Url.Action("GetEquipmentModels", "Equipment")', 'equipmentModelId', 'modelName', data.newId);
-                    } else {
-                        alert('Error adding equipment model.');
-                    }
-                });
-            });
-
-            // Building
-            $('#saveNewBuilding').click(function () {
-                var name = $('#newBuildingName').val();
-                $.post('@Url.Action("AddBuilding", "Equipment")', { name: name }, function (data) {
-                    if (data.success) {
-                        $('#addBuildingModal').modal('hide');
-                        $('#newBuildingName').val('');
-                        refreshSelectList($('#BuildingId'), '@Url.Action("GetBuildings", "Equipment")', 'buildingId', 'buildingName', data.newId);
-                    } else {
-                        alert('Error adding building.');
-                    }
-                });
-            });
-
-            // Room
-            $('#saveNewRoom').click(function () {
-                var name = $('#newRoomName').val();
-                $.post('@Url.Action("AddRoom", "Equipment")', { name: name }, function (data) {
-                    if (data.success) {
-                        $('#addRoomModal').modal('hide');
-                        $('#newRoomName').val('');
-                        refreshSelectList($('#RoomId'), '@Url.Action("GetRooms", "Equipment")', 'roomId', 'roomName', data.newId);
-                    } else {
-                        alert('Error adding room.');
-                    }
-                });
-            });
+            // Initialize the generic function for each type
+            addNewItem('#addEquipmentTypeModal', '#newEquipmentTypeName', '@Url.Action("AddEquipmentType", "Equipment")', '#EquipmentTypeId', 'equipmentTypeId', 'equipmentTypeName');
+            addNewItem('#addEquipmentModelModal', '#newEquipmentModelName', '@Url.Action("AddEquipmentModel", "Equipment")', '#EquipmentModelId', 'equipmentModelId', 'modelName');
+            addNewItem('#addBuildingModal', '#newBuildingName', '@Url.Action("AddBuilding", "Equipment")', '#BuildingId', 'buildingId', 'buildingName');
+            addNewItem('#addRoomModal', '#newRoomName', '@Url.Action("AddRoom", "Equipment")', '#RoomId', 'roomId', 'roomName');
 
             // Initial Load - Load Equipment Models based on selected Equipment Type
             function loadEquipmentModels(equipmentTypeId, selectedValue) {
