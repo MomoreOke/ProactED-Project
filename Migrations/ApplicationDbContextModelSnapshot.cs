@@ -142,6 +142,944 @@ namespace FEENALOoFINALE.Migrations
                     b.HasIndex("RoomId");
 
                     b.ToTable("Equipment");
+
+                    b.HasData(
+                        new
+                        {
+                            EquipmentId = 100,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 1, 25, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 1,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 101,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 1,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 102,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 1,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 103,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 1,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 104,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #4",
+                            RoomId = 1,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 105,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 4, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 1,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 106,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 2, 4, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 2,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 107,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 2,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 108,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 2,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 109,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 2,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 110,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #4",
+                            RoomId = 2,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 111,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 2,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 112,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 2, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 3,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 113,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 4,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 2, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #2",
+                            RoomId = 3,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 114,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 3,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 115,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 3,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 116,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 3,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 117,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #4",
+                            RoomId = 3,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 118,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 3,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 119,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 2, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 4,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 120,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 4,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 121,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 4,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 122,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 4,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 123,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #4",
+                            RoomId = 4,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 124,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 13, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 4,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 125,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 3, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 5,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 126,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 26, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 5,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 127,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 26, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 5,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 128,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 26, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 5,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 129,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 2, 26, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #4",
+                            RoomId = 5,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 130,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 5,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 131,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 6,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 132,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 4,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #2",
+                            RoomId = 6,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 133,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 6,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 134,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 6,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 135,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 6,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 136,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #4",
+                            RoomId = 6,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 137,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 19, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 6,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 138,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 1,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 3, 25, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 7,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 139,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 7,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 140,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 7,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 141,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 7,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 142,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 22, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 7,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 143,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 2,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 4, 4, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 8,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 144,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 8,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 145,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 8,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 146,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 8,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 147,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 25, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 8,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 148,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 2,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 4, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 9,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 149,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 2,
+                            EquipmentModelId = 4,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 4, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #2",
+                            RoomId = 9,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 150,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 17, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 9,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 151,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 17, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 9,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 152,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 17, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 9,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 153,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 9,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 154,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 2,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 4, 24, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 10,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 155,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 22, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 10,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 156,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 22, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 10,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 157,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 22, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 10,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 158,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 3, 31, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 10,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 159,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 2,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 5, 4, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 11,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 160,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 11,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 161,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 11,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 162,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 3, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 11,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 163,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 4, 3, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 11,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 164,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 2,
+                            EquipmentModelId = 1,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 5, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #1",
+                            RoomId = 12,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 165,
+                            AverageWeeklyUsageHours = 25.5,
+                            BuildingId = 2,
+                            EquipmentModelId = 4,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2024, 5, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Classroom projector #2",
+                            RoomId = 12,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 166,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 4, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #1",
+                            RoomId = 12,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 167,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 4, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #2",
+                            RoomId = 12,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 168,
+                            AverageWeeklyUsageHours = 40.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 2,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2024, 4, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "HVAC unit #3",
+                            RoomId = 12,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 169,
+                            AverageWeeklyUsageHours = 20.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 5,
+                            EquipmentTypeId = 3,
+                            ExpectedLifespanMonths = 120,
+                            InstallationDate = new DateTime(2024, 4, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Lecture podium",
+                            RoomId = 12,
+                            Status = 0
+                        },
+                        new
+                        {
+                            EquipmentId = 170,
+                            AverageWeeklyUsageHours = 0.0,
+                            BuildingId = 1,
+                            EquipmentModelId = 4,
+                            EquipmentTypeId = 1,
+                            ExpectedLifespanMonths = 60,
+                            InstallationDate = new DateTime(2023, 6, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Old projector - needs repair",
+                            RoomId = 7,
+                            Status = 1
+                        },
+                        new
+                        {
+                            EquipmentId = 171,
+                            AverageWeeklyUsageHours = 0.0,
+                            BuildingId = 2,
+                            EquipmentModelId = 3,
+                            EquipmentTypeId = 2,
+                            ExpectedLifespanMonths = 84,
+                            InstallationDate = new DateTime(2023, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Notes = "Retired air conditioner - end of life",
+                            RoomId = 12,
+                            Status = 2
+                        });
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentModel", b =>

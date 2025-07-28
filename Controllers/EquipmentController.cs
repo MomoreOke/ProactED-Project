@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using FEENALOoFINALE.Services;
 
 namespace FEENALOoFINALE.Controllers
 {
@@ -17,18 +18,27 @@ namespace FEENALOoFINALE.Controllers
         private readonly ApplicationDbContext _context;
         private readonly MaintenanceSchedulingService _schedulingService;
         private readonly ICacheService _cacheService;
+        private readonly IPerformanceMonitoringService? _performanceMonitor;
+        private readonly ILogger<EquipmentController> _logger;
 
-        public EquipmentController(ApplicationDbContext context, MaintenanceSchedulingService schedulingService, ICacheService cacheService)
+        public EquipmentController(ApplicationDbContext context, 
+                                  MaintenanceSchedulingService schedulingService, 
+                                  ICacheService cacheService,
+                                  ILogger<EquipmentController> logger,
+                                  IPerformanceMonitoringService? performanceMonitor = null)
         {
             _context = context;
             _schedulingService = schedulingService;
             _cacheService = cacheService;
+            _logger = logger;
+            _performanceMonitor = performanceMonitor;
         }
 
         // GET: Equipment
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchTerm, int? buildingId, int? roomId, string status)
         {
-            return View(await _context.Equipment
+            // Start with all equipment
+            var query = _context.Equipment
                 .Include(e => e.EquipmentType)
                 .Include(e => e.EquipmentModel)
                 .Include(e => e.Building)
@@ -36,7 +46,48 @@ namespace FEENALOoFINALE.Controllers
                 .Include(e => e.MaintenanceLogs)
                 .Include(e => e.FailurePredictions)
                 .Include(e => e.Alerts)
-                .ToListAsync());
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(e => (e.EquipmentModel != null && e.EquipmentModel.ModelName.Contains(searchTerm)) ||
+                                       (e.EquipmentType != null && e.EquipmentType.EquipmentTypeName.Contains(searchTerm)) ||
+                                       (e.Notes != null && e.Notes.Contains(searchTerm)));
+                ViewBag.SearchTerm = searchTerm;
+            }
+
+            if (buildingId.HasValue)
+            {
+                query = query.Where(e => e.BuildingId == buildingId.Value);
+                ViewBag.SelectedBuildingId = buildingId.Value;
+            }
+
+            if (roomId.HasValue)
+            {
+                query = query.Where(e => e.RoomId == roomId.Value);
+                ViewBag.SelectedRoomId = roomId.Value;
+            }
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (Enum.TryParse<EquipmentStatus>(status, out var statusEnum))
+                {
+                    query = query.Where(e => e.Status == statusEnum);
+                }
+                ViewBag.SelectedStatus = status;
+            }
+
+            // Load filter data
+            ViewBag.Buildings = await _context.Buildings.OrderBy(b => b.BuildingName).ToListAsync();
+            ViewBag.Rooms = await _context.Rooms.Include(r => r.Building).OrderBy(r => r.Building != null ? r.Building.BuildingName : "").ThenBy(r => r.RoomName).ToListAsync();
+
+            var equipment = await query.OrderBy(e => e.Building != null ? e.Building.BuildingName : "")
+                                     .ThenBy(e => e.Room != null ? e.Room.RoomName : "")
+                                     .ThenBy(e => e.EquipmentType != null ? e.EquipmentType.EquipmentTypeName : "")
+                                     .ToListAsync();
+
+            return View(equipment);
         }
 
         // GET: Equipment/Details/5
@@ -80,81 +131,117 @@ namespace FEENALOoFINALE.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("EquipmentId,EquipmentTypeId,EquipmentModelName,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
         {
-            // Validate required fields
+            // Track performance if service is available
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            // Enhanced validation with user-friendly messages
             if (string.IsNullOrWhiteSpace(equipment.EquipmentModelName))
             {
-                ModelState.AddModelError("EquipmentModelName", "Equipment Model is required.");
+                ModelState.AddModelError("EquipmentModelName", "Equipment model name is required. Please enter a descriptive name for this equipment.");
+            }
+
+            if (equipment.EquipmentTypeId <= 0)
+            {
+                ModelState.AddModelError("EquipmentTypeId", "Please select a valid equipment type from the dropdown menu.");
+            }
+
+            if (equipment.BuildingId <= 0)
+            {
+                ModelState.AddModelError("BuildingId", "Please select the building where this equipment is located.");
+            }
+
+            if (equipment.RoomId <= 0)
+            {
+                ModelState.AddModelError("RoomId", "Please select the specific room where this equipment is installed.");
+            }
+
+            if (equipment.InstallationDate.HasValue && equipment.InstallationDate.Value > DateTime.Now)
+            {
+                ModelState.AddModelError("InstallationDate", "Installation date cannot be in the future. Please enter a valid past date.");
+            }
+
+            if (equipment.ExpectedLifespanMonths <= 0)
+            {
+                ModelState.AddModelError("ExpectedLifespanMonths", "Expected lifespan must be greater than 0 months. Please enter a realistic lifespan estimate.");
             }
 
             if (ModelState.IsValid)
             {
-                // Validate foreign keys
-                var equipmentTypeExists = await _context.EquipmentTypes.AnyAsync(e => e.EquipmentTypeId == equipment.EquipmentTypeId);
-                var buildingExists = await _context.Buildings.AnyAsync(b => b.BuildingId == equipment.BuildingId);
-                var roomExists = await _context.Rooms.AnyAsync(r => r.RoomId == equipment.RoomId);
-
-                if (!equipmentTypeExists || !buildingExists || !roomExists)
-                {
-                    ModelState.AddModelError("", "One or more selected values are invalid.");
-                    // Repopulate dropdowns and return view
-                    ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
-                    ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
-                    ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
-                    return View(equipment);
-                }
-
                 try
                 {
-                    // Find or create the equipment model
-                    var existingModel = await _context.EquipmentModels
-                        .FirstOrDefaultAsync(m => m.ModelName.ToLower() == equipment.EquipmentModelName!.ToLower() 
-                                                && m.EquipmentTypeId == equipment.EquipmentTypeId);
+                    // Verify references exist
+                    var equipmentTypeExists = await _context.EquipmentTypes.AnyAsync(et => et.EquipmentTypeId == equipment.EquipmentTypeId);
+                    var buildingExists = await _context.Buildings.AnyAsync(b => b.BuildingId == equipment.BuildingId);
+                    var roomExists = await _context.Rooms.AnyAsync(r => r.RoomId == equipment.RoomId && r.BuildingId == equipment.BuildingId);
 
-                    if (existingModel != null)
+                    if (!equipmentTypeExists)
                     {
-                        // Use existing model
-                        equipment.EquipmentModelId = existingModel.EquipmentModelId;
-                    }
-                    else
-                    {
-                        // Create new model
-                        var newModel = new EquipmentModel
-                        {
-                            ModelName = equipment.EquipmentModelName!.Trim(),
-                            EquipmentTypeId = equipment.EquipmentTypeId
-                        };
-                        
-                        _context.EquipmentModels.Add(newModel);
-                        await _context.SaveChangesAsync(); // Save to get the ID
-                        equipment.EquipmentModelId = newModel.EquipmentModelId;
+                        ModelState.AddModelError("EquipmentTypeId", "The selected equipment type is no longer available. Please refresh the page and try again.");
+                        await PopulateDropdowns();
+                        return View(equipment);
                     }
 
-                    // Clear the non-mapped property before saving equipment
-                    equipment.EquipmentModelName = null;
-                    
-                    _context.Add(equipment);
-                    await _context.SaveChangesAsync();
+                    if (!buildingExists)
+                    {
+                        ModelState.AddModelError("BuildingId", "The selected building is no longer available. Please refresh the page and try again.");
+                        await PopulateDropdowns();
+                        return View(equipment);
+                    }
 
-                    // Generate alert for new equipment if status is problematic
-                    await GenerateNewEquipmentAlert(equipment);
+                    if (!roomExists)
+                    {
+                        ModelState.AddModelError("RoomId", "The selected room is not available in the chosen building. Please select a different room or building.");
+                        await PopulateDropdowns();
+                        return View(equipment);
+                    }            // Set default values
+            equipment.Status = equipment.Status == 0 ? EquipmentStatus.Active : equipment.Status;
 
-                    return RedirectToAction(nameof(Index));
+            _context.Add(equipment);
+            await _context.SaveChangesAsync();
+
+                    // Clear cache
+                    await _cacheService.RemoveAsync("equipment_list");
+                    await _cacheService.RemoveAsync("dashboard_equipment_metrics");            TempData["SuccessMessage"] = $"Equipment '{equipment.EquipmentModelName}' has been successfully added to {await GetBuildingName(equipment.BuildingId)}.";
+            
+            // Track performance
+            stopwatch.Stop();
+            _performanceMonitor?.TrackOperation("Equipment.Create", stopwatch.Elapsed, true);
+            
+            return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException ex)
+                {
+                    _logger?.LogError(ex, "Database error while creating equipment");
+                    ModelState.AddModelError("", "A database error occurred while saving the equipment. Please try again or contact support if the problem persists.");
                 }
                 catch (Exception ex)
                 {
-                    // Log ex.Message and ex.InnerException?.Message
-                    ModelState.AddModelError("", "Error saving equipment: " + ex.Message);
+                    _logger?.LogError(ex, "Unexpected error while creating equipment");
+                    ModelState.AddModelError("", "An unexpected error occurred. Please try again or contact support if the problem persists.");
                 }
             }
 
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            // Set a breakpoint here or log 'errors' to see what is failing
-
-            ViewData["EquipmentTypeId"] = new SelectList(await _context.EquipmentTypes.ToListAsync(), "EquipmentTypeId", "EquipmentTypeName", equipment.EquipmentTypeId);
-            ViewData["BuildingId"] = new SelectList(await _context.Buildings.ToListAsync(), "BuildingId", "BuildingName", equipment.BuildingId);
-            ViewData["RoomId"] = new SelectList(await _context.Rooms.Where(r => r.BuildingId == equipment.BuildingId).ToListAsync(), "RoomId", "RoomName", equipment.RoomId);
-
+            await PopulateDropdowns();
             return View(equipment);
+        }
+
+        private async Task PopulateDropdowns()
+        {
+            ViewData["EquipmentTypeId"] = new SelectList(await _cacheService.GetOrSetAsync("equipment_types", 
+                async () => await _context.EquipmentTypes.ToListAsync(), TimeSpan.FromMinutes(30)), 
+                "EquipmentTypeId", "EquipmentTypeName");
+            
+            ViewData["BuildingId"] = new SelectList(await _cacheService.GetOrSetAsync("buildings", 
+                async () => await _context.Buildings.ToListAsync(), TimeSpan.FromMinutes(30)), 
+                "BuildingId", "BuildingName");
+            
+            ViewData["RoomId"] = new SelectList(new List<Room>(), "RoomId", "RoomName");
+        }
+
+        private async Task<string> GetBuildingName(int buildingId)
+        {
+            var building = await _context.Buildings.FindAsync(buildingId);
+            return building?.BuildingName ?? "Unknown Building";
         }
 
         // GET: Equipment/Edit/5

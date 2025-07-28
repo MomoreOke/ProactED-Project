@@ -43,6 +43,69 @@
     </div>
 </div>
 
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>Filters
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="filterForm" method="get">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="searchTerm" class="form-label">Search Equipment</label>
+                    <input type="text" class="form-control" id="searchTerm" name="searchTerm" 
+                           value="@ViewBag.SearchTerm" placeholder="Search by model name...">
+                </div>
+                <div class="col-md-3">
+                    <label for="buildingFilter" class="form-label">Building</label>
+                    <select class="form-select" id="buildingFilter" name="buildingId">
+                        <option value="">All Buildings</option>
+                        @foreach (var building in ViewBag.Buildings as List<FEENALOoFINALE.Models.Building> ?? new List<FEENALOoFINALE.Models.Building>())
+                        {
+                            <option value="@building.BuildingId" selected="@(ViewBag.SelectedBuildingId?.ToString() == building.BuildingId.ToString())">
+                                @building.BuildingName
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="roomFilter" class="form-label">Room</label>
+                    <select class="form-select" id="roomFilter" name="roomId">
+                        <option value="">All Rooms</option>
+                        @foreach (var room in ViewBag.Rooms as List<FEENALOoFINALE.Models.Room> ?? new List<FEENALOoFINALE.Models.Room>())
+                        {
+                            <option value="@room.RoomId" selected="@(ViewBag.SelectedRoomId?.ToString() == room.RoomId.ToString())">
+                                @room.RoomName (@(room.Building?.BuildingName ?? "Unknown Building"))
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select class="form-select" id="statusFilter" name="status">
+                        <option value="">All Status</option>
+                        <option value="Active" selected="@(ViewBag.SelectedStatus == "Active")">Active</option>
+                        <option value="Inactive" selected="@(ViewBag.SelectedStatus == "Inactive")">Inactive</option>
+                        <option value="Retired" selected="@(ViewBag.SelectedStatus == "Retired")">Retired</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search me-1"></i>Apply Filters
+                    </button>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Clear Filters
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card shadow-sm border-0">
     <div class="card-header bg-light">
         <div class="d-flex justify-content-between align-items-center">
@@ -173,3 +236,42 @@
         margin-right: 0;
     }
 </style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle building change to filter rooms
+            $('#buildingFilter').change(function() {
+                var buildingId = $(this).val();
+                var roomFilter = $('#roomFilter');
+                
+                // Clear current room options
+                roomFilter.empty();
+                roomFilter.append('<option value="">All Rooms</option>');
+                
+                if (buildingId) {
+                    // Get rooms for selected building
+                    $.ajax({
+                        url: '@Url.Action("GetRoomsByBuilding", "Equipment")',
+                        data: { buildingId: buildingId },
+                        type: 'GET',
+                        success: function(rooms) {
+                            $.each(rooms, function(index, room) {
+                                roomFilter.append('<option value="' + room.roomId + '">' + room.roomName + '</option>');
+                            });
+                        },
+                        error: function() {
+                            console.log('Error loading rooms for building');
+                        }
+                    });
+                }
+            });
+            
+            // Auto-submit form when filters change (optional)
+            $('#buildingFilter, #roomFilter, #statusFilter').change(function() {
+                // Uncomment the line below to auto-submit the form when filters change
+                // $('#filterForm').submit();
+            });
+        });
+    </script>
+}

@@ -11,7 +11,7 @@ namespace FEENALOoFINALE.Services
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<AutomatedAlertService> _logger;
         private readonly IHubContext<MaintenanceHub> _hubContext;
-        private readonly TimeSpan _checkPeriod = TimeSpan.FromMinutes(10); // Check every 10 minutes
+        private readonly TimeSpan _checkPeriod = TimeSpan.FromHours(2); // Check every 2 hours instead of 10 minutes
 
         public AutomatedAlertService(
             IServiceScopeFactory serviceScopeFactory,
@@ -27,8 +27,8 @@ namespace FEENALOoFINALE.Services
         {
             _logger.LogInformation("Automated Alert Service started");
 
-            // Wait 5 minutes before first check to avoid generating alerts on startup
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            // Wait 30 minutes before first check to avoid generating alerts on startup
+            await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -110,7 +110,8 @@ namespace FEENALOoFINALE.Services
                 if (existingAlert == null)
                 {
                     var daysOverdue = (DateTime.Now - task.ScheduledDate).TotalDays;
-                    var priority = daysOverdue > 7 ? AlertPriority.High : daysOverdue > 3 ? AlertPriority.Medium : AlertPriority.Low;
+                    // Make critical alerts much rarer - only after 30+ days overdue
+                    var priority = daysOverdue > 60 ? AlertPriority.High : daysOverdue > 14 ? AlertPriority.Medium : AlertPriority.Low;
 
                     newAlerts.Add(new Alert
                     {
@@ -176,7 +177,8 @@ namespace FEENALOoFINALE.Services
 
                     if (existingAlert == null)
                     {
-                        var priority = currentStock == 0 ? AlertPriority.High : AlertPriority.High;
+                        // Only mark as critical if completely out of stock, otherwise medium priority
+                        var priority = currentStock == 0 ? AlertPriority.High : AlertPriority.Medium;
                         var stockStatus = currentStock == 0 ? "out of stock" : "low stock";
 
                         newAlerts.Add(new Alert
@@ -213,7 +215,9 @@ namespace FEENALOoFINALE.Services
 
                 if (existingAlert == null)
                 {
-                    var priority = prediction.Status == PredictionStatus.High ? AlertPriority.High : AlertPriority.High;
+                    // Only mark as critical if high prediction status AND high confidence
+                    var priority = (prediction.Status == PredictionStatus.High && prediction.ConfidenceLevel > 80) ? 
+                                  AlertPriority.High : AlertPriority.Medium;
 
                     newAlerts.Add(new Alert
                     {
@@ -255,7 +259,8 @@ namespace FEENALOoFINALE.Services
                             ? (DateTime.Now - lastMaintenance.LogDate).TotalDays 
                             : 9999;
 
-                        var priority = daysSinceLastMaintenance > 730 ? AlertPriority.High : AlertPriority.Medium; // 2 years = high priority
+                        // Make critical alerts much rarer - only after 3+ years without maintenance
+                        var priority = daysSinceLastMaintenance > 1460 ? AlertPriority.High : AlertPriority.Medium; // 4 years = high priority (was 3)
 
                         var message = lastMaintenance != null 
                             ? $"Equipment {item.EquipmentModel?.ModelName ?? "Unknown"} maintenance overdue: {Math.Floor(daysSinceLastMaintenance)} days since last maintenance"

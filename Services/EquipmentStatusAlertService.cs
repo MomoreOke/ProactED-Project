@@ -23,8 +23,8 @@ namespace FEENALOoFINALE.Services
         {
             try
             {
-                // Only create alerts for Inactive or Retired status
-                if (newStatus != EquipmentStatus.Inactive && newStatus != EquipmentStatus.Retired)
+                // Only create alerts for Retired status (not Inactive to reduce alert volume)
+                if (newStatus != EquipmentStatus.Retired)
                     return;
 
                 // Don't create duplicate alerts if status hasn't actually changed
@@ -123,7 +123,9 @@ namespace FEENALOoFINALE.Services
         {
             return status switch
             {
+                // Only retired equipment gets critical priority
                 EquipmentStatus.Retired => AlertPriority.High,
+                // Inactive equipment gets medium priority (not critical)
                 EquipmentStatus.Inactive => AlertPriority.Medium,
                 _ => AlertPriority.Low
             };

@@ -163,4 +163,108 @@ app.MapHub<MaintenanceHub>("/maintenanceHub");
 app.MapRazorPages()
    .WithStaticAssets();
 
+// One-time massive alerts cleanup
+await CleanupExcessiveAlerts(app.Services);
+
 app.Run();
+
+// Method to clean up excessive alerts across all priorities
+static async Task CleanupExcessiveAlerts(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        logger.LogInformation("Starting massive alert cleanup...");
+
+        // Get current alert counts
+        var totalAlerts = await context.Alerts.CountAsync();
+        var criticalAlerts = await context.Alerts.CountAsync(a => a.Priority == AlertPriority.High);
+        var mediumAlerts = await context.Alerts.CountAsync(a => a.Priority == AlertPriority.Medium);
+        var lowAlerts = await context.Alerts.CountAsync(a => a.Priority == AlertPriority.Low);
+
+        logger.LogInformation($"Current alerts - Total: {totalAlerts}, Critical: {criticalAlerts}, Medium: {mediumAlerts}, Low: {lowAlerts}");
+
+        // Target: Keep only about 32 alerts total for 74 equipment (reasonable ratio)
+        if (totalAlerts <= 35)
+        {
+            logger.LogInformation("Alert count is already reasonable, no cleanup needed");
+            return;
+        }
+
+        // Delete most medium priority alerts (keep only 8)
+        if (mediumAlerts > 8)
+        {
+            var mediumToDelete = await context.Alerts
+                .Where(a => a.Priority == AlertPriority.Medium)
+                .OrderBy(a => a.CreatedDate) // Delete oldest first
+                .Take(mediumAlerts - 8)
+                .ToListAsync();
+            
+            context.Alerts.RemoveRange(mediumToDelete);
+            logger.LogInformation($"Deleted {mediumToDelete.Count} medium priority alerts");
+        }
+
+        // Delete most low priority alerts (keep only 4)
+        if (lowAlerts > 4)
+        {
+            var lowToDelete = await context.Alerts
+                .Where(a => a.Priority == AlertPriority.Low)
+                .OrderBy(a => a.CreatedDate) // Delete oldest first
+                .Take(lowAlerts - 4)
+                .ToListAsync();
+            
+            context.Alerts.RemoveRange(lowToDelete);
+            logger.LogInformation($"Deleted {lowToDelete.Count} low priority alerts");
+        }
+
+        // For critical alerts, keep only truly critical ones (max 20)
+        if (criticalAlerts > 20)
+        {
+            // Keep alerts that are truly critical or most recent
+            var allCritical = await context.Alerts
+                .Where(a => a.Priority == AlertPriority.High)
+                .OrderByDescending(a => a.CreatedDate)
+                .ToListAsync();
+
+            var criticalToKeep = allCritical
+                .Where(a => 
+                    // Keep truly critical alerts
+                    (a.Title != null && (a.Title.Contains("Safety", StringComparison.OrdinalIgnoreCase) || 
+                                       a.Title.Contains("Emergency", StringComparison.OrdinalIgnoreCase))) ||
+                    (a.Description != null && (a.Description.Contains("Safety", StringComparison.OrdinalIgnoreCase) ||
+                                             a.Description.Contains("Emergency", StringComparison.OrdinalIgnoreCase)))
+                )
+                .Take(10) // Keep up to 10 truly critical
+                .Concat(allCritical.Take(20)) // Plus 20 most recent
+                .Distinct()
+                .Take(20) // Final limit of 20
+                .ToList();
+
+            var criticalToDelete = allCritical.Except(criticalToKeep).ToList();
+            
+            if (criticalToDelete.Any())
+            {
+                context.Alerts.RemoveRange(criticalToDelete);
+                logger.LogInformation($"Deleted {criticalToDelete.Count} critical alerts");
+            }
+        }
+
+        await context.SaveChangesAsync();
+
+        // Show final counts
+        var finalTotal = await context.Alerts.CountAsync();
+        var finalCritical = await context.Alerts.CountAsync(a => a.Priority == AlertPriority.High);
+        var finalMedium = await context.Alerts.CountAsync(a => a.Priority == AlertPriority.Medium);
+        var finalLow = await context.Alerts.CountAsync(a => a.Priority == AlertPriority.Low);
+
+        logger.LogInformation($"Final alerts - Total: {finalTotal}, Critical: {finalCritical}, Medium: {finalMedium}, Low: {finalLow}");
+        logger.LogInformation($"Deleted {totalAlerts - finalTotal} alerts total - System now has reasonable alert count!");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error during massive alert cleanup");
+    }
+}
