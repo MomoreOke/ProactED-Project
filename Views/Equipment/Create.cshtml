@@ -51,12 +51,9 @@
 
             <div class="form-group">
                 <label asp-for="RoomId" class="control-label">Room</label>
-                <div class="input-group">
-                    <select asp-for="RoomId" class="form-control select-chevron" id="RoomId">
-                        <option value="">-- Select Room --</option>
-                    </select>
-                     <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addRoomModal">Add New</button>
-                </div>
+                <select asp-for="RoomId" class="form-control select-chevron" asp-items="ViewBag.RoomId" id="RoomId">
+                    <option value="">-- Select Room --</option>
+                </select>
                 <span asp-validation-for="RoomId" class="text-danger"></span>
             </div>
 
@@ -184,95 +181,21 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-
     <script>
-        $(document).ready(function () {
-            // Function to refresh select list options
-            function refreshSelectList(selectElement, url, valueField, textField, selectedValue) {
-                $.get(url, function (data) {
-                    selectElement.empty().append('<option value="">-- Select --</option>');
-                    $.each(data, function (i, item) {
-                        selectElement.append($('<option>', {
-                            value: item[valueField],
-                            text: item[textField],
-                            selected: item[valueField] == selectedValue
-                        }));
-                    });
-                });
-            }
-
-            // Generic function to handle adding new items
-            function addNewItem(modalId, inputId, actionUrl, selectElementId, valueField, textField) {
-                $(modalId + ' #saveNew').click(function () {
-                    var name = $(modalId + ' ' + inputId).val();
-                    $.post(actionUrl, { name: name }, function (data) {
-                        if (data.success) {
-                            $(modalId).modal('hide');
-                            $(modalId + ' ' + inputId).val('');
-                            refreshSelectList($(selectElementId), $(selectElementId).data('url'), valueField, textField, data.newId);
-                        } else {
-                            alert('Error adding item.');
-                        }
-                    });
-                });
-            }
-
-            // Initialize the generic function for each type
-            addNewItem('#addEquipmentTypeModal', '#newEquipmentTypeName', '@Url.Action("AddEquipmentType", "Equipment")', '#EquipmentTypeId', 'equipmentTypeId', 'equipmentTypeName');
-            addNewItem('#addEquipmentModelModal', '#newEquipmentModelName', '@Url.Action("AddEquipmentModel", "Equipment")', '#EquipmentModelId', 'equipmentModelId', 'modelName');
-            addNewItem('#addBuildingModal', '#newBuildingName', '@Url.Action("AddBuilding", "Equipment")', '#BuildingId', 'buildingId', 'buildingName');
-            addNewItem('#addRoomModal', '#newRoomName', '@Url.Action("AddRoom", "Equipment")', '#RoomId', 'roomId', 'roomName');
-
-            // Initial Load - Load Equipment Models based on selected Equipment Type
-            function loadEquipmentModels(equipmentTypeId, selectedValue) {
-                var url = '@Url.Action("GetEquipmentModels", "Equipment")';
-                if (equipmentTypeId) {
-                    url += '?equipmentTypeId=' + equipmentTypeId;
-                }
-                refreshSelectList($('#EquipmentModelId'), url, 'equipmentModelId', 'modelName', selectedValue);
-            }
-
-            // Initial Load - Load Rooms based on selected Building
-            function loadRooms(buildingId, selectedValue) {
-                var url = '@Url.Action("GetRoomsByBuilding", "Equipment")';
-                var $roomSelect = $('#RoomId');
-                $roomSelect.empty();
-                $roomSelect.append('<option value="">-- Select Room --</option>');
-                if (buildingId) {
-                    url += '?buildingId=' + buildingId;
-                    $.get(url, function (data) {
-                        $.each(data, function (i, item) {
-                            $roomSelect.append($('<option>', {
-                                value: item.roomId,
-                                text: item.roomName,
-                                selected: item.roomId == selectedValue
-                            }));
-                        });
-                    });
-                }
-            }
-
-            // Load Equipment Models and Rooms on page load based on selected values
-            var initialEquipmentTypeId = $('#EquipmentTypeId').val();
-            loadEquipmentModels(initialEquipmentTypeId);
-
-            var initialBuildingId = $('#BuildingId').val();
-            loadRooms(initialBuildingId);
-
-            // Load Buildings on page load
-            refreshSelectList($('#BuildingId'), '@Url.Action("GetBuildings", "Equipment")', 'buildingId', 'buildingName');
-
-            // When Equipment Type changes, update Equipment Models
-            $('#EquipmentTypeId').change(function () {
-                var equipmentTypeId = $(this).val();
-                loadEquipmentModels(equipmentTypeId);
-            });
-
-            // When Building changes, update Rooms
-            $('#BuildingId').change(function () {
+        $(document).ready(function() {
+            $('#BuildingId').change(function() {
                 var buildingId = $(this).val();
-                loadRooms(buildingId);
-            });
+                var $room = $('#RoomId');
+                $room.empty().append($('<option>', { value: '', text: '-- Select Room --' }));
+                if (buildingId) {
+                    $.getJSON('@Url.Action("GetRoomsByBuilding", "Equipment")', { buildingId: buildingId })
+                        .done(function(data) {
+                            $.each(data, function(i, item) {
+                                $room.append($('<option>', { value: item.value, text: item.text }));
+                            });
+                        });
+                }
+            }).trigger('change');
         });
     </script>
 }

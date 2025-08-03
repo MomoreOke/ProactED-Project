@@ -31,7 +31,7 @@ namespace FEENALOoFINALE.Services
                 if (previousStatus == newStatus)
                     return;
 
-                // Get equipment details
+                // Get equipment details first
                 var equipment = await _context.Equipment
                     .Include(e => e.EquipmentModel)
                     .Include(e => e.EquipmentType)
@@ -42,6 +42,16 @@ namespace FEENALOoFINALE.Services
                 if (equipment == null)
                 {
                     _logger.LogWarning("Equipment with ID {EquipmentId} not found", equipmentId);
+                    return;
+                }
+
+                // Check if this is critical equipment worth alerting about
+                var isCriticalEquipment = equipment.EquipmentType?.EquipmentTypeName?.Contains("Critical", StringComparison.OrdinalIgnoreCase) == true ||
+                                         equipment.EquipmentModel?.ModelName?.Contains("Critical", StringComparison.OrdinalIgnoreCase) == true;
+
+                if (!isCriticalEquipment)
+                {
+                    _logger.LogInformation("Equipment {EquipmentId} status changed to {Status} but is not critical equipment, skipping alert", equipmentId, newStatus);
                     return;
                 }
 

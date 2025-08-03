@@ -317,7 +317,7 @@
                 }
             });
 
-            // Form submission handling with enhanced feedback
+            // Form submission handling with enhanced feedback and real-time monitoring
             $('#uploadForm').submit(function(e) {
                 const submitBtn = $('#submitBtn');
                 const originalText = submitBtn.html();
@@ -338,17 +338,116 @@
                 submitBtn.prop('disabled', true);
                 submitBtn.html('<i class="bi bi-hourglass-split"></i> Uploading...');
                 
-                // Show processing message
-                $('<div class="alert alert-info mt-3" id="processingAlert">' +
-                  '<i class="bi bi-hourglass-split"></i> <strong>Processing:</strong> Uploading semester timetable. Please wait...' +
+                // Show processing message with progress indicator
+                const processingAlert = $('<div class="alert alert-info mt-3" id="processingAlert">' +
+                  '<div class="d-flex align-items-center">' +
+                    '<div class="spinner-border spinner-border-sm me-2" role="status"></div>' +
+                    '<div>' +
+                      '<strong>Processing:</strong> <span id="processingStatus">Uploading semester timetable...</span>' +
+                      '<div class="small text-muted mt-1" id="processingDetails">Please wait while we process your timetable file.</div>' +
+                    '</div>' +
+                  '</div>' +
                   '</div>').insertAfter('#uploadForm');
+
+                // Start monitoring after form submission
+                startProcessingMonitor();
+            });
+
+            // Real-time processing status monitoring
+            let monitoringInterval;
+            let currentSemesterId = null;
+
+            function startProcessingMonitor() {
+                // Get semester ID from TempData after upload (if available)
+                const semesterId = '@TempData["NewSemesterId"]';
+                if (semesterId && semesterId !== '') {
+                    currentSemesterId = semesterId;
+                    monitorProcessingStatus();
+                } else {
+                    // Fallback: monitor for new processing semesters
+                    setTimeout(checkForNewProcessingSemester, 2000);
+                }
+            }
+
+            function checkForNewProcessingSemester() {
+                // This is a fallback method to find processing semesters
+                // In a real implementation, you might want to store the semester ID in sessionStorage
+                // or pass it through the response
+                console.log('Checking for new processing semester...');
+            }
+
+            function monitorProcessingStatus() {
+                if (!currentSemesterId) return;
+
+                monitoringInterval = setInterval(function() {
+                    $.ajax({
+                        url: '@Url.Action("CheckProcessingStatus")',
+                        type: 'GET',
+                        data: { semesterId: currentSemesterId },
+                        success: function(response) {
+                            updateProcessingStatus(response);
+                            
+                            // Stop monitoring if processing is complete or failed
+                            if (response.isCompleted || response.isFailed) {
+                                clearInterval(monitoringInterval);
+                                handleProcessingComplete(response);
+                            }
+                        },
+                        error: function() {
+                            console.log('Error checking processing status');
+                        }
+                    });
+                }, 3000); // Check every 3 seconds
+            }
+
+            function updateProcessingStatus(response) {
+                const statusEl = $('#processingStatus');
+                const detailsEl = $('#processingDetails');
+                const alertEl = $('#processingAlert');
+
+                if (response.isProcessing) {
+                    statusEl.text('Processing timetable file...');
+                    detailsEl.text(response.message || 'Extracting and analyzing timetable data.');
+                    alertEl.removeClass('alert-success alert-danger').addClass('alert-info');
+                } else if (response.isCompleted) {
+                    statusEl.text('Processing completed successfully!');
+                    detailsEl.text(response.message || 'Timetable has been processed and equipment data extracted.');
+                    alertEl.removeClass('alert-info alert-danger').addClass('alert-success');
+                    alertEl.find('.spinner-border').removeClass('spinner-border').addClass('bi bi-check-circle');
+                } else if (response.isFailed) {
+                    statusEl.text('Processing failed.');
+                    detailsEl.text(response.message || 'An error occurred while processing the timetable.');
+                    alertEl.removeClass('alert-info alert-success').addClass('alert-danger');
+                    alertEl.find('.spinner-border').removeClass('spinner-border').addClass('bi bi-exclamation-triangle');
+                }
+            }
+
+            function handleProcessingComplete(response) {
+                const submitBtn = $('#submitBtn');
                 
-                // Re-enable button after 30 seconds (in case of error)
-                setTimeout(function() {
-                    submitBtn.prop('disabled', false);
-                    submitBtn.html(originalText);
-                    $('#processingAlert').remove();
-                }, 30000);
+                // Re-enable submit button
+                submitBtn.prop('disabled', false);
+                submitBtn.html('<i class="bi bi-upload"></i> Upload Timetable');
+
+                if (response.isCompleted) {
+                    // Add redirect button to view semester details
+                    const redirectBtn = $('<a href="@Url.Action("Details")?id=' + response.semesterId + '" class="btn btn-success ms-2">' +
+                        '<i class="bi bi-eye"></i> View Semester Details</a>');
+                    $('#processingAlert').append('<hr><div class="d-flex justify-content-end">' + redirectBtn[0].outerHTML + '</div>');
+                } else if (response.isFailed) {
+                    // Add retry option
+                    const retryText = '<hr><div class="text-end">' +
+                        '<small class="text-muted">You can try uploading the file again or contact support if the problem persists.</small>' +
+                        '</div>';
+                    $('#processingAlert').append(retryText);
+                }
+            }
+
+            // Clean up monitoring when leaving the page
+            $(window).on('beforeunload', function() {
+                if (monitoringInterval) {
+                    clearInterval(monitoringInterval);
+                }
             });
 
             // Initialize duration preview

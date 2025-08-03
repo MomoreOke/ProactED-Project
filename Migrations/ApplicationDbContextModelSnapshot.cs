@@ -1379,6 +1379,66 @@ namespace FEENALOoFINALE.Migrations
                     b.ToTable("MaintenanceLogs");
                 });
 
+            modelBuilder.Entity("FEENALOoFINALE.Models.MaintenanceRecommendation", b =>
+                {
+                    b.Property<int>("RecommendationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RecommendationId"));
+
+                    b.Property<decimal?>("ConfidenceScore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DocumentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("EquipmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("EquipmentModelId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("IntervalDays")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastAppliedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Priority")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("RecommendationText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecommendationType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("RecommendationId");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("EquipmentId");
+
+                    b.HasIndex("EquipmentModelId");
+
+                    b.ToTable("MaintenanceRecommendations");
+                });
+
             modelBuilder.Entity("FEENALOoFINALE.Models.MaintenanceTask", b =>
                 {
                     b.Property<int>("TaskId")
@@ -1421,6 +1481,67 @@ namespace FEENALOoFINALE.Migrations
                     b.HasIndex("EquipmentId");
 
                     b.ToTable("MaintenanceTasks");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.ManufacturerDocument", b =>
+                {
+                    b.Property<int>("DocumentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DocumentId"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DocumentType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("EquipmentModelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ExtractedText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsProcessed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ProcessedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ProcessingNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("UploadDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UploadedByEquipmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("DocumentId");
+
+                    b.HasIndex("EquipmentModelId");
+
+                    b.HasIndex("UploadedByEquipmentId");
+
+                    b.ToTable("ManufacturerDocuments");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.Room", b =>
@@ -2037,6 +2158,27 @@ namespace FEENALOoFINALE.Migrations
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("FEENALOoFINALE.Models.MaintenanceRecommendation", b =>
+                {
+                    b.HasOne("FEENALOoFINALE.Models.ManufacturerDocument", "Document")
+                        .WithMany("MaintenanceRecommendations")
+                        .HasForeignKey("DocumentId");
+
+                    b.HasOne("FEENALOoFINALE.Models.Equipment", "Equipment")
+                        .WithMany("MaintenanceRecommendations")
+                        .HasForeignKey("EquipmentId");
+
+                    b.HasOne("FEENALOoFINALE.Models.EquipmentModel", "EquipmentModel")
+                        .WithMany()
+                        .HasForeignKey("EquipmentModelId");
+
+                    b.Navigation("Document");
+
+                    b.Navigation("Equipment");
+
+                    b.Navigation("EquipmentModel");
+                });
+
             modelBuilder.Entity("FEENALOoFINALE.Models.MaintenanceTask", b =>
                 {
                     b.HasOne("FEENALOoFINALE.Models.User", "AssignedTo")
@@ -2059,6 +2201,23 @@ namespace FEENALOoFINALE.Migrations
                     b.Navigation("Equipment");
 
                     b.Navigation("OriginatingAlert");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.ManufacturerDocument", b =>
+                {
+                    b.HasOne("FEENALOoFINALE.Models.EquipmentModel", "EquipmentModel")
+                        .WithMany("ManufacturerDocuments")
+                        .HasForeignKey("EquipmentModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FEENALOoFINALE.Models.Equipment", "UploadedByEquipment")
+                        .WithMany("ManufacturerDocuments")
+                        .HasForeignKey("UploadedByEquipmentId");
+
+                    b.Navigation("EquipmentModel");
+
+                    b.Navigation("UploadedByEquipment");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.Room", b =>
@@ -2177,11 +2336,17 @@ namespace FEENALOoFINALE.Migrations
                     b.Navigation("FailurePredictions");
 
                     b.Navigation("MaintenanceLogs");
+
+                    b.Navigation("MaintenanceRecommendations");
+
+                    b.Navigation("ManufacturerDocuments");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentModel", b =>
                 {
                     b.Navigation("Equipments");
+
+                    b.Navigation("ManufacturerDocuments");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.EquipmentType", b =>
@@ -2203,6 +2368,11 @@ namespace FEENALOoFINALE.Migrations
             modelBuilder.Entity("FEENALOoFINALE.Models.MaintenanceLog", b =>
                 {
                     b.Navigation("MaintenanceInventoryLinks");
+                });
+
+            modelBuilder.Entity("FEENALOoFINALE.Models.ManufacturerDocument", b =>
+                {
+                    b.Navigation("MaintenanceRecommendations");
                 });
 
             modelBuilder.Entity("FEENALOoFINALE.Models.Room", b =>

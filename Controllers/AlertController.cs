@@ -306,7 +306,9 @@ namespace FEENALOoFINALE.Controllers
 
         public async Task<IActionResult> MarkInProgress(int id)
         {
-            var alert = await _context.Alerts.FindAsync(id);
+            var alert = await _context.Alerts
+                .Include(a => a.Equipment)
+                .FirstOrDefaultAsync(a => a.AlertId == id);
             if (alert == null)
                 return NotFound();
 
@@ -330,6 +332,31 @@ namespace FEENALOoFINALE.Controllers
             }
 
             alert.Status = AlertStatus.InProgress;
+            
+            // Check if there's already a maintenance log for this alert to avoid duplicates
+            var existingLog = await _context.MaintenanceLogs
+                .FirstOrDefaultAsync(ml => ml.AlertId == alert.AlertId && ml.Status == MaintenanceStatus.Pending);
+            
+            if (existingLog == null && alert.Equipment != null)
+            {
+                // Create a maintenance log entry when starting work on an alert
+                var maintenanceLog = new MaintenanceLog
+                {
+                    EquipmentId = alert.Equipment.EquipmentId,
+                    AlertId = alert.AlertId,
+                    LogDate = DateTime.Now,
+                    MaintenanceType = MaintenanceType.Corrective, // Since this is from an alert
+                    Description = $"Work started on alert: {alert.Title}",
+                    Technician = currentUser?.UserName ?? "Unknown",
+                    Status = MaintenanceStatus.Pending, // Starts as pending until completed
+                    Cost = 0, // Will be updated when work is completed
+                    DowntimeHours = 0 // Will be updated when work is completed
+                };
+                
+                _context.MaintenanceLogs.Add(maintenanceLog);
+                TempData["InfoMessage"] = "A maintenance log has been created for you to complete when work is finished.";
+            }
+            
             _context.Update(alert);
             await _context.SaveChangesAsync();
 

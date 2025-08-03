@@ -106,7 +106,7 @@ namespace FEENALOoFINALE.Models.ViewModels
         public SemesterProgressInfo ProgressInfo { get; set; } = new SemesterProgressInfo();
         public List<EquipmentUsageSummary> EquipmentUsage { get; set; } = new List<EquipmentUsageSummary>();
         public List<WeeklyProgressItem> WeeklyProgress { get; set; } = new List<WeeklyProgressItem>();
-        public List<MaintenanceRecommendation> MaintenanceRecommendations { get; set; } = new List<MaintenanceRecommendation>();
+        public List<FEENALOoFINALE.ViewModels.MaintenanceRecommendation> MaintenanceRecommendations { get; set; } = new List<FEENALOoFINALE.ViewModels.MaintenanceRecommendation>();
         public SemesterStatistics Statistics { get; set; } = new SemesterStatistics();
     }
 
@@ -251,5 +251,22 @@ namespace FEENALOoFINALE.Models.ViewModels
         public List<string> ProcessingMessages { get; set; } = new List<string>();
         public Dictionary<string, double> RoomUsageHours { get; set; } = new Dictionary<string, double>();
         public Dictionary<string, double> EquipmentUsageHours { get; set; } = new Dictionary<string, double>();
+    }
+
+    public class SemesterDeleteViewModel
+    {
+        public int SemesterId { get; set; }
+        public string SemesterName { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public bool IsActive { get; set; }
+        public int EquipmentUsageCount { get; set; }
+        public int MaintenanceTaskCount { get; set; }
+        public double TotalUsageHours { get; set; }
+        public string? UploadedByName { get; set; }
+        public DateTime UploadDate { get; set; }
+        public List<string> DeletionWarnings { get; set; } = new List<string>();
+        public bool CanDelete { get; set; } = true;
+        public string? DeletionBlockReason { get; set; }
     }
 }

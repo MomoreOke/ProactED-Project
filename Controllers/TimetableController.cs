@@ -39,7 +39,17 @@ namespace FEENALOoFINALE.Controllers
         // GET: Timetable Management Dashboard
         public async Task<IActionResult> Index()
         {
-            var viewModel = new TimetableManagementViewModel();
+            var viewModel = new TimetableManagementViewModel
+            {
+                PageTitle = "Timetable Management Dashboard",
+                PageDescription = "Manage semester timetables and track equipment usage",
+                Notifications = new List<NotificationMessage>(),
+                QuickActions = new List<QuickActionItem>(),
+                Statistics = new TimetableStatistics(),
+                ProgressInfo = new SemesterProgressInfo(),
+                RecentSemesters = new List<Semester>(),
+                CurrentSemester = null
+            };
 
             try
             {
@@ -72,6 +82,20 @@ namespace FEENALOoFINALE.Controllers
                 if (viewModel.CurrentSemester != null)
                 {
                     viewModel.ProgressInfo = GenerateProgressInfo(viewModel.CurrentSemester);
+                }
+                else
+                {
+                    // Set default progress info for when there's no current semester
+                    viewModel.ProgressInfo = new SemesterProgressInfo
+                    {
+                        ProgressPercentage = 0,
+                        WeeksElapsed = 0,
+                        WeeksRemaining = 0,
+                        DaysRemaining = 0,
+                        CurrentWeek = 0,
+                        Status = SemesterStatus.Inactive,
+                        StatusDescription = "No active semester"
+                    };
                 }
 
                 // Add quick actions
@@ -127,25 +151,17 @@ namespace FEENALOoFINALE.Controllers
                 var currentUser = await _userManager.GetUserAsync(User);
                 _logger.LogInformation("Current user: {UserId}", currentUser?.Id ?? "null");
                 
-                // Enhanced validation
-                if (model.StartDate < DateTime.Today)
-                {
-                    ModelState.AddModelError("StartDate", "Start date cannot be in the past.");
-                    TempData["ErrorMessage"] = "Start date cannot be in the past.";
-                    return View(model);
-                }
-
                 // Check for overlapping semesters
+                var modelEndDate = model.StartDate.AddDays(model.NumberOfWeeks * 7);
                 var overlappingSemester = await _context.Semesters
-                    .Where(s => s.IsActive && 
-                               ((s.StartDate <= model.StartDate && s.EndDate >= model.StartDate) ||
-                                (s.StartDate <= model.StartDate.AddDays(model.NumberOfWeeks * 7) && 
-                                 s.EndDate >= model.StartDate.AddDays(model.NumberOfWeeks * 7))))
+                    .Where(s => s.IsActive &&
+                               ((s.StartDate <= model.StartDate && s.StartDate.AddDays(s.NumberOfWeeks * 7) >= model.StartDate) ||
+                                (s.StartDate <= modelEndDate && s.StartDate.AddDays(s.NumberOfWeeks * 7) >= modelEndDate)))
                     .FirstOrDefaultAsync();
 
                 if (overlappingSemester != null && !model.ReplaceCurrentSemester)
                 {
-                    ModelState.AddModelError("", $"There is an overlapping active semester: '{overlappingSemester.SemesterName}' ({overlappingSemester.StartDate:MMM dd} - {overlappingSemester.EndDate:MMM dd, yyyy}). Please check 'Replace Current Active Semester' if you want to replace it.");
+                    ModelState.AddModelError("", $"There is an overlapping active semester: '{overlappingSemester.SemesterName}' ({overlappingSemester.StartDate:MMM dd} - {overlappingSemester.StartDate.AddDays(overlappingSemester.NumberOfWeeks * 7):MMM dd, yyyy}). Please check 'Replace Current Active Semester' if you want to replace it.");
                     TempData["ErrorMessage"] = "Semester dates overlap with an existing active semester.";
                     return View(model);
                 }
@@ -194,7 +210,7 @@ namespace FEENALOoFINALE.Controllers
                     if (!uploadResult.Success)
                     {
                         _logger.LogError("File upload failed: {ErrorMessage}", uploadResult.ErrorMessage);
-                        ModelState.AddModelError("TimetableFile", uploadResult.ErrorMessage);
+                        ModelState.AddModelError("TimetableFile", uploadResult.ErrorMessage ?? "An unknown error occurred during file upload.");
                         TempData["ErrorMessage"] = uploadResult.ErrorMessage;
                         return View(model);
                     }
@@ -280,16 +296,16 @@ namespace FEENALOoFINALE.Controllers
                     // Get current active semester
                     semester = await _context.Semesters
                         .Include(s => s.SemesterEquipmentUsages)
-                            .ThenInclude(seu => seu.Equipment)
-                                .ThenInclude(e => e.EquipmentType)
+                            .ThenInclude(seu => seu.Equipment.EquipmentModel)
                         .Include(s => s.SemesterEquipmentUsages)
-                            .ThenInclude(seu => seu.Equipment)
-                                .ThenInclude(e => e.Building)
+                            .ThenInclude(seu => seu.Equipment.EquipmentType)
                         .Include(s => s.SemesterEquipmentUsages)
-                            .ThenInclude(seu => seu.Equipment)
-                                .ThenInclude(e => e.Room)
+                            .ThenInclude(seu => seu.Equipment.Building)
+                        .Include(s => s.SemesterEquipmentUsages)
+                            .ThenInclude(seu => seu.Equipment.Room)
                         .Where(s => s.IsActive)
                         .OrderByDescending(s => s.StartDate)
+                        .AsSplitQuery()
                         .FirstOrDefaultAsync();
                 }
 
@@ -327,14 +343,14 @@ namespace FEENALOoFINALE.Controllers
                 var semester = await _context.Semesters
                     .Include(s => s.UploadedBy)
                     .Include(s => s.SemesterEquipmentUsages)
-                        .ThenInclude(seu => seu.Equipment)
-                            .ThenInclude(e => e.EquipmentType)
+                        .ThenInclude(seu => seu.Equipment.EquipmentModel)
                     .Include(s => s.SemesterEquipmentUsages)
-                        .ThenInclude(seu => seu.Equipment)
-                            .ThenInclude(e => e.Building)
+                        .ThenInclude(seu => seu.Equipment.EquipmentType)
                     .Include(s => s.SemesterEquipmentUsages)
-                        .ThenInclude(seu => seu.Equipment)
-                            .ThenInclude(e => e.Room)
+                        .ThenInclude(seu => seu.Equipment.Building)
+                    .Include(s => s.SemesterEquipmentUsages)
+                        .ThenInclude(seu => seu.Equipment.Room)
+                    .AsSplitQuery()
                     .FirstOrDefaultAsync(s => s.SemesterId == id);
 
                 if (semester == null)
@@ -351,7 +367,7 @@ namespace FEENALOoFINALE.Controllers
                     Statistics = await CalculateSemesterStatistics(semester),
                     ProcessingLogs = GetProcessingLogs(semester),
                     CanEdit = true,
-                    CanDelete = semester.Status != SemesterStatus.Active,
+                    CanDelete = true, // Allow deletion of all semesters, including active ones
                     CanReprocess = semester.ProcessingStatus == SemesterProcessingStatus.Failed
                 };
 
@@ -427,25 +443,17 @@ namespace FEENALOoFINALE.Controllers
                     return NotFound();
                 }
 
-                // Enhanced validation
-                if (model.StartDate < DateTime.Today && semester.StartDate > DateTime.Today)
-                {
-                    ModelState.AddModelError("StartDate", "Start date cannot be in the past for upcoming semesters.");
-                    TempData["ErrorMessage"] = "Start date cannot be in the past for upcoming semesters.";
-                    return View(model);
-                }
-
                 // Check for overlapping semesters (excluding current semester)
+                var modelEndDate = model.StartDate.AddDays(model.NumberOfWeeks * 7);
                 var overlappingSemester = await _context.Semesters
-                    .Where(s => s.SemesterId != id && s.IsActive && 
-                               ((s.StartDate <= model.StartDate && s.EndDate >= model.StartDate) ||
-                                (s.StartDate <= model.StartDate.AddDays(model.NumberOfWeeks * 7) && 
-                                 s.EndDate >= model.StartDate.AddDays(model.NumberOfWeeks * 7))))
+                    .Where(s => s.SemesterId != id && s.IsActive &&
+                               ((s.StartDate <= model.StartDate && s.StartDate.AddDays(s.NumberOfWeeks * 7) >= model.StartDate) ||
+                                (s.StartDate <= modelEndDate && s.StartDate.AddDays(s.NumberOfWeeks * 7) >= modelEndDate)))
                     .FirstOrDefaultAsync();
 
                 if (overlappingSemester != null)
                 {
-                    ModelState.AddModelError("", $"There is an overlapping active semester: '{overlappingSemester.SemesterName}' ({overlappingSemester.StartDate:MMM dd} - {overlappingSemester.EndDate:MMM dd, yyyy}).");
+                    ModelState.AddModelError("", $"There is an overlapping active semester: '{overlappingSemester.SemesterName}' ({overlappingSemester.StartDate:MMM dd} - {overlappingSemester.StartDate.AddDays(overlappingSemester.NumberOfWeeks * 7):MMM dd, yyyy}).");
                     TempData["ErrorMessage"] = "Semester dates overlap with another active semester.";
                     return View(model);
                 }
@@ -482,7 +490,7 @@ namespace FEENALOoFINALE.Controllers
                     var uploadResult = await SaveTimetableFile(model.NewTimetableFile, semester);
                     if (!uploadResult.Success)
                     {
-                        ModelState.AddModelError("NewTimetableFile", uploadResult.ErrorMessage);
+                        ModelState.AddModelError("NewTimetableFile", uploadResult.ErrorMessage ?? "An unknown error occurred during file upload.");
                         TempData["ErrorMessage"] = uploadResult.ErrorMessage;
                         return View(model);
                     }
@@ -531,67 +539,77 @@ namespace FEENALOoFINALE.Controllers
         // POST: Delete Semester
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int SemesterId)
         {
             try
             {
+                _logger.LogInformation("Attempting to delete semester with ID: {SemesterId}", SemesterId);
+                
                 var semester = await _context.Semesters
                     .Include(s => s.SemesterEquipmentUsages)
-                    .FirstOrDefaultAsync(s => s.SemesterId == id);
+                    .FirstOrDefaultAsync(s => s.SemesterId == SemesterId);
 
+                if (semester == null)
+                {
+                    _logger.LogWarning("Semester with ID {SemesterId} not found for deletion", SemesterId);
+                    TempData["ErrorMessage"] = "Semester not found.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Delete related data first
+                if (semester.SemesterEquipmentUsages != null && semester.SemesterEquipmentUsages.Any())
+                {
+                    _context.SemesterEquipmentUsages.RemoveRange(semester.SemesterEquipmentUsages);
+                }
+
+                // Delete the semester
+                _context.Semesters.Remove(semester);
+                
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation("Successfully deleted semester: {SemesterName} (ID: {SemesterId})", 
+                    semester.SemesterName, semester.SemesterId);
+                
+                TempData["SuccessMessage"] = $"Semester '{semester.SemesterName}' has been successfully deleted.";
+                
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting semester with ID: {SemesterId}", SemesterId);
+                TempData["ErrorMessage"] = "An error occurred while deleting the semester. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Force Complete Processing (for debugging)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForceCompleteProcessing(int id)
+        {
+            try
+            {
+                var semester = await _context.Semesters.FindAsync(id);
                 if (semester == null)
                 {
                     TempData["ErrorMessage"] = "Semester not found.";
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Enhanced validation
-                if (semester.IsActive)
-                {
-                    TempData["ErrorMessage"] = $"Cannot delete active semester '{semester.SemesterName}'. Please deactivate it first or use the edit function to change its status.";
-                    return RedirectToAction(nameof(Details), new { id });
-                }
-
-                // Check if semester has associated data
-                var equipmentUsageCount = semester.SemesterEquipmentUsages?.Count ?? 0;
-                var hasMaintenanceData = await _context.MaintenanceLogs
-                    .AnyAsync(ml => ml.EquipmentId != null && 
-                                   semester.SemesterEquipmentUsages.Any(seu => seu.EquipmentId == ml.EquipmentId) &&
-                                   ml.LogDate >= semester.StartDate && ml.LogDate <= semester.EndDate);
-
-                // Store semester info for confirmation message
-                var semesterName = semester.SemesterName;
-                var semesterDuration = $"{semester.StartDate:MMM dd, yyyy} - {semester.EndDate:MMM dd, yyyy}";
-
-                // Delete associated file
-                if (!string.IsNullOrEmpty(semester.TimetableFilePath))
-                {
-                    DeleteTimetableFile(semester.TimetableFilePath);
-                }
-
-                // Remove semester and related data
-                _context.SemesterEquipmentUsages.RemoveRange(semester.SemesterEquipmentUsages);
-                _context.Semesters.Remove(semester);
+                // Force complete the processing with minimal data
+                semester.ProcessingStatus = SemesterProcessingStatus.Completed;
+                semester.ProcessingMessage = "Processing completed manually (no equipment data parsed).";
+                semester.TotalEquipmentHours = 0;
+                semester.EquipmentUsageDataJson = "{}";
                 await _context.SaveChangesAsync();
 
-                // Enhanced success message
-                var successMessage = $"Semester '{semesterName}' ({semesterDuration}) deleted successfully.";
-                if (equipmentUsageCount > 0)
-                {
-                    successMessage += $" Removed {equipmentUsageCount} equipment usage records.";
-                }
-                if (hasMaintenanceData)
-                {
-                    successMessage += " Note: Related maintenance data has been preserved.";
-                }
-
-                TempData["SuccessMessage"] = successMessage;
-                return RedirectToAction(nameof(Index));
+                TempData["SuccessMessage"] = $"Processing for semester '{semester.SemesterName}' has been manually completed.";
+                return RedirectToAction(nameof(Details), new { id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting semester: {SemesterId}", id);
-                TempData["ErrorMessage"] = "An error occurred while deleting the semester. Please try again or contact support if the problem persists.";
+                _logger.LogError(ex, "Error forcing completion for semester: {SemesterId}", id);
+                TempData["ErrorMessage"] = "An error occurred while completing the processing.";
                 return RedirectToAction(nameof(Details), new { id });
             }
         }
@@ -667,7 +685,7 @@ namespace FEENALOoFINALE.Controllers
                         SemesterId = s.SemesterId,
                         SemesterName = s.SemesterName,
                         StartDate = s.StartDate,
-                        EndDate = s.EndDate,
+                        EndDate = s.StartDate.AddDays(s.NumberOfWeeks * 7),
                         NumberOfWeeks = s.NumberOfWeeks,
                         Status = s.Status,
                         ProgressPercentage = s.ProgressPercentage,
@@ -678,7 +696,7 @@ namespace FEENALOoFINALE.Controllers
                         EquipmentCount = s.SemesterEquipmentUsages?.Count ?? 0,
                         TotalUsageHours = s.TotalEquipmentHours,
                         CanEdit = true,
-                        CanDelete = s.Status != SemesterStatus.Active,
+                        CanDelete = true, // Allow deletion of all semesters, including active ones
                         CanActivate = s.Status != SemesterStatus.Active && s.ProcessingStatus == SemesterProcessingStatus.Completed
                     }).ToList(),
                     CurrentPage = page,
@@ -705,14 +723,53 @@ namespace FEENALOoFINALE.Controllers
         {
             var statistics = new TimetableStatistics();
 
-            statistics.TotalSemesters = await _context.Semesters.CountAsync();
-            statistics.ActiveSemesters = await _context.Semesters.CountAsync(s => s.IsActive);
-            statistics.CompletedSemesters = await _context.Semesters.CountAsync(s => s.IsActive && DateTime.Now > s.EndDate);
-            statistics.AverageWeeksPerSemester = await _context.Semesters.AverageAsync(s => (double)s.NumberOfWeeks);
-            statistics.TotalEquipmentTracked = await _context.SemesterEquipmentUsages.Select(seu => seu.EquipmentId).Distinct().CountAsync();
-            statistics.TotalUsageHours = await _context.Semesters.SumAsync(s => s.TotalEquipmentHours);
-            statistics.LastUploadDate = await _context.Semesters.MaxAsync(s => (DateTime?)s.UploadDate);
-            statistics.PendingProcessing = await _context.Semesters.CountAsync(s => s.ProcessingStatus == SemesterProcessingStatus.Pending);
+            try
+            {
+                statistics.TotalSemesters = await _context.Semesters.CountAsync();
+                statistics.ActiveSemesters = await _context.Semesters.CountAsync(s => s.IsActive);
+                statistics.CompletedSemesters = await _context.Semesters.CountAsync(s => s.IsActive && DateTime.Now > s.StartDate.AddDays(s.NumberOfWeeks * 7));
+                
+                // Handle average calculation for empty collections
+                if (statistics.TotalSemesters > 0)
+                {
+                    statistics.AverageWeeksPerSemester = await _context.Semesters.AverageAsync(s => (double)s.NumberOfWeeks);
+                }
+                else
+                {
+                    statistics.AverageWeeksPerSemester = 0;
+                }
+
+                statistics.TotalEquipmentTracked = await _context.SemesterEquipmentUsages.Select(seu => seu.EquipmentId).Distinct().CountAsync();
+                statistics.TotalUsageHours = await _context.Semesters.SumAsync(s => s.TotalEquipmentHours);
+                
+                // Handle max calculation for empty collections - check if any semesters exist first
+                if (statistics.TotalSemesters > 0)
+                {
+                    statistics.LastUploadDate = await _context.Semesters.MaxAsync(s => (DateTime?)s.UploadDate);
+                }
+                else
+                {
+                    statistics.LastUploadDate = null;
+                }
+                
+                statistics.PendingProcessing = await _context.Semesters.CountAsync(s => s.ProcessingStatus == SemesterProcessingStatus.Pending);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating timetable statistics");
+                // Return default statistics on error
+                statistics = new TimetableStatistics
+                {
+                    TotalSemesters = 0,
+                    ActiveSemesters = 0,
+                    CompletedSemesters = 0,
+                    AverageWeeksPerSemester = 0,
+                    TotalEquipmentTracked = 0,
+                    TotalUsageHours = 0,
+                    LastUploadDate = null,
+                    PendingProcessing = 0
+                };
+            }
 
             return statistics;
         }
@@ -780,6 +837,20 @@ namespace FEENALOoFINALE.Controllers
                     Action = "Edit",
                     RouteValues = new Dictionary<string, string> { { "id", currentSemester.SemesterId.ToString() } },
                     Color = "warning"
+                });
+
+                // Show delete option for all semesters (with appropriate warnings in the confirmation view)
+                actions.Add(new QuickActionItem
+                {
+                    Title = currentSemester.IsActive ? "Delete Active Semester" : "Delete Semester",
+                    Description = currentSemester.IsActive ? 
+                        $"Remove active semester {currentSemester.SemesterName} (with warnings)" : 
+                        $"Remove {currentSemester.SemesterName} and its data",
+                    Icon = "bi-trash",
+                    Controller = "Timetable",
+                    Action = "ConfirmDelete",
+                    RouteValues = new Dictionary<string, string> { { "id", currentSemester.SemesterId.ToString() } },
+                    Color = "danger"
                 });
             }
 
@@ -872,7 +943,7 @@ namespace FEENALOoFINALE.Controllers
                 // Check for high usage equipment
                 var highUsageEquipment = await _context.SemesterEquipmentUsages
                     .Include(seu => seu.Equipment)
-                    .Where(seu => seu.SemesterId == currentSemester.SemesterId && seu.WeeklyUsageHours > 20)
+                    .Where(seu => seu.WeeklyUsageHours > 20)
                     .ToListAsync();
 
                 if (highUsageEquipment.Any())
@@ -902,16 +973,37 @@ namespace FEENALOoFINALE.Controllers
         {
             var equipmentUsage = new List<EquipmentUsageSummary>();
 
+            if (semester.SemesterEquipmentUsages == null || !semester.SemesterEquipmentUsages.Any())
+            {
+                return equipmentUsage;
+            }
+
+            // Get all equipment IDs at once
+            var equipmentIds = semester.SemesterEquipmentUsages
+                .Where(seu => seu.Equipment != null)
+                .Select(seu => seu.EquipmentId)
+                .ToList();
+
+            // Get all maintenance logs for these equipment items in a single query
+            var maintenanceLogs = await _context.MaintenanceLogs
+                .Where(ml => equipmentIds.Contains(ml.EquipmentId))
+                .GroupBy(ml => ml.EquipmentId)
+                .Select(g => new { 
+                    EquipmentId = g.Key, 
+                    LastMaintenanceDate = g.OrderByDescending(ml => ml.LogDate).FirstOrDefault()!.LogDate 
+                })
+                .ToListAsync();
+
+            // Create a lookup dictionary for O(1) access
+            var maintenanceDict = maintenanceLogs.ToDictionary(ml => ml.EquipmentId, ml => ml.LastMaintenanceDate);
+
             foreach (var usage in semester.SemesterEquipmentUsages)
             {
                 var equipment = usage.Equipment;
                 if (equipment == null) continue;
 
-                // Get last maintenance date
-                var lastMaintenance = await _context.MaintenanceLogs
-                    .Where(ml => ml.EquipmentId == equipment.EquipmentId)
-                    .OrderByDescending(ml => ml.LogDate)
-                    .FirstOrDefaultAsync();
+                // Get last maintenance date from the dictionary (O(1) lookup)
+                maintenanceDict.TryGetValue(equipment.EquipmentId, out var lastMaintenanceDate);
 
                 equipmentUsage.Add(new EquipmentUsageSummary
                 {
@@ -922,9 +1014,9 @@ namespace FEENALOoFINALE.Controllers
                     WeeklyHours = usage.WeeklyUsageHours,
                     TotalSemesterHours = usage.TotalSemesterHours,
                     UtilizationPercentage = CalculateUtilizationPercentage(usage.WeeklyUsageHours),
-                    RiskLevel = CalculateRiskLevel(usage.WeeklyUsageHours, lastMaintenance?.LogDate),
-                    LastMaintenanceDate = lastMaintenance?.LogDate,
-                    NextMaintenanceDue = CalculateNextMaintenanceDue(lastMaintenance?.LogDate, usage.WeeklyUsageHours)
+                    RiskLevel = CalculateRiskLevel(usage.WeeklyUsageHours, lastMaintenanceDate),
+                    LastMaintenanceDate = lastMaintenanceDate,
+                    NextMaintenanceDue = CalculateNextMaintenanceDue(lastMaintenanceDate, usage.WeeklyUsageHours)
                 });
             }
 
@@ -982,41 +1074,57 @@ namespace FEENALOoFINALE.Controllers
             return statistics;
         }
 
-        private async Task<List<MaintenanceRecommendation>> GenerateMaintenanceRecommendations(Semester semester)
+        private async Task<List<FEENALOoFINALE.ViewModels.MaintenanceRecommendation>> GenerateMaintenanceRecommendations(Semester semester)
         {
-            var recommendations = new List<MaintenanceRecommendation>();
+            var recommendations = new List<FEENALOoFINALE.ViewModels.MaintenanceRecommendation>();
+            var highUsageEquipment = semester.SemesterEquipmentUsages?
+                .Where(seu => seu.WeeklyUsageHours > 40)
+                .ToList() ?? new List<SemesterEquipmentUsage>();
 
-            foreach (var usage in semester.SemesterEquipmentUsages ?? new List<SemesterEquipmentUsage>())
+            if (!highUsageEquipment.Any()) return recommendations;
+
+            // Get all equipment IDs for high usage equipment
+            var equipmentIds = highUsageEquipment.Select(seu => seu.EquipmentId).ToList();
+
+            // Get all maintenance logs for these equipment items in a single query
+            var maintenanceLogs = await _context.MaintenanceLogs
+                .Where(ml => equipmentIds.Contains(ml.EquipmentId))
+                .GroupBy(ml => ml.EquipmentId)
+                .Select(g => new { 
+                    EquipmentId = g.Key, 
+                    LastMaintenanceDate = g.OrderByDescending(ml => ml.LogDate).FirstOrDefault()!.LogDate 
+                })
+                .ToListAsync();
+
+            // Create a lookup dictionary for O(1) access
+            var maintenanceDict = maintenanceLogs.ToDictionary(ml => ml.EquipmentId, ml => ml.LastMaintenanceDate);
+
+            foreach (var usage in highUsageEquipment)
             {
-                if (usage.WeeklyUsageHours > 40) // High usage equipment
+                // Get last maintenance date from the dictionary (O(1) lookup)
+                var hasLastMaintenance = maintenanceDict.TryGetValue(usage.EquipmentId, out var lastMaintenanceDate);
+                
+                var daysSinceLastMaintenance = hasLastMaintenance
+                    ? (DateTime.Now - lastMaintenanceDate).TotalDays 
+                    : 365;
+
+                if (daysSinceLastMaintenance > 90) // More than 3 months
                 {
-                    var lastMaintenance = await _context.MaintenanceLogs
-                        .Where(ml => ml.EquipmentId == usage.EquipmentId)
-                        .OrderByDescending(ml => ml.LogDate)
-                        .FirstOrDefaultAsync();
-
-                    var daysSinceLastMaintenance = lastMaintenance != null 
-                        ? (DateTime.Now - lastMaintenance.LogDate).TotalDays 
-                        : 365;
-
-                    if (daysSinceLastMaintenance > 90) // More than 3 months
+                    recommendations.Add(new FEENALOoFINALE.ViewModels.MaintenanceRecommendation
                     {
-                        recommendations.Add(new MaintenanceRecommendation
+                        EquipmentId = usage.EquipmentId,
+                        EquipmentName = usage.Equipment?.EquipmentModel?.ModelName ?? "Unknown",
+                        RecommendationType = "Preventive Maintenance",
+                        Priority = daysSinceLastMaintenance > 180 ? "High" : "Medium",
+                        Urgency = daysSinceLastMaintenance > 180 ? "Immediate" : "Within 30 days",
+                        EstimatedCost = CalculateMaintenanceCost(usage.WeeklyUsageHours),
+                        Recommendations = new List<string>
                         {
-                            EquipmentId = usage.EquipmentId,
-                            EquipmentName = usage.Equipment?.EquipmentModel?.ModelName ?? "Unknown",
-                            RecommendationType = "Preventive Maintenance",
-                            Priority = daysSinceLastMaintenance > 180 ? "High" : "Medium",
-                            Urgency = daysSinceLastMaintenance > 180 ? "Immediate" : "Within 30 days",
-                            EstimatedCost = CalculateMaintenanceCost(usage.WeeklyUsageHours),
-                            Recommendations = new List<string>
-                            {
-                                $"Equipment has high usage ({usage.WeeklyUsageHours:F1} hours/week)",
-                                $"Last maintenance was {daysSinceLastMaintenance:F0} days ago",
-                                "Schedule preventive maintenance to avoid equipment failure"
-                            }
-                        });
-                    }
+                            $"Equipment has high usage ({usage.WeeklyUsageHours:F1} hours/week)",
+                            $"Last maintenance was {daysSinceLastMaintenance:F0} days ago",
+                            "Schedule preventive maintenance to avoid equipment failure"
+                        }
+                    });
                 }
             }
 
@@ -1119,32 +1227,57 @@ namespace FEENALOoFINALE.Controllers
 
         private async Task ProcessTimetableFile(int semesterId)
         {
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(10)); // 10-minute timeout
             try
             {
-                var semester = await _context.Semesters.FindAsync(semesterId);
+                _logger.LogInformation("Starting ProcessTimetableFile for semester {SemesterId}", semesterId);
+                
+                var semester = await _context.Semesters.FindAsync(semesterId, cancellationTokenSource.Token);
                 if (semester == null || string.IsNullOrEmpty(semester.TimetableFilePath))
                 {
+                    _logger.LogWarning("Semester not found or no file path for semester {SemesterId}", semesterId);
                     return;
                 }
 
+                _logger.LogInformation("Setting processing status for semester {SemesterId}", semesterId);
                 semester.ProcessingStatus = SemesterProcessingStatus.Processing;
                 semester.ProcessingMessage = "Processing timetable file...";
-                await _context.SaveChangesAsync();
+                semester.LastModified = DateTime.UtcNow;
+                await _context.SaveChangesAsync(cancellationTokenSource.Token);
 
                 // Extract text from PDF
+                _logger.LogInformation("Extracting text from PDF for semester {SemesterId}", semesterId);
                 var filePath = Path.Combine(_environment.WebRootPath, semester.TimetableFilePath);
-                var timetableText = await ExtractTextFromPdf(filePath);
+                
+                if (!System.IO.File.Exists(filePath))
+                {
+                    throw new FileNotFoundException($"Timetable file not found: {filePath}");
+                }
+                
+                var timetableText = ExtractTextFromPdf(filePath);
+                _logger.LogInformation("Extracted {TextLength} characters from PDF for semester {SemesterId}", 
+                    timetableText?.Length ?? 0, semesterId);
+
+                if (string.IsNullOrEmpty(timetableText))
+                {
+                    throw new InvalidOperationException("No text could be extracted from the PDF file");
+                }
 
                 // Parse timetable text
-                var equipmentUsage = ParseTimetableText(timetableText, semester.NumberOfWeeks);
+                _logger.LogInformation("Parsing timetable text for semester {SemesterId}", semesterId);
+                var equipmentUsage = await ParseTimetableText(timetableText, semester.NumberOfWeeks);
+                _logger.LogInformation("Parsed {EquipmentCount} equipment items for semester {SemesterId}", 
+                    equipmentUsage.Count, semesterId);
 
                 // Clear existing usage data
+                _logger.LogInformation("Clearing existing usage data for semester {SemesterId}", semesterId);
                 var existingUsage = await _context.SemesterEquipmentUsages
                     .Where(seu => seu.SemesterId == semesterId)
                     .ToListAsync();
                 _context.SemesterEquipmentUsages.RemoveRange(existingUsage);
 
                 // Save new usage data
+                _logger.LogInformation("Saving new usage data for semester {SemesterId}", semesterId);
                 var totalHours = 0.0;
                 foreach (var usage in equipmentUsage)
                 {
@@ -1167,24 +1300,61 @@ namespace FEENALOoFINALE.Controllers
                 semester.ProcessingStatus = SemesterProcessingStatus.Completed;
                 semester.ProcessingMessage = $"Successfully processed {equipmentUsage.Count} equipment items.";
                 semester.EquipmentUsageDataJson = JsonSerializer.Serialize(equipmentUsage);
+                semester.LastModified = DateTime.UtcNow;
 
-                await _context.SaveChangesAsync();
+                _logger.LogInformation("Saving final results for semester {SemesterId}", semesterId);
+                await _context.SaveChangesAsync(cancellationTokenSource.Token);
+                _logger.LogInformation("Successfully completed processing for semester {SemesterId}", semesterId);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("Timetable processing for semester {SemesterId} was cancelled due to timeout", semesterId);
+                
+                try
+                {
+                    var semester = await _context.Semesters.FindAsync(semesterId);
+                    if (semester != null)
+                    {
+                        semester.ProcessingStatus = SemesterProcessingStatus.Failed;
+                        semester.ProcessingMessage = "Processing failed: Operation timed out after 10 minutes.";
+                        semester.LastModified = DateTime.UtcNow;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                catch (Exception saveEx)
+                {
+                    _logger.LogError(saveEx, "Failed to update semester {SemesterId} status after timeout", semesterId);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing timetable file for semester {SemesterId}", semesterId);
+                _logger.LogError(ex, "Error processing timetable file for semester {SemesterId}: {ErrorMessage}", 
+                    semesterId, ex.Message);
                 
-                var semester = await _context.Semesters.FindAsync(semesterId);
-                if (semester != null)
+                try
                 {
-                    semester.ProcessingStatus = SemesterProcessingStatus.Failed;
-                    semester.ProcessingMessage = $"Processing failed: {ex.Message}";
-                    await _context.SaveChangesAsync();
+                    var semester = await _context.Semesters.FindAsync(semesterId);
+                    if (semester != null)
+                    {
+                        semester.ProcessingStatus = SemesterProcessingStatus.Failed;
+                        semester.ProcessingMessage = $"Processing failed: {ex.Message}";
+                        semester.LastModified = DateTime.UtcNow;
+                        await _context.SaveChangesAsync();
+                        _logger.LogInformation("Updated semester {SemesterId} status to Failed", semesterId);
+                    }
                 }
+                catch (Exception saveEx)
+                {
+                    _logger.LogError(saveEx, "Failed to update semester {SemesterId} status after processing error", semesterId);
+                }
+            }
+            finally
+            {
+                cancellationTokenSource?.Dispose();
             }
         }
 
-        private async Task<string> ExtractTextFromPdf(string filePath)
+        private string ExtractTextFromPdf(string filePath)
         {
             using (var pdfDocument = new PdfDocument(new PdfReader(filePath)))
             {
@@ -1199,7 +1369,7 @@ namespace FEENALOoFINALE.Controllers
             }
         }
 
-        private Dictionary<string, double> ParseTimetableText(string text, int semesterWeeks)
+        private async Task<Dictionary<string, double>> ParseTimetableText(string text, int semesterWeeks)
         {
             var roomWeeklyUsage = new Dictionary<string, double>();
             var lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -1224,12 +1394,12 @@ namespace FEENALOoFINALE.Controllers
                 }
             }
 
-            // Map room usage to equipment
+            // Map room usage to equipment using async query
             var equipmentUsage = new Dictionary<string, double>();
-            var allEquipmentInRooms = _context.Equipment
+            var allEquipmentInRooms = await _context.Equipment
                 .Where(e => e.Room != null && roomWeeklyUsage.Keys.Contains(e.Room.RoomName.ToUpper()))
                 .Include(e => e.Room)
-                .ToList();
+                .ToListAsync();
 
             foreach (var equipment in allEquipmentInRooms)
             {
@@ -1342,7 +1512,7 @@ namespace FEENALOoFINALE.Controllers
             try
             {
                 var now = DateTime.Now;
-                var endDate = semester.EndDate;
+                var endDate = semester.StartDate.AddDays(semester.NumberOfWeeks * 7);
 
                 // Check if semester has ended
                 if (now > endDate && semester.IsActive)
@@ -1361,6 +1531,150 @@ namespace FEENALOoFINALE.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error checking semester completion for semester {SemesterId}", semester.SemesterId);
+            }
+        }
+
+        // GET: Confirm Delete Semester
+        public async Task<IActionResult> ConfirmDelete(int id)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to load semester for deletion confirmation. ID: {SemesterId}", id);
+                
+                var semester = await _context.Semesters
+                    .Include(s => s.UploadedBy)
+                    .Include(s => s.SemesterEquipmentUsages)
+                    .FirstOrDefaultAsync(s => s.SemesterId == id);
+
+                if (semester == null)
+                {
+                    _logger.LogWarning("Semester with ID {SemesterId} not found for deletion", id);
+                    TempData["ErrorMessage"] = "Semester not found.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Calculate delete implications
+                var equipmentUsageCount = semester.SemesterEquipmentUsages?.Count ?? 0;
+                var maintenanceTaskCount = 0;
+                var hasMaintenanceData = false;
+
+                if (semester.SemesterEquipmentUsages != null && semester.SemesterEquipmentUsages.Any())
+                {
+                    var equipmentIds = semester.SemesterEquipmentUsages.Select(seu => seu.EquipmentId).ToList();
+                    
+                    // Check maintenance tasks
+                    maintenanceTaskCount = await _context.MaintenanceTasks
+                        .Where(mt => equipmentIds.Contains(mt.EquipmentId))
+                        .CountAsync();
+
+                    // Check maintenance logs
+                    hasMaintenanceData = await _context.MaintenanceLogs
+                        .AnyAsync(ml => equipmentIds.Contains(ml.EquipmentId) &&
+                                       ml.LogDate >= semester.StartDate && 
+                                       ml.LogDate <= semester.StartDate.AddDays(semester.NumberOfWeeks * 7));
+                }
+
+                var viewModel = new SemesterDeleteViewModel
+                {
+                    SemesterId = semester.SemesterId,
+                    SemesterName = semester.SemesterName,
+                    StartDate = semester.StartDate,
+                    EndDate = semester.StartDate.AddDays(semester.NumberOfWeeks * 7),
+                    IsActive = semester.IsActive,
+                    EquipmentUsageCount = equipmentUsageCount,
+                    MaintenanceTaskCount = maintenanceTaskCount,
+                    TotalUsageHours = semester.TotalEquipmentHours,
+                    UploadedByName = semester.UploadedBy?.UserName,
+                    UploadDate = semester.UploadDate
+                };
+
+                // Generate warnings and check if deletion is allowed
+                var warnings = new List<string>();
+                var canDelete = true;
+                string? blockReason = null;
+
+                // Allow deletion of active semesters, but warn the user
+                if (semester.IsActive)
+                {
+                    warnings.Add("This semester is currently active. Deleting it will immediately deactivate all related processes.");
+                }
+
+                if (equipmentUsageCount > 0)
+                {
+                    warnings.Add($"This will delete {equipmentUsageCount} equipment usage records.");
+                }
+
+                if (maintenanceTaskCount > 0)
+                {
+                    warnings.Add($"This action may affect {maintenanceTaskCount} related maintenance tasks.");
+                }
+
+                if (hasMaintenanceData)
+                {
+                    warnings.Add("This semester has associated maintenance history that may be affected.");
+                }
+
+                if (semester.TotalEquipmentHours > 0)
+                {
+                    warnings.Add($"This will permanently remove {semester.TotalEquipmentHours:F1} hours of equipment usage data.");
+                }
+
+                if (warnings.Count == 0)
+                {
+                    warnings.Add("This semester has minimal data and can be safely deleted.");
+                }
+
+                viewModel.DeletionWarnings = warnings;
+                viewModel.CanDelete = canDelete;
+                viewModel.DeletionBlockReason = blockReason;
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading semester deletion confirmation for ID: {SemesterId}", id);
+                TempData["ErrorMessage"] = "Error loading semester details. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // API endpoint to check processing status
+        [HttpGet]
+        public async Task<IActionResult> CheckProcessingStatus(int semesterId)
+        {
+            try
+            {
+                var semester = await _context.Semesters
+                    .Select(s => new {
+                        s.SemesterId,
+                        s.SemesterName,
+                        s.ProcessingStatus,
+                        s.ProcessingMessage,
+                        s.LastModified
+                    })
+                    .FirstOrDefaultAsync(s => s.SemesterId == semesterId);
+
+                if (semester == null)
+                {
+                    return NotFound(new { error = "Semester not found" });
+                }
+
+                return Json(new
+                {
+                    semesterId = semester.SemesterId,
+                    semesterName = semester.SemesterName,
+                    status = semester.ProcessingStatus.ToString(),
+                    message = semester.ProcessingMessage,
+                    lastModified = semester.LastModified,
+                    isProcessing = semester.ProcessingStatus == SemesterProcessingStatus.Processing,
+                    isCompleted = semester.ProcessingStatus == SemesterProcessingStatus.Completed,
+                    isFailed = semester.ProcessingStatus == SemesterProcessingStatus.Failed
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking processing status for semester {SemesterId}", semesterId);
+                return StatusCode(500, new { error = "An error occurred while checking processing status" });
             }
         }
 

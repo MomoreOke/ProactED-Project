@@ -102,10 +102,31 @@
     .metric-card:hover {
         transform: translateY(-8px);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
     }
     
     .metric-card:hover::before {
         width: 8px;
+    }
+    
+    /* Make metric cards clickable */
+    a .metric-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    a:hover .metric-card {
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    a .metric-value,
+    a .metric-label {
+        color: inherit;
+    }
+    
+    /* Ensure links don't change text color */
+    a:hover {
+        text-decoration: none;
     }
     
     .metric-icon {
@@ -862,96 +883,84 @@
             </div>
         </div>
 
-        <!-- Quick Filter Bar -->
-        <div class="row mb-3">
-            <div class="col-12">
-                <div class="d-flex gap-2 flex-wrap">
-                    <span class="text-muted me-3">Quick Filters:</span>
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="applyQuickFilter('critical')">
-                        <i class="bi bi-exclamation-triangle me-1"></i>Critical Only
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-info" onclick="applyQuickFilter('today')">
-                        <i class="bi bi-calendar-day me-1"></i>Today
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-info" onclick="applyQuickFilter('week')">
-                        <i class="bi bi-calendar-week me-1"></i>This Week
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="applyQuickFilter('inactive')">
-                        <i class="bi bi-gear me-1"></i>Inactive Equipment
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearFilters()">
-                        <i class="bi bi-x-circle me-1"></i>Clear All
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Metrics Row -->
         <div class="row g-4 mb-4">
             <!-- Total Equipment -->
             <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="metric-card primary">
-                    <div class="metric-icon primary">
-                        <i class="bi bi-gear-wide-connected"></i>
+                <a asp-controller="Equipment" asp-action="Index" class="text-decoration-none">
+                    <div class="metric-card primary">
+                        <div class="metric-icon primary">
+                            <i class="bi bi-gear-wide-connected"></i>
+                        </div>
+                        <h3 class="metric-value">@Model.TotalEquipment</h3>
+                        <p class="metric-label">Total Equipment</p>
                     </div>
-                    <h3 class="metric-value">@Model.TotalEquipment</h3>
-                    <p class="metric-label">Total Equipment</p>
-                </div>
+                </a>
             </div>
 
             <!-- Critical Alerts -->
             <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="metric-card @(Model.CriticalAlerts > 0 ? "danger metric-danger" : "success")">
-                    <div class="metric-icon @(Model.CriticalAlerts > 0 ? "danger" : "success")">
-                        <i class="bi bi-exclamation-triangle"></i>
+                <a asp-controller="Alert" asp-action="Index" class="text-decoration-none">
+                    <div class="metric-card @(Model.CriticalAlerts > 0 ? "danger metric-danger" : "success")">
+                        <div class="metric-icon @(Model.CriticalAlerts > 0 ? "danger" : "success")">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <h3 class="metric-value">@Model.CriticalAlerts</h3>
+                        <p class="metric-label">Critical Alerts</p>
                     </div>
-                    <h3 class="metric-value">@Model.CriticalAlerts</h3>
-                    <p class="metric-label">Critical Alerts</p>
-                </div>
+                </a>
             </div>
 
             <!-- Active Maintenance -->
             <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="metric-card @(Model.ActiveMaintenanceTasks > 0 ? "warning metric-info" : "success")">
-                    <div class="metric-icon @(Model.ActiveMaintenanceTasks > 0 ? "warning" : "success")">
-                        <i class="bi bi-wrench-adjustable"></i>
+                <a asp-controller="MaintenanceLog" asp-action="ActiveTasks" class="text-decoration-none">
+                    <div class="metric-card @(Model.ActiveMaintenanceTasks > 0 ? "warning metric-info" : "success")">
+                        <div class="metric-icon @(Model.ActiveMaintenanceTasks > 0 ? "warning" : "success")">
+                            <i class="bi bi-wrench-adjustable"></i>
+                        </div>
+                        <h3 class="metric-value">@Model.ActiveMaintenanceTasks</h3>
+                        <p class="metric-label">Active Tasks</p>
                     </div>
-                    <h3 class="metric-value">@Model.ActiveMaintenanceTasks</h3>
-                    <p class="metric-label">Active Tasks</p>
-                </div>
+                </a>
             </div>
 
             <!-- Overdue Maintenance -->
             <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="metric-card @(Model.OverdueMaintenances > 0 ? "danger metric-danger" : "success")">
-                    <div class="metric-icon @(Model.OverdueMaintenances > 0 ? "danger" : "success")">
-                        <i class="bi bi-calendar-x"></i>
+                <a asp-controller="MaintenanceLog" asp-action="Index" class="text-decoration-none">
+                    <div class="metric-card @(Model.OverdueMaintenances > 0 ? "danger metric-danger" : "success")">
+                        <div class="metric-icon @(Model.OverdueMaintenances > 0 ? "danger" : "success")">
+                            <i class="bi bi-calendar-x"></i>
+                        </div>
+                        <h3 class="metric-value">@Model.OverdueMaintenances</h3>
+                        <p class="metric-label">Overdue</p>
                     </div>
-                    <h3 class="metric-value">@Model.OverdueMaintenances</h3>
-                    <p class="metric-label">Overdue</p>
-                </div>
+                </a>
             </div>
 
             <!-- Equipment Needing Attention -->
             <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="metric-card @(Model.EquipmentNeedingAttention > 0 ? "warning metric-warning" : "success")">
-                    <div class="metric-icon @(Model.EquipmentNeedingAttention > 0 ? "warning" : "success")">
-                        <i class="bi bi-tools"></i>
+                <a asp-controller="Equipment" asp-action="Index" asp-route-filter="needsAttention" class="text-decoration-none">
+                    <div class="metric-card @(Model.EquipmentNeedingAttention > 0 ? "warning metric-warning" : "success")">
+                        <div class="metric-icon @(Model.EquipmentNeedingAttention > 0 ? "warning" : "success")">
+                            <i class="bi bi-tools"></i>
+                        </div>
+                        <h3 class="metric-value">@Model.EquipmentNeedingAttention</h3>
+                        <p class="metric-label">Need Attention</p>
                     </div>
-                    <h3 class="metric-value">@Model.EquipmentNeedingAttention</h3>
-                    <p class="metric-label">Need Attention</p>
-                </div>
+                </a>
             </div>
 
             <!-- Low Stock Items -->
             <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="metric-card @(Model.LowStockItems > 0 ? "warning metric-warning" : "success")">
-                    <div class="metric-icon @(Model.LowStockItems > 0 ? "danger" : "success")">
-                        <i class="bi bi-box-seam"></i>
+                <a asp-controller="Inventory" asp-action="Index" asp-route-filter="lowStock" class="text-decoration-none">
+                    <div class="metric-card @(Model.LowStockItems > 0 ? "warning metric-warning" : "success")">
+                        <div class="metric-icon @(Model.LowStockItems > 0 ? "danger" : "success")">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <h3 class="metric-value">@Model.LowStockItems</h3>
+                        <p class="metric-label">Low Stock</p>
                     </div>
-                    <h3 class="metric-value">@Model.LowStockItems</h3>
-                    <p class="metric-label">Low Stock</p>
-                </div>
+                </a>
             </div>
         </div>
 

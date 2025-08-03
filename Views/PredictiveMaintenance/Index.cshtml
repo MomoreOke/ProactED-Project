@@ -462,9 +462,20 @@
         }
 
         function loadPlanning() {
-            // This would load planning data - placeholder for now
-            document.getElementById('planningData').innerHTML = 
-                '<div class="alert alert-info">Maintenance planning feature coming soon!</div>';
+            fetch('/PredictiveMaintenance/GetMaintenancePlanning')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayMaintenancePlanning(data.data);
+                    } else {
+                        document.getElementById('planningData').innerHTML = 
+                            '<div class="alert alert-danger">Error loading maintenance planning: ' + data.error + '</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('planningData').innerHTML = 
+                        '<div class="alert alert-danger">Network error loading maintenance planning</div>';
+                });
         }
 
         function displayRiskAssessment(riskData) {
@@ -542,6 +553,61 @@
         function viewDetails(equipmentId) {
             // Redirect to equipment details
             window.location.href = `/Equipment/Details/${equipmentId}`;
+        }
+
+        function displayMaintenancePlanning(planningData) {
+            let html = '<div class="row">';
+            
+            // Add summary cards
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5>This Week</h5>
+                            <h3>${planningData.thisWeekTasks || 0}</h3>
+                            <p class="mb-0">Tasks Scheduled</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5>Next Week</h5>
+                            <h3>${planningData.nextWeekTasks || 0}</h3>
+                            <p class="mb-0">Tasks Planned</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add upcoming tasks table
+            if (planningData.upcomingTasks && planningData.upcomingTasks.length > 0) {
+                html += '<div class="col-12"><div class="table-responsive"><table class="table table-bordered"><thead><tr>';
+                html += '<th>Equipment</th><th>Type</th><th>Scheduled Date</th><th>Priority</th><th>Estimated Duration</th><th>Actions</th>';
+                html += '</tr></thead><tbody>';
+                
+                planningData.upcomingTasks.forEach(task => {
+                    const date = new Date(task.scheduledDate).toLocaleDateString();
+                    const priorityColor = task.priority === 'High' ? 'danger' : task.priority === 'Medium' ? 'warning' : 'success';
+                    html += `<tr>
+                        <td>${task.equipmentName}</td>
+                        <td>${task.maintenanceType}</td>
+                        <td>${date}</td>
+                        <td><span class="badge bg-${priorityColor}">${task.priority}</span></td>
+                        <td>${task.estimatedDuration || 'TBD'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="viewDetails(${task.equipmentId})">Details</button>
+                        </td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table></div></div>';
+            } else {
+                html += '<div class="col-12"><div class="alert alert-info">No upcoming maintenance tasks scheduled.</div></div>';
+            }
+            
+            html += '</div>';
+            document.getElementById('planningData').innerHTML = html;
         }
     </script>
 }

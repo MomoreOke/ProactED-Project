@@ -47,6 +47,8 @@ namespace FEENALOoFINALE.Models
         public ICollection<MaintenanceLog>? MaintenanceLogs { get; set; }
         public ICollection<FailurePrediction>? FailurePredictions { get; set; }
         public ICollection<Alert>? Alerts { get; set; }
+        public ICollection<ManufacturerDocument>? ManufacturerDocuments { get; set; }
+        public ICollection<MaintenanceRecommendation>? MaintenanceRecommendations { get; set; }
     }
 
     public enum EquipmentStatus

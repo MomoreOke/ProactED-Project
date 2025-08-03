@@ -1,5 +1,6 @@
 @model FEENALOoFINALE.Models.ViewModels.SemesterDetailsViewModel
 @using FEENALOoFINALE.Models.ViewModels
+@using FEENALOoFINALE.Models
 @{
     ViewData["Title"] = $"Semester Details - {Model.Semester.SemesterName}";
 }
@@ -43,6 +44,12 @@
                         {
                             <a href="@Url.Action("Progress", new { id = Model.Semester.SemesterId })" class="btn btn-success">
                                 <i class="bi bi-graph-up"></i> View Progress
+                            </a>
+                        }
+                        @if (Model.CanDelete)
+                        {
+                            <a href="@Url.Action("ConfirmDelete", new { id = Model.Semester.SemesterId })" class="btn btn-outline-danger">
+                                <i class="bi bi-trash"></i> Delete
                             </a>
                         }
                     </div>
@@ -111,14 +118,18 @@
                                 </div>
                                 <div class="col-6 mb-3">
                                     <strong>Processing Status:</strong><br>
-                                    <span class="badge bg-@(Model.Semester.ProcessingStatus == SemesterProcessingStatus.Completed ? "success" : 
+                                    <span class="badge processing-status-badge bg-@(Model.Semester.ProcessingStatus == SemesterProcessingStatus.Completed ? "success" : 
                                                        Model.Semester.ProcessingStatus == SemesterProcessingStatus.Processing ? "warning" : 
                                                        Model.Semester.ProcessingStatus == SemesterProcessingStatus.Failed ? "danger" : "secondary")">
                                         @Model.Semester.ProcessingStatus
                                     </span>
                                     @if (!string.IsNullOrEmpty(Model.Semester.ProcessingMessage))
                                     {
-                                        <br><small class="text-muted">@Model.Semester.ProcessingMessage</small>
+                                        <br><small class="text-muted processing-message">@Model.Semester.ProcessingMessage</small>
+                                    }
+                                    else
+                                    {
+                                        <br><small class="text-muted processing-message">No additional information</small>
                                     }
                                 </div>
                             </div>
@@ -401,6 +412,99 @@
         function confirmDelete() {
             var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
             modal.show();
+        }
+
+        // Real-time processing status monitoring
+        $(document).ready(function() {
+            const semesterId = @Model.Semester.SemesterId;
+            const currentStatus = '@Model.Semester.ProcessingStatus';
+
+            // Only monitor if processing is in progress
+            if (currentStatus === 'Processing') {
+                startStatusMonitoring(semesterId);
+            }
+        });
+
+        function startStatusMonitoring(semesterId) {
+            const statusInterval = setInterval(function() {
+                $.ajax({
+                    url: '@Url.Action("CheckProcessingStatus")',
+                    type: 'GET',
+                    data: { semesterId: semesterId },
+                    success: function(response) {
+                        updateProcessingStatusDisplay(response);
+                        
+                        // Stop monitoring if processing is complete or failed
+                        if (response.isCompleted || response.isFailed) {
+                            clearInterval(statusInterval);
+                            showProcessingCompleteNotification(response);
+                        }
+                    },
+                    error: function() {
+                        console.log('Error checking processing status');
+                    }
+                });
+            }, 3000); // Check every 3 seconds
+
+            // Clean up when leaving the page
+            $(window).on('beforeunload', function() {
+                clearInterval(statusInterval);
+            });
+        }
+
+        function updateProcessingStatusDisplay(response) {
+            // Update processing status badges
+            const statusBadges = $('.processing-status-badge');
+            statusBadges.each(function() {
+                const badge = $(this);
+                
+                if (response.isProcessing) {
+                    badge.removeClass('bg-success bg-danger bg-secondary')
+                         .addClass('bg-warning')
+                         .text('Processing');
+                } else if (response.isCompleted) {
+                    badge.removeClass('bg-warning bg-danger bg-secondary')
+                         .addClass('bg-success')
+                         .text('Completed');
+                } else if (response.isFailed) {
+                    badge.removeClass('bg-warning bg-success bg-secondary')
+                         .addClass('bg-danger')
+                         .text('Failed');
+                }
+            });
+
+            // Update processing message
+            $('.processing-message').text(response.message || 'No additional information');
+        }
+
+        function showProcessingCompleteNotification(response) {
+            let alertClass = response.isCompleted ? 'alert-success' : 'alert-danger';
+            let icon = response.isCompleted ? 'bi-check-circle' : 'bi-exclamation-triangle';
+            let title = response.isCompleted ? 'Processing Complete!' : 'Processing Failed';
+            
+            const notification = $(`
+                <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+                     style="top: 20px; right: 20px; z-index: 1050; min-width: 300px;" role="alert">
+                    <i class="${icon} me-2"></i>
+                    <strong>${title}</strong><br>
+                    <small>${response.message}</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+            
+            $('body').append(notification);
+            
+            // Auto-remove after 10 seconds
+            setTimeout(function() {
+                notification.alert('close');
+            }, 10000);
+
+            // Refresh the page after completion to show updated data
+            if (response.isCompleted) {
+                setTimeout(function() {
+                    window.location.reload();
+                }, 3000);
+            }
         }
     </script>
 }

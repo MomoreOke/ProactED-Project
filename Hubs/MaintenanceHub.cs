@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
+using FEENALOoFINALE.Models.DTOs; // Add this line
+using FEENALOoFINALE.Models;
 
 namespace FEENALOoFINALE.Hubs
 {
@@ -96,7 +98,7 @@ namespace FEENALOoFINALE.Hubs
         /// <summary>
         /// Handle disconnection events
         /// </summary>
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var userId = Context.User?.Identity?.Name;
             if (!string.IsNullOrEmpty(userId))
@@ -121,6 +123,32 @@ namespace FEENALOoFINALE.Hubs
                 Message = message ?? $"Equipment status changed to {status}",
                 Timestamp = DateTime.UtcNow
             });
+        }
+
+        /// <summary>
+        /// Send alert notification using DTO to avoid circular references
+        /// </summary>
+        /// <param name="alert">Alert to send</param>
+        public async Task SendAlertNotification(Alert alert)
+        {
+            if (alert == null) return;
+            
+            var alertDto = AlertNotificationDto.FromAlert(alert);
+            await Clients.Group("Dashboard").SendAsync("AlertCreated", alertDto);
+            await Clients.Group("Alerts").SendAsync("AlertCreated", alertDto);
+        }
+        
+        /// <summary>
+        /// Send alert update notification using DTO
+        /// </summary>
+        /// <param name="alert">Updated alert</param>
+        public async Task SendAlertUpdate(Alert alert)
+        {
+            if (alert == null) return;
+            
+            var alertDto = AlertNotificationDto.FromAlert(alert);
+            await Clients.Group("Dashboard").SendAsync("AlertUpdated", alertDto);
+            await Clients.Group("Alerts").SendAsync("AlertUpdated", alertDto);
         }
     }
 }

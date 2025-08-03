@@ -14,7 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+    options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+    .EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Change from IdentityUser to your custom User class
@@ -51,14 +52,29 @@ builder.Services.AddSingleton<IPerformanceMonitoringService, PerformanceMonitori
 // Register Maintenance Scheduling Service
 builder.Services.AddScoped<MaintenanceSchedulingService>();
 
+// Register scalable PDF extraction service
+builder.Services.AddScoped<IPdfTimetableExtractionService, PdfTimetableExtractionService>();
+
+// Register document processing service
+builder.Services.AddScoped<IDocumentProcessingService, DocumentProcessingService>();
+
 // Authentication is handled by ASP.NET Core Identity with cookie authentication
 
-// Add SignalR services
-builder.Services.AddSignalR();
+// Add SignalR services with JSON serialization fix for circular references
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.PayloadSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.PayloadSerializerOptions.WriteIndented = false;
+    });
 
 // Register Predictive Maintenance Services (Phase 2)
 // builder.Services.AddScoped<EquipmentUsageTrackingService>(); // Will be added after model integration
 // builder.Services.AddScoped<BasicPredictionService>(); // Will be added after model integration
+
+// Register services
+builder.Services.AddScoped<IPredictiveAnalyticsService, PredictiveAnalyticsDataService>();
 
 // Register Background Services
 // TODO: These services need to be fixed - commenting out for now

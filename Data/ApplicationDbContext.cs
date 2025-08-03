@@ -31,6 +31,10 @@ namespace FEENALOoFINALE.Data
         // Semester management
         public DbSet<Semester> Semesters { get; set; }
         public DbSet<SemesterEquipmentUsage> SemesterEquipmentUsages { get; set; }
+        
+        // Document management and maintenance recommendations
+        public DbSet<ManufacturerDocument> ManufacturerDocuments { get; set; }
+        public DbSet<MaintenanceRecommendation> MaintenanceRecommendations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -401,6 +405,10 @@ namespace FEENALOoFINALE.Data
             });
 
             modelBuilder.Entity<Equipment>().HasData(equipmentSeedData.ToArray());
+
+            modelBuilder.Entity<MaintenanceRecommendation>()
+                .Property(m => m.ConfidenceScore)
+                .HasPrecision(5, 4); // Allows values like 0.9876
         }
 
         public async Task<List<Equipment>> GetEquipmentWithDetailsAsync()

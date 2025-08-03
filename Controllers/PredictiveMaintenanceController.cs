@@ -171,8 +171,8 @@ namespace FEENALOoFINALE.Controllers
                     .Select(seu => new
                     {
                         EquipmentId = seu.EquipmentId,
-                        EquipmentName = seu.Equipment.EquipmentModel.ModelName,
-                        EquipmentType = seu.Equipment.EquipmentType.EquipmentTypeName,
+                        EquipmentName = seu.Equipment!.EquipmentModel!.ModelName,
+                        EquipmentType = seu.Equipment!.EquipmentType!.EquipmentTypeName,
                         WeeklyHours = seu.WeeklyUsageHours,
                         TotalHours = seu.TotalSemesterHours,
                         RoomName = seu.RoomName,
@@ -487,7 +487,7 @@ namespace FEENALOoFINALE.Controllers
             return recommendations;
         }
 
-        private async Task<DateTime?> CalculateNextMaintenanceDueAsync(Equipment equipment)
+        private Task<DateTime?> CalculateNextMaintenanceDueAsync(Equipment equipment)
         {
             var lastMaintenance = equipment.MaintenanceLogs?
                 .OrderByDescending(ml => ml.LogDate)
@@ -506,7 +506,7 @@ namespace FEENALOoFINALE.Controllers
                 _ => 120 // 4 months default
             };
 
-            return baseDate.AddDays(intervalDays);
+            return Task.FromResult<DateTime?>(baseDate.AddDays(intervalDays));
         }
 
         private DateTime CalculateEstimatedFailureDate(double riskScore)
@@ -524,7 +524,8 @@ namespace FEENALOoFINALE.Controllers
 
         private decimal CalculatePredictedMaintenanceCost(double riskScore, Equipment equipment)
         {
-            var baseCost = equipment.EquipmentType?.EquipmentTypeName?.ToLower() switch
+            var typeName = equipment.EquipmentType?.EquipmentTypeName?.ToLower() ?? "";
+            var baseCost = typeName switch
             {
                 var type when type.Contains("projector") => 150m,
                 var type when type.Contains("computer") => 100m,
@@ -589,17 +590,17 @@ namespace FEENALOoFINALE.Controllers
             return predictedFailures.Where(pf => pf.EstimatedFailureDate <= DateTime.Now.AddDays(30)).ToList();
         }
 
-        private async Task<List<MaintenanceRecommendation>> GenerateMaintenanceRecommendationsAsync()
+        private async Task<List<FEENALOoFINALE.ViewModels.MaintenanceRecommendation>> GenerateMaintenanceRecommendationsAsync()
         {
             var riskScores = await CalculateEquipmentRiskScoresAsync();
-            var recommendations = new List<MaintenanceRecommendation>();
+            var recommendations = new List<FEENALOoFINALE.ViewModels.MaintenanceRecommendation>();
 
             foreach (var risk in riskScores.Where(rs => rs.RiskScore >= 0.4).Take(10))
             {
                 var priority = risk.RiskScore >= 0.7 ? "High" : "Medium";
                 var urgency = risk.RiskScore >= 0.7 ? "Immediate" : "Within 30 days";
 
-                recommendations.Add(new MaintenanceRecommendation
+                recommendations.Add(new FEENALOoFINALE.ViewModels.MaintenanceRecommendation
                 {
                     EquipmentId = risk.EquipmentId,
                     EquipmentName = risk.EquipmentName,
@@ -622,7 +623,7 @@ namespace FEENALOoFINALE.Controllers
             var preventiveCost = recommendations.Sum(r => r.EstimatedCost);
             var estimatedFailureCost = preventiveCost * 3; // Failure typically costs 3x preventive maintenance
             
-            return Math.Round(estimatedFailureCost - preventiveCost, 2);
+            return Math.Round((decimal)(estimatedFailureCost - preventiveCost), 2);
         }
 
         private async Task<List<MaintenancePrediction>> PredictMaintenanceForEquipmentAsync(int equipmentId)

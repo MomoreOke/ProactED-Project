@@ -1,5 +1,6 @@
 @model FEENALOoFINALE.Models.ViewModels.TimetableManagementViewModel
 @using FEENALOoFINALE.Models.ViewModels
+@using FEENALOoFINALE.Models
 @{
     ViewData["Title"] = Model.PageTitle;
 }
@@ -95,24 +96,24 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <strong>Duration:</strong> @Model.CurrentSemester.StartDate.ToString("MMM dd, yyyy") - @Model.CurrentSemester.EndDate.ToString("MMM dd, yyyy")
+                                    <strong>Duration:</strong> @Model.CurrentSemester.StartDate.ToString("MMM dd, yyyy") - @Model.CurrentSemester.StartDate.AddDays(Model.CurrentSemester.NumberOfWeeks * 7).ToString("MMM dd, yyyy")
                                     <br><small class="text-muted">@Model.CurrentSemester.NumberOfWeeks weeks</small>
                                 </div>
                                 <div class="mb-3">
                                     <strong>Progress:</strong>
                                     <div class="progress mb-2" style="height: 20px;">
-                                        <div class="progress-bar bg-@(Model.ProgressInfo.RequiresNewSemester ? "warning" : "success")" 
+                                        <div class="progress-bar bg-@(Model.ProgressInfo?.RequiresNewSemester == true ? "warning" : "success")" 
                                              role="progressbar" 
-                                             style="width: @Model.ProgressInfo.ProgressPercentage%"
-                                             aria-valuenow="@Model.ProgressInfo.ProgressPercentage" 
+                                             style="width: @(Model.ProgressInfo?.ProgressPercentage ?? 0)%"
+                                             aria-valuenow="@(Model.ProgressInfo?.ProgressPercentage ?? 0)" 
                                              aria-valuemin="0" 
                                              aria-valuemax="100">
-                                            @Model.ProgressInfo.ProgressPercentage.ToString("F1")%
+                                            @(Model.ProgressInfo?.ProgressPercentage.ToString("F1") ?? "0.0")%
                                         </div>
                                     </div>
                                     <small class="text-muted">
-                                        Week @Model.ProgressInfo.CurrentWeek of @Model.CurrentSemester.NumberOfWeeks
-                                        @if (Model.ProgressInfo.DaysRemaining > 0)
+                                        Week @(Model.ProgressInfo?.CurrentWeek ?? 0) of @Model.CurrentSemester.NumberOfWeeks
+                                        @if (Model.ProgressInfo?.DaysRemaining > 0)
                                         {
                                             <span class="ms-2">• @Model.ProgressInfo.DaysRemaining days remaining</span>
                                         }
@@ -209,37 +210,6 @@
         </div>
     }
 
-    <!-- Quick Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-lightning"></i> Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        @foreach (var action in Model.QuickActions)
-                        {
-                            <div class="col-lg-3 col-md-6 mb-3">
-                                <a href="@Url.Action(action.Action, action.Controller, action.RouteValues)" class="text-decoration-none">
-                                    <div class="card h-100 border-@action.Color hover-shadow">
-                                        <div class="card-body text-center">
-                                            <i class="bi @action.Icon text-@action.Color display-4 mb-3"></i>
-                                            <h6 class="card-title">@action.Title</h6>
-                                            <p class="card-text text-muted small">@action.Description</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Statistics -->
     <div class="row mb-4">
         <div class="col-12">
@@ -254,28 +224,28 @@
                         <div class="col-md-3 mb-3">
                             <div class="border rounded p-3">
                                 <i class="bi bi-calendar-check text-primary display-4"></i>
-                                <h4 class="mt-2">@Model.Statistics.TotalSemesters</h4>
+                                <h4 class="mt-2">@(Model.Statistics?.TotalSemesters ?? 0)</h4>
                                 <p class="text-muted mb-0">Total Semesters</p>
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <div class="border rounded p-3">
                                 <i class="bi bi-play-circle text-success display-4"></i>
-                                <h4 class="mt-2">@Model.Statistics.ActiveSemesters</h4>
+                                <h4 class="mt-2">@(Model.Statistics?.ActiveSemesters ?? 0)</h4>
                                 <p class="text-muted mb-0">Active Semesters</p>
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <div class="border rounded p-3">
                                 <i class="bi bi-check-circle text-info display-4"></i>
-                                <h4 class="mt-2">@Model.Statistics.CompletedSemesters</h4>
+                                <h4 class="mt-2">@(Model.Statistics?.CompletedSemesters ?? 0)</h4>
                                 <p class="text-muted mb-0">Completed</p>
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <div class="border rounded p-3">
                                 <i class="bi bi-clock text-warning display-4"></i>
-                                <h4 class="mt-2">@Model.Statistics.PendingProcessing</h4>
+                                <h4 class="mt-2">@(Model.Statistics?.PendingProcessing ?? 0)</h4>
                                 <p class="text-muted mb-0">Pending Processing</p>
                             </div>
                         </div>
@@ -324,7 +294,7 @@
                                                 }
                                             </td>
                                             <td>
-                                                @semester.StartDate.ToString("MMM dd") - @semester.EndDate.ToString("MMM dd, yyyy")
+                                                @semester.StartDate.ToString("MMM dd") - @semester.StartDate.AddDays(semester.NumberOfWeeks * 7).ToString("MMM dd, yyyy")
                                                 <br><small class="text-muted">@semester.NumberOfWeeks weeks</small>
                                             </td>
                                             <td>
@@ -382,16 +352,6 @@
             setTimeout(function() {
                 $('.alert').fadeOut('slow');
             }, 10000);
-
-            // Add hover effects to quick action cards
-            $('.hover-shadow').hover(
-                function() {
-                    $(this).addClass('shadow');
-                },
-                function() {
-                    $(this).removeClass('shadow');
-                }
-            );
         });
     </script>
 }
