@@ -27,22 +27,44 @@ namespace FEENALOoFINALE.Services
         {
             _logger.LogInformation("Predictive Analytics Service started");
 
-            // Wait 3 minutes before first analysis to reduce startup load
-            await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);
-
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
+                // Wait 30 seconds before first analysis to reduce startup load
+                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    await PerformPredictiveAnalysis();
-                    await Task.Delay(_analysisPeriod, stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred during predictive analysis");
-                    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken); // Wait 5 minutes before retry
+                    try
+                    {
+                        await PerformPredictiveAnalysis();
+                        await Task.Delay(_analysisPeriod, stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Expected when cancellation is requested
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error occurred during predictive analysis");
+                        try
+                        {
+                            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken); // Wait 5 minutes before retry
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // Expected when cancellation is requested during startup delay
+                _logger.LogInformation("Predictive Analytics Service cancelled during startup");
+            }
+            
+            _logger.LogInformation("Predictive Analytics Service stopped");
         }
 
         private async Task PerformPredictiveAnalysis()
@@ -91,6 +113,72 @@ namespace FEENALOoFINALE.Services
 
         private async Task<FailurePrediction?> AnalyzeEquipmentFailureRisk(Equipment equipment, ApplicationDbContext dbContext)
         {
+            try
+            {
+                // Use ML prediction service for analysis
+                var predictionService = _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IEquipmentPredictionService>();
+                
+                // Check if we already have a recent prediction for this equipment
+                var existingPrediction = await dbContext.FailurePredictions
+                    .Where(fp => fp.EquipmentId == equipment.EquipmentId && 
+                                fp.CreatedDate >= DateTime.Now.AddDays(-7))
+                    .FirstOrDefaultAsync();
+
+                if (existingPrediction == null)
+                {
+                    // Convert Equipment to EquipmentPredictionData using the static method
+                    var predictionData = EquipmentPredictionData.FromEquipment(equipment);
+                    var mlPrediction = await predictionService.PredictEquipmentFailureAsync(predictionData);
+                    
+                    if (mlPrediction != null && mlPrediction.Success && mlPrediction.FailureProbability > 0)
+                    {
+                        var riskLevel = mlPrediction.RiskLevel.ToLower() switch
+                        {
+                            "critical" => PredictionStatus.High,
+                            "high" => PredictionStatus.High,
+                            "medium" => PredictionStatus.Medium,
+                            _ => PredictionStatus.Low
+                        };
+
+                        // Calculate predicted failure date based on probability
+                        var daysToFailure = mlPrediction.FailureProbability switch
+                        {
+                            >= 0.9 => 7,   // Critical - 1 week
+                            >= 0.8 => 14,  // High - 2 weeks  
+                            >= 0.7 => 30,  // High - 1 month
+                            >= 0.5 => 60,  // Medium - 2 months
+                            _ => 90         // Low - 3 months
+                        };
+
+                        return new FailurePrediction
+                        {
+                            EquipmentId = equipment.EquipmentId,
+                            CreatedDate = DateTime.Now,
+                            PredictedFailureDate = DateTime.Now.AddDays(daysToFailure),
+                            ConfidenceLevel = (int)(mlPrediction.ConfidenceScore * 100),
+                            Status = riskLevel,
+                            AnalysisNotes = $"ML prediction indicates {mlPrediction.RiskLevel} risk with {mlPrediction.FailureProbability:P1} failure probability. Confidence: {mlPrediction.ConfidenceScore:P1}",
+                            ContributingFactors = $"Advanced ML analysis using {mlPrediction.ModelVersion}"
+                        };
+                    }
+                    else
+                    {
+                        // Fallback to rule-based analysis if ML prediction fails
+                        return FallbackRuleBasedAnalysis(equipment, dbContext);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ML prediction failed for equipment {EquipmentId}, falling back to rule-based analysis", equipment.EquipmentId);
+                return FallbackRuleBasedAnalysis(equipment, dbContext);
+            }
+
+            return null;
+        }
+
+        private FailurePrediction? FallbackRuleBasedAnalysis(Equipment equipment, ApplicationDbContext dbContext)
+        {
             // Simple predictive algorithm based on maintenance history and equipment age
             var recentMaintenanceLogs = equipment.MaintenanceLogs?
                 .Where(ml => ml.LogDate >= DateTime.Now.AddDays(-90))
@@ -101,16 +189,16 @@ namespace FEENALOoFINALE.Services
             double failureProbability = 0.0;
             string riskFactors = "";
 
-            // Factor 1: Age of equipment (assuming InstallationDate represents when equipment was put into service)
+            // Factor 1: Age of equipment
             var equipmentAge = equipment.InstallationDate.HasValue 
                 ? (DateTime.Now - equipment.InstallationDate.Value).TotalDays 
-                : 0; // If no installation date, assume new equipment
-            if (equipmentAge > 365 * 5) // Over 5 years old
+                : 0;
+            if (equipmentAge > 365 * 5)
             {
                 failureProbability += 0.2;
                 riskFactors += "Equipment age over 5 years; ";
             }
-            else if (equipmentAge > 365 * 3) // Over 3 years old
+            else if (equipmentAge > 365 * 3)
             {
                 failureProbability += 0.1;
                 riskFactors += "Equipment age over 3 years; ";
@@ -118,7 +206,7 @@ namespace FEENALOoFINALE.Services
 
             // Factor 2: Frequency of recent maintenance
             var maintenanceFrequency = recentMaintenanceLogs.Count;
-            if (maintenanceFrequency > 5) // More than 5 maintenance logs in 90 days
+            if (maintenanceFrequency > 5)
             {
                 failureProbability += 0.3;
                 riskFactors += "High maintenance frequency; ";
@@ -134,7 +222,7 @@ namespace FEENALOoFINALE.Services
             if (lastMaintenance != null)
             {
                 var daysSinceLastMaintenance = (DateTime.Now - lastMaintenance.LogDate).TotalDays;
-                if (daysSinceLastMaintenance > 180) // No maintenance in 6 months
+                if (daysSinceLastMaintenance > 180)
                 {
                     failureProbability += 0.25;
                     riskFactors += "No recent maintenance; ";
@@ -147,70 +235,31 @@ namespace FEENALOoFINALE.Services
             }
             else
             {
-                // No maintenance history
                 failureProbability += 0.2;
                 riskFactors += "No maintenance history; ";
-            }
-
-            // Factor 4: Critical equipment types get higher priority
-            if (equipment.EquipmentModel?.ModelName?.Contains("Critical", StringComparison.OrdinalIgnoreCase) == true ||
-                equipment.EquipmentModel?.ModelName?.Contains("Server", StringComparison.OrdinalIgnoreCase) == true ||
-                equipment.EquipmentModel?.ModelName?.Contains("Generator", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                failureProbability += 0.1;
-                riskFactors += "Critical equipment type; ";
-            }
-
-            // Factor 5: Usage hours (new)
-            double avgUsage = equipment.AverageWeeklyUsageHours ?? 0;
-
-            // Optionally, use recent history for more granularity:
-            var recentUsage = await dbContext.EquipmentUsageHistories
-                .Where(u => u.EquipmentId == equipment.EquipmentId && u.WeekStart >= DateTime.Now.AddDays(-90))
-                .ToListAsync();
-
-            double recentAvgUsage = recentUsage.Any() ? recentUsage.Average(u => u.UsageHours) : avgUsage;
-
-            if (recentAvgUsage > 40) // Example: over 40 hours/week is heavy use
-            {
-                failureProbability += 0.2;
-                riskFactors += "High weekly usage; ";
-            }
-            else if (recentAvgUsage > 20)
-            {
-                failureProbability += 0.1;
-                riskFactors += "Moderate weekly usage; ";
             }
 
             // Only create prediction if probability is significant
             if (failureProbability >= 0.3)
             {
-                // Check if we already have a recent prediction for this equipment
-                var existingPrediction = await dbContext.FailurePredictions
-                    .Where(fp => fp.EquipmentId == equipment.EquipmentId && 
-                                fp.CreatedDate >= DateTime.Now.AddDays(-7))
-                    .FirstOrDefaultAsync();
-
-                if (existingPrediction == null)
+                var riskLevel = failureProbability switch
                 {
-                    var riskLevel = failureProbability switch
-                    {
-                        >= 0.7 => PredictionStatus.High,
-                        >= 0.5 => PredictionStatus.High,
-                        >= 0.3 => PredictionStatus.Medium,
-                        _ => PredictionStatus.Low
-                    };
+                    >= 0.7 => PredictionStatus.High,
+                    >= 0.5 => PredictionStatus.High,
+                    >= 0.3 => PredictionStatus.Medium,
+                    _ => PredictionStatus.Low
+                };
 
-                    return new FailurePrediction
-                    {
-                        EquipmentId = equipment.EquipmentId,
-                        CreatedDate = DateTime.Now,
-                        PredictedFailureDate = DateTime.Now.AddDays(30 / failureProbability), // Higher probability = sooner failure
-                        ConfidenceLevel = (int)Math.Min(failureProbability * 100, 95), // Cap at 95%
-                        Status = riskLevel,
-                        AnalysisNotes = $"Predictive analysis indicates {riskLevel.ToString().ToLower()} risk of failure. Risk factors: {riskFactors.TrimEnd(' ', ';')}"
-                    };
-                }
+                return new FailurePrediction
+                {
+                    EquipmentId = equipment.EquipmentId,
+                    CreatedDate = DateTime.Now,
+                    PredictedFailureDate = DateTime.Now.AddDays(30 / failureProbability),
+                    ConfidenceLevel = (int)Math.Min(failureProbability * 100, 95),
+                    Status = riskLevel,
+                    AnalysisNotes = $"Rule-based analysis indicates {riskLevel.ToString().ToLower()} risk of failure. Risk factors: {riskFactors.TrimEnd(' ', ';')}",
+                    ContributingFactors = "Rule-based fallback analysis"
+                };
             }
 
             return null;

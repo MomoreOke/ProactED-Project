@@ -257,18 +257,6 @@
 
             // Event listeners
             $('#startDate, #numberOfWeeks').on('change input', updateDurationPreview);
-            $('#startDate').on('change', function() {
-                const selectedDate = new Date($(this).val());
-                const today = new Date();
-                
-                if (selectedDate < today) {
-                    $(this).addClass('is-invalid');
-                    $('<div class="invalid-feedback">Start date cannot be in the past</div>').insertAfter($(this));
-                } else {
-                    $(this).removeClass('is-invalid');
-                    $(this).next('.invalid-feedback').remove();
-                }
-            });
 
             // File upload preview
             $('#timetableFile').change(function() {

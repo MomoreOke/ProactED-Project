@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ProactED Application Issue Testing</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { border: 1px solid #ddd; margin: 20px 0; padding: 15px; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .result { margin: 10px 0; padding: 10px; border-left: 4px solid #007bff; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>ProactED Application Issue Testing</h1>
+    
+    <div class="test-section">
+        <h2>1. Equipment Delete Functionality Test</h2>
+        <button onclick="testEquipmentDeleteView()">Test Equipment Delete View</button>
+        <button onclick="testEquipmentCreate()">Create Test Equipment</button>
+        <button onclick="testEquipmentDelete()">Test Equipment Delete</button>
+        <div id="equipmentDeleteResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Alert Delete Functionality Test</h2>
+        <button onclick="testAlertDeleteView()">Test Alert Delete View</button>
+        <button onclick="testAlertIndex()">View Alert Index</button>
+        <div id="alertDeleteResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. New Equipment ML Tracking Test</h2>
+        <button onclick="testNewEquipmentML()">Test New Equipment ML Tracking</button>
+        <div id="newEquipmentMLResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Critical Risk Classification Test</h2>
+        <button onclick="testCriticalRiskLogic()">Test Critical Risk Logic</button>
+        <div id="criticalRiskResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. View Error Testing</h2>
+        <button onclick="testViewErrors()">Test All Main Views</button>
+        <div id="viewErrorResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5261';
+        
+        // Test Equipment Delete Functionality
+        async function testEquipmentDeleteView() {
+            const resultDiv = document.getElementById('equipmentDeleteResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>Testing equipment delete functionality...</p>';
+            
+            try {
+                // First, get list of equipment to find one to test delete
+                const response = await fetch(`${baseUrl}/Equipment`);
+                const html = await response.text();
+                
+                if (html.includes('Delete') && html.includes('asp-action="Delete"')) {
+                    resultDiv.innerHTML = '<p class="success">✅ Equipment delete links found in index view</p>';
+                    
+                    // Try to access a specific delete page (using equipment ID 1 as test)
+                    const deleteResponse = await fetch(`${baseUrl}/Equipment/Delete/1`);
+                    if (deleteResponse.ok) {
+                        const deleteHtml = await deleteResponse.text();
+                        if (deleteHtml.includes('Are you sure you want to delete')) {
+                            resultDiv.innerHTML += '<p class="success">✅ Equipment delete confirmation page works</p>';
+                        } else {
+                            resultDiv.innerHTML += '<p class="warning">⚠️ Equipment delete page loads but missing confirmation text</p>';
+                        }
+                    } else {
+                        resultDiv.innerHTML += '<p class="error">❌ Equipment delete page failed to load (status: ' + deleteResponse.status + ')</p>';
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p class="error">❌ Equipment delete links not found in equipment list</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="error">❌ Error testing equipment delete: ' + error.message + '</p>';
+            }
+        }
+        
+        // Test Alert Delete Functionality
+        async function testAlertDeleteView() {
+            const resultDiv = document.getElementById('alertDeleteResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>Testing alert delete functionality...</p>';
+            
+            try {
+                const response = await fetch(`${baseUrl}/Alert`);
+                if (response.ok) {
+                    const html = await response.text();
+                    if (html.includes('Delete') && html.includes('asp-action="Delete"')) {
+                        resultDiv.innerHTML = '<p class="success">✅ Alert delete links found in alert index</p>';
+                        
+                        // Try to access a specific alert delete page
+                        const deleteResponse = await fetch(`${baseUrl}/Alert/Delete/1`);
+                        if (deleteResponse.ok) {
+                            const deleteHtml = await deleteResponse.text();
+                            if (deleteHtml.includes('Are you sure you want to delete this alert')) {
+                                resultDiv.innerHTML += '<p class="success">✅ Alert delete confirmation page works</p>';
+                            } else {
+                                resultDiv.innerHTML += '<p class="warning">⚠️ Alert delete page loads but missing confirmation text</p>';
+                            }
+                        } else if (deleteResponse.status === 404) {
+                            resultDiv.innerHTML += '<p class="warning">⚠️ Alert delete test: Alert ID 1 not found (may be normal)</p>';
+                        } else {
+                            resultDiv.innerHTML += '<p class="error">❌ Alert delete page failed (status: ' + deleteResponse.status + ')</p>';
+                        }
+                    } else {
+                        resultDiv.innerHTML = '<p class="error">❌ Alert delete links not found in alert list</p>';
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p class="error">❌ Alert index page failed to load (status: ' + response.status + ')</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="error">❌ Error testing alert delete: ' + error.message + '</p>';
+            }
+        }
+        
+        // Test Alert Index Access
+        async function testAlertIndex() {
+            try {
+                const response = await fetch(`${baseUrl}/Alert`);
+                if (response.ok) {
+                    window.open(`${baseUrl}/Alert`, '_blank');
+                } else {
+                    alert('Alert index failed to load: ' + response.status);
+                }
+            } catch (error) {
+                alert('Error accessing alert index: ' + error.message);
+            }
+        }
+        
+        // Test Equipment Creation for Delete Testing
+        async function testEquipmentCreate() {
+            try {
+                window.open(`${baseUrl}/Equipment/CreateTestEquipment`, '_blank');
+            } catch (error) {
+                alert('Error creating test equipment: ' + error.message);
+            }
+        }
+        
+        // Test New Equipment ML Tracking
+        async function testNewEquipmentML() {
+            const resultDiv = document.getElementById('newEquipmentMLResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>Testing new equipment ML tracking...</p>';
+            
+            try {
+                // Test ML Dashboard to see if it tracks all equipment
+                const mlResponse = await fetch(`${baseUrl}/MLDashboard/GetDashboardData`);
+                if (mlResponse.ok) {
+                    const mlData = await mlResponse.json();
+                    if (mlData.success) {
+                        resultDiv.innerHTML = `
+                            <p class="success">✅ ML Dashboard accessible</p>
+                            <p>Total Equipment Tracked: <strong>${mlData.data.totalEquipmentAnalyzed}</strong></p>
+                            <p>High Risk Equipment: <strong>${mlData.data.highRiskEquipment}</strong></p>
+                            <p>Average Failure Probability: <strong>${(mlData.data.averageFailureProbability * 100).toFixed(1)}%</strong></p>
+                        `;
+                        
+                        // Test live predictions endpoint
+                        const liveResponse = await fetch(`${baseUrl}/MLDashboard/GetLivePredictions`);
+                        if (liveResponse.ok) {
+                            const liveData = await liveResponse.json();
+                            resultDiv.innerHTML += `<p class="success">✅ Live predictions work: ${liveData.length} equipment items analyzed</p>`;
+                        } else {
+                            resultDiv.innerHTML += '<p class="warning">⚠️ Live predictions endpoint failed</p>';
+                        }
+                    } else {
+                        resultDiv.innerHTML = '<p class="error">❌ ML Dashboard returned error: ' + mlData.message + '</p>';
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p class="error">❌ ML Dashboard failed to load</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="error">❌ Error testing new equipment ML tracking: ' + error.message + '</p>';
+            }
+        }
+        
+        // Test Critical Risk Classification Logic
+        async function testCriticalRiskLogic() {
+            const resultDiv = document.getElementById('criticalRiskResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>Testing critical risk classification logic...</p>';
+            
+            try {
+                // Test direct ML API prediction with high-risk data
+                const testData = {
+                    equipment_id: 999,
+                    age_months: 36,
+                    operating_temperature: 85.0,  // High temperature
+                    vibration_level: 4.5,         // High vibration
+                    power_consumption: 250.0      // High power consumption
+                };
+                
+                const response = await fetch('http://localhost:5000/api/equipment/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        const riskClass = result.risk_level;
+                        const probability = (result.failure_probability * 100).toFixed(1);
+                        
+                        let riskExplanation = '';
+                        if (result.failure_probability >= 0.7) {
+                            riskExplanation = 'Critical Risk (≥70% failure probability)';
+                        } else if (result.failure_probability >= 0.5) {
+                            riskExplanation = 'High Risk (50-69% failure probability)';
+                        } else if (result.failure_probability >= 0.3) {
+                            riskExplanation = 'Medium Risk (30-49% failure probability)';
+                        } else {
+                            riskExplanation = 'Low Risk (<30% failure probability)';
+                        }
+                        
+                        resultDiv.innerHTML = `
+                            <p class="success">✅ ML API Risk Classification Working</p>
+                            <p><strong>Test Equipment Risk:</strong> ${riskClass} (${probability}%)</p>
+                            <p><strong>Classification Logic:</strong> ${riskExplanation}</p>
+                            <p><strong>Confidence:</strong> ${(result.confidence_score * 100).toFixed(1)}%</p>
+                            <p><strong>Model:</strong> ${result.model_version}</p>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = '<p class="error">❌ ML API prediction failed: ' + result.error + '</p>';
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p class="error">❌ ML API not accessible (status: ' + response.status + ')</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="error">❌ Error testing critical risk logic: ' + error.message + '</p>';
+            }
+        }
+        
+        // Test All Main Views for Errors
+        async function testViewErrors() {
+            const resultDiv = document.getElementById('viewErrorResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>Testing main views for errors...</p>';
+            
+            const viewsToTest = [
+                '/Dashboard',
+                '/Equipment', 
+                '/Alert',
+                '/MaintenanceLog',
+                '/MLDashboard',
+                '/Report',
+                '/User'
+            ];
+            
+            let results = [];
+            
+            for (const view of viewsToTest) {
+                try {
+                    const response = await fetch(`${baseUrl}${view}`);
+                    if (response.ok) {
+                        results.push(`<p class="success">✅ ${view}: OK</p>`);
+                    } else {
+                        results.push(`<p class="error">❌ ${view}: Error ${response.status}</p>`);
+                    }
+                } catch (error) {
+                    results.push(`<p class="error">❌ ${view}: ${error.message}</p>`);
+                }
+            }
+            
+            resultDiv.innerHTML = results.join('');
+        }
+        
+        // Auto-run basic tests on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-test view errors
+            setTimeout(testViewErrors, 1000);
+        });
+    </script>
+</body>
+</html>

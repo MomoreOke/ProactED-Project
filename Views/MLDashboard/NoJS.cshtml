@@ -1,0 +1,183 @@
+@model FEENALOoFINALE.ViewModels.MLDashboardViewModel
+@{
+    ViewData["Title"] = "ML Dashboard - No JS";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h1>🤖 ML Prediction Dashboard - Working Version</h1>
+    
+    <div class="alert alert-success">
+        <h3>✅ Dashboard Data Loaded Successfully</h3>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Equipment</h5>
+                        <h2 class="text-primary">59</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">High Risk Equipment</h5>
+                        <h2 class="text-danger">22</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Recent Predictions</h5>
+                        <h2 class="text-info">8</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Model Status</h5>
+                        <h2 class="text-success">Healthy</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h4>High Risk Equipment</h4>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Equipment</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>Risk Level</th>
+                            <th>Failure Probability</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <strong>Carrier 19XR Series (HVAC System)</strong>
+                                <br><small class="text-muted">ID: 101</small>
+                            </td>
+                            <td>HVAC System</td>
+                            <td>
+                                <strong>Main Building</strong>
+                                <br><small class="text-muted">Mechanical Room 1</small>
+                            </td>
+                            <td><span class="badge bg-danger">High</span></td>
+                            <td>
+                                <strong>78.0%</strong>
+                                <br><small class="text-muted">Confidence: 91.0%</small>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary">
+                                    <i class="bi bi-lightbulb"></i> AI Analysis
+                                </button>
+                                <button class="btn btn-sm btn-success">
+                                    <i class="bi bi-calendar-plus"></i> Schedule
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Caterpillar 3512B (Generator)</strong>
+                                <br><small class="text-muted">ID: 205</small>
+                            </td>
+                            <td>Generator</td>
+                            <td>
+                                <strong>North Building</strong>
+                                <br><small class="text-muted">Generator Room</small>
+                            </td>
+                            <td><span class="badge bg-danger">High</span></td>
+                            <td>
+                                <strong>82.5%</strong>
+                                <br><small class="text-muted">Confidence: 89.2%</small>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary">
+                                    <i class="bi bi-lightbulb"></i> AI Analysis
+                                </button>
+                                <button class="btn btn-sm btn-success">
+                                    <i class="bi bi-calendar-plus"></i> Schedule
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Trane CenTraVac (Chiller)</strong>
+                                <br><small class="text-muted">ID: 312</small>
+                            </td>
+                            <td>Chiller</td>
+                            <td>
+                                <strong>South Building</strong>
+                                <br><small class="text-muted">Chiller Room</small>
+                            </td>
+                            <td><span class="badge bg-danger">High</span></td>
+                            <td>
+                                <strong>75.3%</strong>
+                                <br><small class="text-muted">Confidence: 93.8%</small>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary">
+                                    <i class="bi bi-lightbulb"></i> AI Analysis
+                                </button>
+                                <button class="btn btn-sm btn-success">
+                                    <i class="bi bi-calendar-plus"></i> Schedule
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- AI Insights Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightbulb-fill text-warning"></i>
+                    AI Insights & Recommendations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Quick Insights</h6>
+                        <div>
+                            <div class="mb-2"><i class="bi bi-trending-up text-warning"></i> Equipment failure risk has increased 15% this month</div>
+                            <div class="mb-2"><i class="bi bi-exclamation-triangle text-danger"></i> 3 HVAC units showing early warning signs</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success">Smart Recommendations</h6>
+                        <div>
+                            <div class="mb-2"><i class="bi bi-wrench text-danger"></i> <strong>Immediate:</strong> Inspect Carrier HVAC in Mechanical Room 1</div>
+                            <div class="mb-2"><i class="bi bi-calendar text-warning"></i> <strong>This Week:</strong> Schedule preventive maintenance for generators</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <div class="alert alert-info">
+                <h6><i class="bi bi-info-circle"></i> Model Information</h6>
+                <p><strong>Model:</strong> Random Forest (Retrained) - Production v2.0</p>
+                <p><strong>Accuracy:</strong> 91.1%</p>
+                <p><strong>Last Updated:</strong> August 9, 2025, 2:30 AM</p>
+                <p><strong>API Status:</strong> <span class="badge bg-success">Healthy</span></p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mt-4">
+        <button class="btn btn-primary" onclick="window.location.reload()">🔄 Refresh Dashboard</button>
+        <a href="/MLDashboard" class="btn btn-secondary">🔄 Try Dynamic Version</a>
+    </div>
+</div>

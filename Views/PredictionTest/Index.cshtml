@@ -1,0 +1,322 @@
+@model FEENALOoFINALE.Controllers.PredictionTestViewModel
+@{
+    ViewData["Title"] = "ML Prediction Integration Test";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-robot"></i> ML Prediction Integration Test</h2>
+            <p class="text-muted">Test the integration between your .NET application and Python ML API</p>
+        </div>
+    </div>
+
+    <!-- API Health Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-heart-pulse"></i> API Health Status</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.ApiHealthy)
+                    {
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle"></i> <strong>API is healthy!</strong> Python ML service is running and responding.
+                        </div>
+                        
+                        @if (Model.ModelInfo != null && Model.ModelInfo.Success)
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Model Version:</strong> @Model.ModelInfo.ModelVersion
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Accuracy:</strong> @Model.ModelInfo.Accuracy.ToString("P1")
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Training Date:</strong> @Model.ModelInfo.TrainingDate.ToString("yyyy-MM-dd")
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Features:</strong> @Model.ModelInfo.Features.Count
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> <strong>API is not responding!</strong>
+                            <br>Make sure the Python ML API is running on <code>http://localhost:5000</code>
+                            <br><br>
+                            <strong>To start the API:</strong>
+                            <ol>
+                                <li>Open PowerShell/Command Prompt</li>
+                                <li>Navigate to: <code>c:\Users\NABILA\Desktop\Predictive Model</code></li>
+                                <li>Run: <code>python enhanced_equipment_api.py</code></li>
+                            </ol>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Controls -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-gear"></i> Single Equipment Test</h5>
+                </div>
+                <div class="card-body">
+                    <p>Test prediction for a single piece of equipment from your database.</p>
+                    <button id="testSingleBtn" class="btn btn-primary" @(Model.ApiHealthy ? "" : "disabled")>
+                        <i class="bi bi-play-circle"></i> Test Single Prediction
+                    </button>
+                </div>
+                <div class="card-footer">
+                    <div id="singleResult" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-collection"></i> Batch Equipment Test</h5>
+                </div>
+                <div class="card-body">
+                    <p>Test batch prediction for multiple equipment items (up to 5).</p>
+                    <button id="testBatchBtn" class="btn btn-success" @(Model.ApiHealthy ? "" : "disabled")>
+                        <i class="bi bi-play-circle-fill"></i> Test Batch Prediction
+                    </button>
+                </div>
+                <div class="card-footer">
+                    <div id="batchResult" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-clipboard-data"></i> Test Results</h5>
+                </div>
+                <div class="card-body">
+                    <div id="testResults">
+                        <p class="text-muted">Run a test above to see results here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            console.log('PredictionTest page loaded successfully');
+            
+            // Single prediction test
+            $('#testSingleBtn').click(function(e) {
+                e.preventDefault();
+                console.log('Single prediction button clicked');
+                
+                var btn = $(this);
+                btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Testing...');
+                $('#singleResult').html('<div class="text-info">Running single prediction test...</div>');
+
+                $.post('/PredictionTest/TestSinglePrediction')
+                    .done(function(response) {
+                        console.log('Single prediction response:', response);
+                        if (response.success) {
+                            $('#singleResult').html(`
+                                <div class="alert alert-success">
+                                    <strong>✓ Success!</strong> Prediction completed for: ${response.equipmentName}
+                                </div>
+                            `);
+                            
+                            displaySingleResult(response.prediction);
+                        } else {
+                            $('#singleResult').html(`
+                                <div class="alert alert-danger">
+                                    <strong>✗ Error:</strong> ${response.error}
+                                </div>
+                            `);
+                        }
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Single prediction failed:', xhr.responseText, status, error);
+                        $('#singleResult').html(`
+                            <div class="alert alert-danger">
+                                <strong>✗ Request Failed:</strong> ${xhr.responseText || error || 'Unknown error'}
+                            </div>
+                        `);
+                    })
+                    .always(function() {
+                        btn.prop('disabled', false).html('<i class="bi bi-play-circle"></i> Test Single Prediction');
+                    });
+            });
+
+            // Batch prediction test
+            $('#testBatchBtn').click(function(e) {
+                e.preventDefault();
+                console.log('Batch prediction button clicked');
+                
+                var btn = $(this);
+                btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Testing...');
+                $('#batchResult').html('<div class="text-info">Running batch prediction test...</div>');
+
+                $.post('/PredictionTest/TestBatchPrediction')
+                    .done(function(response) {
+                        console.log('Batch prediction response:', response);
+                        if (response.success) {
+                            $('#batchResult').html(`
+                                <div class="alert alert-success">
+                                    <strong>✓ Success!</strong> Batch prediction completed for ${response.equipmentCount} equipment items.
+                                </div>
+                            `);
+                            
+                            displayBatchResult(response.batchResult);
+                        } else {
+                            $('#batchResult').html(`
+                                <div class="alert alert-danger">
+                                    <strong>✗ Error:</strong> ${response.error}
+                                </div>
+                            `);
+                        }
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Batch prediction failed:', xhr.responseText, status, error);
+                        $('#batchResult').html(`
+                            <div class="alert alert-danger">
+                                <strong>✗ Request Failed:</strong> ${xhr.responseText || error || 'Unknown error'}
+                            </div>
+                        `);
+                    })
+                    .always(function() {
+                        btn.prop('disabled', false).html('<i class="bi bi-play-circle-fill"></i> Test Batch Prediction');
+                    });
+            });
+        });
+
+        function displaySingleResult(prediction) {
+            var riskColor = getRiskColor(prediction.riskLevel);
+            var html = `
+                <div class="card mt-3">
+                    <div class="card-header bg-light">
+                        <strong>Single Prediction Result</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Equipment ID:</strong> ${prediction.equipmentId}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Risk Level:</strong> 
+                                <span class="badge bg-${riskColor}">${prediction.riskLevel}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Failure Probability:</strong> ${(prediction.failureProbability * 100).toFixed(1)}%
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <strong>Confidence:</strong> ${(prediction.confidenceScore * 100).toFixed(1)}%
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <strong>Model Version:</strong> ${prediction.modelVersion}
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <strong>Timestamp:</strong> ${new Date(prediction.predictionTimestamp).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#testResults').html(html);
+        }
+
+        function displayBatchResult(batchResult) {
+            var html = `
+                <div class="card mt-3">
+                    <div class="card-header bg-light">
+                        <strong>Batch Prediction Results</strong>
+                        <span class="badge bg-info ms-2">${batchResult.processedCount} items processed</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Equipment ID</th>
+                                        <th>Risk Level</th>
+                                        <th>Failure Probability</th>
+                                        <th>Confidence</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+
+            if (batchResult.predictions && batchResult.predictions.length > 0) {
+                batchResult.predictions.forEach(function(prediction) {
+                    var riskColor = getRiskColor(prediction.riskLevel);
+                    html += `
+                        <tr>
+                            <td>${prediction.equipmentId}</td>
+                            <td><span class="badge bg-${riskColor}">${prediction.riskLevel}</span></td>
+                            <td>${(prediction.failureProbability * 100).toFixed(1)}%</td>
+                            <td>${(prediction.confidenceScore * 100).toFixed(1)}%</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html += '<tr><td colspan="4" class="text-muted text-center">No predictions available</td></tr>';
+            }
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#testResults').html(html);
+        }
+
+        function getRiskColor(riskLevel) {
+            switch(riskLevel?.toLowerCase()) {
+                case 'critical':
+                case 'high':
+                    return 'danger';
+                case 'medium':
+                    return 'warning';
+                case 'low':
+                    return 'success';
+                default:
+                    return 'secondary';
+            }
+        }
+    </script>
+}
+
+<style>
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .alert {
+        margin-bottom: 0;
+    }
+    
+    .badge {
+        font-size: 0.8em;
+    }
+</style>

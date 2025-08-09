@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Equipment Button Diagnostics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>🔧 Equipment Button Diagnostics</h1>
+        
+        <!-- Test "Add New" Button Functionality -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3>🔍 Test "Add New" Button Functionality</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <p><strong>Instructions:</strong></p>
+                    <ol>
+                        <li>Click the "Test Add New" button below</li>
+                        <li>Fill in the modal form</li>
+                        <li>Click "Save" and check if the item appears in the dropdown</li>
+                    </ol>
+                </div>
+                
+                <h5>Test Equipment Type Creation:</h5>
+                <div class="input-group mb-3">
+                    <select class="form-select" id="testEquipmentTypeSelect">
+                        <option value="">-- Select Equipment Type --</option>
+                        <option value="1">Projectors</option>
+                        <option value="2">Air Conditioners</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#testAddEquipmentTypeModal">Test Add New</button>
+                </div>
+                
+                <div id="testResults" class="alert alert-light">
+                    <strong>Test Results:</strong> Click "Test Add New" to begin
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Delete Button Functionality -->
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h3>🗑️ Test Delete Button Functionality</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <p><strong>Instructions:</strong></p>
+                    <ol>
+                        <li>Click "Test Delete Equipment" button</li>
+                        <li>Check if the confirmation modal appears</li>
+                        <li>Verify the modal shows equipment details</li>
+                        <li>Test both Cancel and Delete buttons</li>
+                    </ol>
+                </div>
+                
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#testDeleteConfirmModal">
+                    <i class="bi bi-trash me-1"></i>Test Delete Equipment
+                </button>
+                
+                <div id="deleteTestResults" class="alert alert-light mt-3">
+                    <strong>Delete Test Results:</strong> Click "Test Delete Equipment" to begin
+                </div>
+            </div>
+        </div>
+
+        <!-- Test AJAX Connectivity -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h3>🌐 Test AJAX Connectivity</h3>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-success" onclick="testAjaxConnection()">Test AJAX Connection</button>
+                <div id="ajaxResults" class="alert alert-light mt-3">
+                    <strong>AJAX Results:</strong> Click "Test AJAX Connection" to test server connectivity
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Add Equipment Type Modal -->
+    <div class="modal fade" id="testAddEquipmentTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Test Add New Equipment Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="testNewEquipmentTypeName" class="form-label">Equipment Type Name</label>
+                        <input type="text" class="form-control" id="testNewEquipmentTypeName" placeholder="Enter test equipment type name">
+                    </div>
+                    <div class="alert alert-info">
+                        <small><strong>Test Tip:</strong> Try entering "Test Printers" or "Test Computers"</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="testSaveNewEquipmentType">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Delete Confirmation Modal -->
+    <div class="modal fade" id="testDeleteConfirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Test Delete Confirmation
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <strong>Warning:</strong> This is a test modal - no actual deletion will occur!
+                    </div>
+                    <p>Are you sure you want to delete this test equipment?</p>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6><i class="bi bi-gear me-1"></i>Test Equipment - Sample Projector</h6>
+                            <p class="mb-1"><i class="bi bi-geo-alt me-1"></i>Test Building - Room 101</p>
+                            <p class="mb-0"><small class="text-muted">Equipment ID: 999 (Test)</small></p>
+                        </div>
+                    </div>
+                    <p class="mt-3 mb-0">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            This would delete all associated maintenance logs, predictions, and alerts.
+                        </small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="updateDeleteTestResults('Cancelled')">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="updateDeleteTestResults('Delete Confirmed')">
+                        <i class="bi bi-trash me-1"></i>Test Delete Equipment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Test Add New Equipment Type functionality
+            $('#testSaveNewEquipmentType').click(function() {
+                var typeName = $('#testNewEquipmentTypeName').val().trim();
+                
+                if (!typeName) {
+                    updateTestResults('❌ Error: Please enter an equipment type name', 'danger');
+                    return;
+                }
+                
+                updateTestResults('🔄 Testing AJAX call to create equipment type...', 'info');
+                
+                $.ajax({
+                    url: 'http://localhost:5261/Equipment/CreateEquipmentType',
+                    type: 'POST',
+                    data: { name: typeName },
+                    success: function(response) {
+                        if (response.success) {
+                            // Add to dropdown
+                            var $select = $('#testEquipmentTypeSelect');
+                            $select.append($('<option>', {
+                                value: response.id,
+                                text: typeName,
+                                selected: true
+                            }));
+                            
+                            // Close modal and clear input
+                            $('#testAddEquipmentTypeModal').modal('hide');
+                            $('#testNewEquipmentTypeName').val('');
+                            
+                            updateTestResults('✅ Success! Equipment type "' + typeName + '" created with ID: ' + response.id, 'success');
+                        } else {
+                            updateTestResults('❌ Server Error: ' + (response.message || 'Failed to create equipment type'), 'danger');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMsg = 'Connection failed: ' + error;
+                        if (xhr.status === 404) {
+                            errorMsg = 'Endpoint not found (404) - Controller method may not exist';
+                        } else if (xhr.status === 500) {
+                            errorMsg = 'Server error (500) - Check server logs';
+                        }
+                        updateTestResults('❌ AJAX Error: ' + errorMsg, 'danger');
+                    }
+                });
+            });
+            
+            function updateTestResults(message, type) {
+                $('#testResults').removeClass('alert-light alert-success alert-danger alert-info')
+                                .addClass('alert-' + type)
+                                .html('<strong>Test Results:</strong> ' + message);
+            }
+            
+            // Make function available globally
+            window.updateTestResults = updateTestResults;
+        });
+        
+        function updateDeleteTestResults(action) {
+            var message = '✅ Delete modal test completed: ' + action;
+            var alertType = action.includes('Delete') ? 'warning' : 'success';
+            
+            $('#deleteTestResults').removeClass('alert-light alert-success alert-danger alert-warning alert-info')
+                                  .addClass('alert-' + alertType)
+                                  .html('<strong>Delete Test Results:</strong> ' + message);
+            
+            // Close modal if delete was confirmed
+            if (action.includes('Delete')) {
+                $('#testDeleteConfirmModal').modal('hide');
+            }
+        }
+        
+        function testAjaxConnection() {
+            $('#ajaxResults').removeClass('alert-light alert-success alert-danger alert-info')
+                            .addClass('alert-info')
+                            .html('<strong>AJAX Results:</strong> 🔄 Testing connection to Equipment controller...');
+            
+            $.ajax({
+                url: 'http://localhost:5261/Equipment',
+                type: 'GET',
+                timeout: 10000,
+                success: function(response) {
+                    $('#ajaxResults').removeClass('alert-info')
+                                    .addClass('alert-success')
+                                    .html('<strong>AJAX Results:</strong> ✅ Successfully connected to Equipment controller!');
+                },
+                error: function(xhr, status, error) {
+                    var errorDetails = 'Status: ' + xhr.status + ', Error: ' + error;
+                    $('#ajaxResults').removeClass('alert-info')
+                                    .addClass('alert-danger')
+                                    .html('<strong>AJAX Results:</strong> ❌ Connection failed - ' + errorDetails);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

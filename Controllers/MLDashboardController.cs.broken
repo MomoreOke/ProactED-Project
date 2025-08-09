@@ -1,0 +1,1319 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using FEENALOoFINALE.Data;
+using FEENALOoFINALE.Models;
+using FEENALOoFINALE.ViewModels;
+using FEENALOoFINALE.Services;
+using FEENALOoFINALE.Hubs;
+
+namespace FEENALOoFINALE.Controllers
+{
+    public class MLDashboardController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly IEquipmentPredictionService _predictionService;
+        private readonly PredictionMetricsService _metricsService;
+        private readonly IHubContext<MaintenanceHub> _hubContext;
+        private readonly ILogger<MLDashboardController> _logger;
+        private readonly IEquipmentAIInsightService _aiInsightService;
+
+        public MLDashboardController(
+            ApplicationDbContext context,
+            IEquipmentPredictionService predictionService,
+            PredictionMetricsService metricsService,
+            IHubContext<MaintenanceHub> hubContext,
+            ILogger<MLDashboardController> logger,
+            IEquipmentAIInsightService aiInsightService)
+        {
+            _context = context;
+            _predictionService = predictionService;
+            _metricsService = metricsService;
+            _hubContext = hubContext;
+            _logger = logger;
+            _aiInsightService = aiInsightService;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            try
+            {
+                _logger.LogInformation("MLDashboard Index action called - Loading page immediately");
+                
+                // Return the view immediately with no model to show loading screen
+                // The actual data will be loaded via AJAX call to GetDashboardData
+                return View((MLDashboardViewModel)null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading ML Dashboard page");
+                return View("Error", new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetDashboardData()
+        {
+            try
+            {
+                _logger.LogInformation("MLDashboard GetDashboardData API called - Starting ML predictions");
+                var viewModel = await CreateMLDashboardViewModel();
+                _logger.LogInformation("ML Dashboard data loaded successfully");
+                _logger.LogInformation($"ViewModel details - High Risk Equipment: {viewModel.HighRiskEquipmentList.Count}, Total Equipment: {viewModel.TotalEquipmentAnalyzed}, High Risk Count: {viewModel.HighRiskEquipment}");
+                
+                // Create a simplified DTO to avoid circular reference issues
+                var dashboardData = new
+                {
+                    ModelVersion = viewModel.ModelVersion,
+                    ModelAccuracy = viewModel.ModelAccuracy,
+                    ApiHealthy = viewModel.ApiHealthy,
+                    TotalEquipmentAnalyzed = viewModel.TotalEquipmentAnalyzed,
+                    HighRiskEquipment = viewModel.HighRiskEquipment,
+                    MediumRiskEquipment = viewModel.MediumRiskEquipment,
+                    LowRiskEquipment = viewModel.LowRiskEquipment,
+                    AverageFailureProbability = viewModel.AverageFailureProbability,
+                    AverageConfidence = viewModel.AverageConfidence,
+                    LastPredictionUpdate = viewModel.LastPredictionUpdate,
+                    ModelStatus = viewModel.ModelStatus,
+                    CriticalPredictionsCount = viewModel.CriticalPredictionsCount,
+                    RiskLevelDistribution = viewModel.RiskLevelDistribution,
+                    
+                    // Simplified high risk equipment without circular references
+                    HighRiskEquipmentList = viewModel.HighRiskEquipmentList.Select(item => new
+                    {
+                        EquipmentId = item.Equipment.EquipmentId,
+                        EquipmentType = item.Equipment.EquipmentType?.EquipmentTypeName ?? "Unknown",
+                        EquipmentModel = item.Equipment.EquipmentModel?.ModelName ?? "Unknown",
+                        Building = item.Equipment.Building?.BuildingName ?? "Unknown",
+                        Room = item.Equipment.Room?.RoomName ?? "Unknown",
+                        RiskLevel = item.Prediction?.RiskLevel ?? "Unknown",
+                        FailureProbability = item.Prediction?.FailureProbability ?? 0.0,
+                        ConfidenceScore = item.Prediction?.ConfidenceScore ?? 0.0,
+                        RiskLevelDisplay = item.RiskLevelDisplay,
+                        FailureProbabilityDisplay = item.FailureProbabilityDisplay,
+                        ConfidenceDisplay = item.ConfidenceDisplay
+                    }).ToList(),
+                    
+                    // Simplified recent predictions without circular references
+                    RecentPredictions = viewModel.RecentPredictions.Select(fp => new
+                    {
+                        PredictionId = fp.PredictionId,
+                        EquipmentId = fp.EquipmentId,
+                        PredictedFailureDate = fp.PredictedFailureDate,
+                        ConfidenceLevel = fp.ConfidenceLevel,
+                        Status = fp.Status.ToString(),
+                        CreatedDate = fp.CreatedDate,
+                        AnalysisNotes = fp.AnalysisNotes ?? "No analysis notes",
+                        ContributingFactors = fp.ContributingFactors ?? "No contributing factors"
+                    }).ToList(),
+                    
+                    // Chart data
+                    FailureProbabilityTrend = viewModel.FailureProbabilityTrend.Select(dp => new
+                    {
+                        Label = dp.Label,
+                        Value = dp.Value,
+                        Timestamp = dp.Timestamp
+                    }).ToList()
+                };
+                
+                return Json(new { 
+                    success = true, 
+                    data = dashboardData,
+                    message = "ML Dashboard data loaded successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading ML Dashboard data");
+                return Json(new { 
+                    success = false, 
+                    message = ex.Message,
+                    error = "Failed to load ML predictions"
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Test()
+        {
+            try
+            {
+                _logger.LogInformation("MLDashboard Test action called");
+                var viewModel = await CreateMLDashboardViewModel();
+                _logger.LogInformation("Test ViewModel created successfully");
+                _logger.LogInformation($"Test ViewModel details - High Risk Equipment: {viewModel.HighRiskEquipmentList.Count}, Total Equipment: {viewModel.TotalEquipmentAnalyzed}, High Risk Count: {viewModel.HighRiskEquipment}");
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading ML Dashboard Test");
+                return View("Error", new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Simple()
+        {
+            try
+            {
+                _logger.LogInformation("MLDashboard Simple action called");
+                var viewModel = await CreateMLDashboardViewModel();
+                _logger.LogInformation("Simple ViewModel created successfully");
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading ML Dashboard Simple");
+                return View("Error", new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLivePredictions()
+        {
+            try
+            {
+                var equipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .Include(e => e.Building)
+                    .Include(e => e.Room)
+                    .Where(e => e.Status == EquipmentStatus.Active)
+                    .Take(10) // Limit for performance
+                    .ToListAsync();
+
+                var predictions = new List<object>();
+
+                foreach (var item in equipment)
+                {
+                    try
+                    {
+                        var predictionData = EquipmentPredictionData.FromEquipment(item);
+                        var prediction = await _predictionService.PredictEquipmentFailureAsync(predictionData);
+                        
+                        predictions.Add(new
+                        {
+                            Equipment = new
+                            {
+                                EquipmentId = item.EquipmentId,
+                                Status = item.Status.ToString(),
+                                EquipmentType = new
+                                {
+                                    EquipmentTypeName = item.EquipmentType?.EquipmentTypeName
+                                },
+                                EquipmentModel = new
+                                {
+                                    ModelName = item.EquipmentModel?.ModelName
+                                },
+                                Building = new
+                                {
+                                    BuildingName = item.Building?.BuildingName
+                                },
+                                Room = new
+                                {
+                                    RoomName = item.Room?.RoomName
+                                }
+                            },
+                            Prediction = prediction != null ? new
+                            {
+                                RiskLevel = prediction.RiskLevel,
+                                FailureProbability = prediction.FailureProbability,
+                                Confidence = prediction.ConfidenceScore
+                            } : null,
+                            RiskLevelDisplay = prediction?.RiskLevel switch
+                            {
+                                "Critical" => "🔴 Critical Risk",
+                                "High" => "🔴 High Risk",
+                                "Medium" => "🟡 Medium Risk", 
+                                "Low" => "🟢 Low Risk",
+                                _ => "⚪ Unknown"
+                            }
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to get prediction for equipment {EquipmentId}", item.EquipmentId);
+                        predictions.Add(new
+                        {
+                            Equipment = new
+                            {
+                                EquipmentId = item.EquipmentId,
+                                Status = item.Status.ToString(),
+                                EquipmentType = new
+                                {
+                                    EquipmentTypeName = item.EquipmentType?.EquipmentTypeName
+                                },
+                                EquipmentModel = new
+                                {
+                                    ModelName = item.EquipmentModel?.ModelName
+                                },
+                                Building = new
+                                {
+                                    BuildingName = item.Building?.BuildingName
+                                },
+                                Room = new
+                                {
+                                    RoomName = item.Room?.RoomName
+                                }
+                            },
+                            Prediction = (object?)null,
+                            RiskLevelDisplay = "⚪ Unknown"
+                        });
+                    }
+                }
+
+                return Json(predictions);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting live predictions");
+                return Json(new List<object>());
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RunBatchPrediction()
+        {
+            try
+            {
+                var equipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .Where(e => e.Status == EquipmentStatus.Active)
+                    .Take(20) // Batch size
+                    .ToListAsync();
+
+                var predictionDataList = equipment.Select(e => EquipmentPredictionData.FromEquipment(e)).ToList();
+                var batchResult = await _predictionService.PredictBatchEquipmentFailureAsync(predictionDataList);
+
+                if (batchResult.Success)
+                {
+                    // Notify clients via SignalR
+                    await _hubContext.Clients.Group("MLDashboard").SendAsync("BatchPredictionComplete", new
+                    {
+                        ProcessedCount = batchResult.ProcessedCount,
+                        Predictions = batchResult.Predictions.Take(10), // Limit for UI
+                        Timestamp = DateTime.Now
+                    });
+
+                    return Json(new { success = true, processedCount = batchResult.ProcessedCount });
+                }
+
+                return Json(new { success = false, error = batchResult.ErrorMessage });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error running batch prediction");
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetModelMetrics()
+        {
+            try
+            {
+                var modelInfo = await _predictionService.GetModelInfoAsync();
+                var metrics = _metricsService.GetMetricsSummary();
+
+                return Json(new
+                {
+                    modelInfo = new
+                    {
+                        accuracy = modelInfo.Accuracy,
+                        version = modelInfo.ModelVersion,
+                        trainingDate = modelInfo.TrainingDate,
+                        features = modelInfo.Features
+                    },
+                    metrics = new
+                    {
+                        totalPredictions = metrics.TotalPredictions,
+                        averageResponseTime = metrics.AverageResponseTimeMs,
+                        successRate = metrics.SuccessRate,
+                        lastPrediction = metrics.LastUpdated
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting model metrics");
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRiskDistribution()
+        {
+            try
+            {
+                var recentPredictions = await _context.FailurePredictions
+                    .Where(fp => fp.CreatedDate >= DateTime.Now.AddDays(-7))
+                    .GroupBy(fp => fp.Status)
+                    .Select(g => new { RiskLevel = g.Key, Count = g.Count() })
+                    .ToListAsync();
+
+                // Map PredictionStatus enum to user-friendly labels
+                var distributionData = new Dictionary<string, int>
+                {
+                    ["High Risk"] = recentPredictions.Where(x => x.RiskLevel == PredictionStatus.High).Sum(x => x.Count),
+                    ["Medium Risk"] = recentPredictions.Where(x => x.RiskLevel == PredictionStatus.Medium).Sum(x => x.Count),
+                    ["Low Risk"] = recentPredictions.Where(x => x.RiskLevel == PredictionStatus.Low).Sum(x => x.Count)
+                };
+
+                // Ensure all categories are present even if count is 0
+                if (!distributionData.ContainsKey("High Risk")) distributionData["High Risk"] = 0;
+                if (!distributionData.ContainsKey("Medium Risk")) distributionData["Medium Risk"] = 0;
+                if (!distributionData.ContainsKey("Low Risk")) distributionData["Low Risk"] = 0;
+
+                return Json(distributionData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting risk distribution");
+                return Json(new Dictionary<string, int> { ["High Risk"] = 0, ["Medium Risk"] = 0, ["Low Risk"] = 0 });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPredictionTrends()
+        {
+            try
+            {
+                // Get prediction trends for the last 7 days
+                var trends = new List<object>();
+                
+                for (int i = 6; i >= 0; i--)
+                {
+                    var date = DateTime.Now.Date.AddDays(-i);
+                    var nextDate = date.AddDays(1);
+                    
+                    var dayPredictions = await _context.FailurePredictions
+                        .Where(fp => fp.CreatedDate >= date && fp.CreatedDate < nextDate)
+                        .ToListAsync();
+                    
+                    var avgProbability = dayPredictions.Any() 
+                        ? dayPredictions.Average(fp => fp.ConfidenceLevel / 100.0) 
+                        : 0.0;
+                    
+                    trends.Add(new
+                    {
+                        Date = date.ToString("MMM dd"),
+                        AverageFailureProbability = Math.Round(avgProbability, 3),
+                        PredictionCount = dayPredictions.Count,
+                        HighRiskCount = dayPredictions.Count(fp => fp.Status == PredictionStatus.High),
+                        MediumRiskCount = dayPredictions.Count(fp => fp.Status == PredictionStatus.Medium),
+                        LowRiskCount = dayPredictions.Count(fp => fp.Status == PredictionStatus.Low)
+                    });
+                }
+
+                return Json(trends);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting prediction trends");
+                return Json(new List<object>());
+            }
+        }
+
+        [HttpPost]
+        public IActionResult JoinMLDashboard()
+        {
+            // This would be called from the frontend to join the SignalR group
+            // The actual group joining happens in the SignalR hub
+            return Json(new { success = true });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetEquipmentAIInsight(int equipmentId)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 GetEquipmentAIInsight called for Equipment ID: {equipmentId}");
+                
+                var equipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .Include(e => e.Building)
+                    .Include(e => e.Room)
+                    .FirstOrDefaultAsync(e => e.EquipmentId == equipmentId);
+
+                EquipmentModel? equipmentModel = null;
+
+                if (equipment == null)
+                {
+                    _logger.LogWarning($"❌ Equipment with ID {equipmentId} not found. Searching for similar equipment for model-based analysis...");
+                    
+                    // Find a similar equipment ID to provide model-based analysis
+                    var similarEquipmentId = await FindSimilarEquipmentId(equipmentId);
+                    
+                    if (similarEquipmentId.HasValue)
+                    {
+                        equipment = await _context.Equipment
+                            .Include(e => e.EquipmentType)
+                            .Include(e => e.EquipmentModel)
+                            .Include(e => e.Building)
+                            .Include(e => e.Room)
+                            .FirstOrDefaultAsync(e => e.EquipmentId == similarEquipmentId.Value);
+                        
+                        if (equipment != null)
+                        {
+                            _logger.LogInformation($"🔄 Using similar Equipment ID: {equipment.EquipmentId} for model-based analysis of requested ID: {equipmentId}");
+                        }
+                    }
+                    
+                    if (equipment == null)
+                    {
+                        // Fallback: find any equipment with a model for basic model-based analysis
+                        equipment = await _context.Equipment
+                            .Include(e => e.EquipmentType)
+                            .Include(e => e.EquipmentModel)
+                            .Include(e => e.Building)
+                            .Include(e => e.Room)
+                            .Where(e => e.EquipmentModel != null)
+                            .FirstOrDefaultAsync();
+                        
+                        if (equipment == null)
+                        {
+                            _logger.LogError("❌ No equipment with models found in the system");
+                            return Json(new { 
+                                success = false, 
+                                error = "No equipment models found",
+                                message = "No equipment with associated models found in the system for AI analysis."
+                            });
+                        }
+                        
+                        _logger.LogInformation($"🔄 Using fallback Equipment ID: {equipment.EquipmentId} for model-based analysis of requested ID: {equipmentId}");
+                    }
+                }
+
+                _logger.LogInformation($"✅ Equipment found: {equipment.EquipmentModel?.ModelName} ({equipment.EquipmentType?.EquipmentTypeName})");
+                _logger.LogInformation($"🎯 Starting MODEL-BASED AI Analysis - analyzing all equipment of this model type");
+
+                // Get AI insights based on Equipment Model instead of individual equipment ID
+                var equipmentModelId = equipment.EquipmentModelId;
+                equipmentModel = equipment.EquipmentModel;
+                
+                if (equipmentModel == null)
+                {
+                    _logger.LogWarning($"❌ Equipment Model not found for Equipment ID: {equipmentId}");
+                    return Json(new { 
+                        success = false, 
+                        error = "Equipment model not found",
+                        message = "This equipment does not have an associated equipment model for AI analysis."
+                    });
+                }
+
+                _logger.LogInformation($"🎯 Generating AI insights for Equipment Model: {equipmentModel.ModelName} (ID: {equipmentModelId})");
+
+                // Get all equipment of this model for comprehensive analysis
+                var similarEquipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.Building)
+                    .Include(e => e.Room)
+                    .Where(e => e.EquipmentModelId == equipmentModelId)
+                    .ToListAsync();
+
+                _logger.LogInformation($"📊 Found {similarEquipment.Count} equipment items of model '{equipmentModel.ModelName}' for analysis");
+
+                // Get ML prediction for the specific equipment (but use model-based insights)
+                var predictionData = EquipmentPredictionData.FromEquipment(equipment);
+                var prediction = await _predictionService.PredictEquipmentFailureAsync(predictionData);
+
+                if (prediction != null && prediction.Success)
+                {
+                    _logger.LogInformation($"✅ ML Prediction successful for Equipment {equipmentId}: {prediction.RiskLevel}");
+                    
+                    // Generate AI insights for this specific equipment model
+                    var insight = await GenerateAIInsight(equipment, prediction);
+                    return Json(new { success = true, insight = insight });
+                }
+
+                _logger.LogWarning($"❌ ML Prediction failed for Equipment {equipmentId}: {prediction?.ErrorMessage}");
+                return Json(new { 
+                    success = false, 
+                    error = "Failed to generate AI insight",
+                    message = prediction?.ErrorMessage ?? "ML prediction service returned null result"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating AI insight for equipment {EquipmentId}", equipmentId);
+                return Json(new { success = false, error = "Error generating AI insight" });
+            }
+        }
+
+        private async Task<object> GenerateAIInsight(Equipment equipment, PredictionResult prediction)
+        {
+            var equipmentType = equipment.EquipmentModel?.EquipmentType?.EquipmentTypeName ?? "Unknown";
+            var modelName = equipment.EquipmentModel?.ModelName ?? "Unknown Model";
+            
+            _logger.LogInformation($"🔬 Generating AI insight for {equipmentType}: {modelName}");
+
+            // Calculate equipment age
+            var equipmentAge = equipment.InstallationDate.HasValue 
+                ? (DateTime.Now - equipment.InstallationDate.Value).TotalDays / 365.25 
+                : 0;
+
+            // Get recent maintenance history
+            var recentMaintenanceLogs = equipment.MaintenanceLogs?
+                .OrderByDescending(ml => ml.LogDate)
+                .Take(3)
+                .ToList() ?? new List<MaintenanceLog>();
+
+            // Generate model-based insights
+            var insights = new List<string>();
+            var recommendations = new List<string>();
+
+            // Risk-based insights
+            switch (prediction.RiskLevel.ToLower())
+            {
+                case "high":
+                    insights.Add($"⚠️ HIGH RISK: {modelName} shows elevated failure probability ({prediction.FailureProbability:P1})");
+                    recommendations.Add("Schedule immediate maintenance inspection");
+                    recommendations.Add("Consider equipment replacement if cost-effective");
+                    break;
+                case "medium":
+                    insights.Add($"⚡ MEDIUM RISK: {modelName} requires attention ({prediction.FailureProbability:P1})");
+                    recommendations.Add("Schedule preventive maintenance within 2 weeks");
+                    recommendations.Add("Monitor performance metrics closely");
+                    break;
+                default:
+                    insights.Add($"✅ LOW RISK: {modelName} is operating within normal parameters ({prediction.FailureProbability:P1})");
+                    recommendations.Add("Continue regular maintenance schedule");
+                    break;
+            }
+
+            // Equipment age insights
+            if (equipmentAge > 5)
+            {
+                insights.Add($"📅 Equipment age: {equipmentAge:F1} years - approaching replacement consideration");
+                recommendations.Add("Evaluate total cost of ownership vs. replacement");
+            }
+            else if (equipmentAge > 3)
+            {
+                insights.Add($"📅 Equipment age: {equipmentAge:F1} years - mature operational phase");
+            }
+            else
+            {
+                insights.Add($"📅 Equipment age: {equipmentAge:F1} years - early operational phase");
+            }
+
+            // Maintenance history insights
+            if (recentMaintenanceLogs.Count == 0)
+            {
+                insights.Add("⚠️ No recent maintenance records found");
+                recommendations.Add("Review maintenance schedule and logging practices");
+            }
+            else
+            {
+                var avgCost = recentMaintenanceLogs.Average(ml => (double?)ml.Cost) ?? 0;
+                insights.Add($"🔧 Recent maintenance: {recentMaintenanceLogs.Count} logs, avg cost: ${avgCost:F2}");
+            }
+
+            return new
+            {
+                equipmentId = equipment.EquipmentId,
+                equipmentType = equipmentType,
+                equipmentModel = modelName,
+                building = equipment.Building?.BuildingName ?? "Unknown",
+                room = equipment.Room?.RoomName ?? "Unknown",
+                riskLevel = prediction.RiskLevel,
+                failureProbability = Math.Round(prediction.FailureProbability, 3),
+                confidenceScore = Math.Round(prediction.ConfidenceScore, 3),
+                equipmentAge = Math.Round(equipmentAge, 1),
+                insights = insights,
+                recommendations = recommendations,
+                maintenanceHistory = recentMaintenanceLogs.Select(ml => new
+                {
+                    date = ml.LogDate.ToString("yyyy-MM-dd"),
+                    type = Enum.GetName(typeof(MaintenanceType), ml.MaintenanceType),
+                    description = ml.Description,
+                    cost = ml.Cost
+                }),
+                analysisTimestamp = DateTime.Now,
+                modelVersion = prediction.ModelVersion
+            };
+        }
+
+
+
+
+
+
+
+
+        // Removed GenerateDetailedRecommendations method
+
+        [HttpGet]
+            var recommendations = new List<object>();
+
+            // Universal recommendations based on risk level
+            if (prediction.RiskLevel == "Critical" || prediction.FailureProbability > 0.8)
+            {
+                recommendations.Add(new
+                {
+                    category = "IMMEDIATE ACTION REQUIRED",
+                    priority = "CRITICAL",
+                    description = "Schedule emergency inspection within 24 hours",
+                    icon = "bi-exclamation-triangle-fill",
+                    timeframe = "Within 24 hours",
+                    estimatedCost = 500,
+                    impact = "Prevent equipment failure and downtime"
+                });
+            }
+            else if (prediction.RiskLevel == "High" || prediction.FailureProbability > 0.6)
+            {
+                recommendations.Add(new
+                {
+                    category = "HIGH PRIORITY",
+                    priority = "HIGH",
+                    description = "Schedule comprehensive inspection within 1 week",
+                    icon = "bi-exclamation-triangle",
+                    timeframe = "Within 1 week",
+                    estimatedCost = 300,
+                    impact = "Reduce failure risk significantly"
+                });
+            }
+
+            // Equipment-type-specific recommendations
+            switch (equipmentType.ToLower())
+            {
+                case var type when type.Contains("projector"):
+                    if (equipmentAge > 4)
+                    {
+                        recommendations.Add(new
+                        {
+                            category = "Lamp Replacement",
+                            priority = "HIGH",
+                            description = "Replace projector lamp - likely near end of life",
+                            icon = "bi-lightbulb",
+                            timeframe = "Within 2 weeks",
+                            estimatedCost = 250,
+                            impact = "Restore brightness and prevent sudden failure"
+                        });
+                    }
+                    if (equipmentAge > 2)
+                    {
+                        recommendations.Add(new
+                        {
+                            category = "Filter Maintenance",
+                            priority = "MEDIUM",
+                            description = "Clean or replace air filter to prevent overheating",
+                            icon = "bi-wind",
+                            timeframe = "Within 1 month",
+                            estimatedCost = 50,
+                            impact = "Improve cooling efficiency and extend life"
+                        });
+                    }
+                    recommendations.Add(new
+                    {
+                        category = "Optical Maintenance",
+                        priority = "LOW",
+                        description = "Professional lens cleaning for optimal image quality",
+                        icon = "bi-eye",
+                        timeframe = "Within 3 months",
+                        estimatedCost = 100,
+                        impact = "Maintain image clarity and brightness"
+                    });
+                    break;
+
+                case var type when type.Contains("podium"):
+                    if (equipmentAge > 8)
+                    {
+                        recommendations.Add(new
+                        {
+                            category = "Technology Update",
+                            priority = "MEDIUM",
+                            description = "Consider upgrading control interface and connectivity",
+                            icon = "bi-cpu",
+                            timeframe = "Within 6 months",
+                            estimatedCost = 1500,
+                            impact = "Improve functionality and user experience"
+                        });
+                    }
+                    recommendations.Add(new
+                    {
+                        category = "Audio System Check",
+                        priority = "MEDIUM",
+                        description = "Test and calibrate audio system components",
+                        icon = "bi-speaker",
+                        timeframe = "Within 2 months",
+                        estimatedCost = 150,
+                        impact = "Ensure optimal sound quality"
+                    });
+                    recommendations.Add(new
+                    {
+                        category = "Connectivity Testing",
+                        priority = "LOW",
+                        description = "Test all connection ports and update drivers",
+                        icon = "bi-plug",
+                        timeframe = "Within 3 months",
+                        estimatedCost = 75,
+                        impact = "Ensure reliable connectivity"
+                    });
+                    break;
+
+                case var type when type.Contains("air") || type.Contains("conditioner"):
+                    recommendations.Add(new
+                    {
+                        category = "Filter Replacement",
+                        priority = "HIGH",
+                        description = "Replace air filter immediately if overdue",
+                        icon = "bi-wind",
+                        timeframe = "Within 1 week",
+                        estimatedCost = 30,
+                        impact = "Restore airflow and efficiency"
+                    });
+                    if (equipmentAge > 10)
+                    {
+                        recommendations.Add(new
+                        {
+                            category = "System Inspection",
+                            priority = "HIGH",
+                            description = "Comprehensive HVAC system inspection and refrigerant check",
+                            icon = "bi-gear",
+                            timeframe = "Within 2 weeks",
+                            estimatedCost = 400,
+                            impact = "Prevent major system failure"
+                        });
+                    }
+                    if (equipmentAge > 5)
+                    {
+                        recommendations.Add(new
+                        {
+                            category = "Efficiency Optimization",
+                            priority = "MEDIUM",
+                            description = "Clean coils and optimize system settings for energy efficiency",
+                            icon = "bi-lightning",
+                            timeframe = "Within 1 month",
+                            estimatedCost = 200,
+                            impact = "Reduce energy costs and improve performance"
+                        });
+                    }
+                    break;
+            }
+
+            // Age-based recommendations for all equipment
+            if (equipmentAge > 10)
+            {
+                recommendations.Add(new
+                {
+                    category = "Replacement Planning",
+                    priority = "LOW",
+                    description = "Begin planning for equipment replacement in next budget cycle",
+                    icon = "bi-arrow-repeat",
+                    timeframe = "Within 12 months",
+                    estimatedCost = 5000,
+                    impact = "Avoid unexpected failures and improve efficiency"
+                });
+            }
+
+            return recommendations;
+        }
+
+        private object GenerateMaintenanceSchedule(string equipmentType, Equipment equipment, PredictionResult prediction, double equipmentAge)
+        {
+            var schedule = new List<object>();
+
+            // Equipment-type-specific maintenance schedules
+            switch (equipmentType.ToLower())
+            {
+                case var type when type.Contains("projector"):
+                    schedule.Add(new { task = "Lamp inspection and cleaning", frequency = "Monthly", nextDue = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd"), priority = "HIGH" });
+                    schedule.Add(new { task = "Filter cleaning/replacement", frequency = "Every 3 months", nextDue = DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd"), priority = "HIGH" });
+                    schedule.Add(new { task = "Lens cleaning", frequency = "Every 6 months", nextDue = DateTime.Now.AddMonths(6).ToString("yyyy-MM-dd"), priority = "MEDIUM" });
+                    schedule.Add(new { task = "Full system calibration", frequency = "Annually", nextDue = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"), priority = "MEDIUM" });
+                    if (equipmentAge > 3)
+                    {
+                        schedule.Add(new { task = "Lamp replacement", frequency = "As needed (high priority)", nextDue = DateTime.Now.AddMonths(2).ToString("yyyy-MM-dd"), priority = "CRITICAL" });
+                    }
+                    break;
+
+                case var type when type.Contains("podium"):
+                    schedule.Add(new { task = "Control interface testing", frequency = "Monthly", nextDue = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd"), priority = "MEDIUM" });
+                    schedule.Add(new { task = "Audio system calibration", frequency = "Every 3 months", nextDue = DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd"), priority = "MEDIUM" });
+                    schedule.Add(new { task = "Connectivity port testing", frequency = "Every 6 months", nextDue = DateTime.Now.AddMonths(6).ToString("yyyy-MM-dd"), priority = "MEDIUM" });
+                    schedule.Add(new { task = "Software updates", frequency = "Every 6 months", nextDue = DateTime.Now.AddMonths(6).ToString("yyyy-MM-dd"), priority = "MEDIUM" });
+                    schedule.Add(new { task = "Comprehensive system check", frequency = "Annually", nextDue = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"), priority = "HIGH" });
+                    break;
+
+                case var type when type.Contains("air") || type.Contains("conditioner"):
+                    schedule.Add(new { task = "Filter replacement", frequency = "Every 3 months", nextDue = DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd"), priority = "CRITICAL" });
+                    schedule.Add(new { task = "Coil cleaning", frequency = "Every 6 months", nextDue = DateTime.Now.AddMonths(6).ToString("yyyy-MM-dd"), priority = "HIGH" });
+                    schedule.Add(new { task = "Refrigerant level check", frequency = "Every 6 months", nextDue = DateTime.Now.AddMonths(6).ToString("yyyy-MM-dd"), priority = "HIGH" });
+                    schedule.Add(new { task = "Electrical connections inspection", frequency = "Annually", nextDue = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"), priority = "HIGH" });
+                    schedule.Add(new { task = "Full system efficiency test", frequency = "Annually", nextDue = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"), priority = "MEDIUM" });
+                    if (equipmentAge > 10)
+                    {
+                        schedule.Add(new { task = "Major component inspection", frequency = "Every 6 months", nextDue = DateTime.Now.AddMonths(6).ToString("yyyy-MM-dd"), priority = "CRITICAL" });
+                    }
+                    break;
+
+                default:
+                    schedule.Add(new { task = "General inspection", frequency = "Every 6 months", nextDue = DateTime.Now.AddMonths(6).ToString("yyyy-MM-dd"), priority = "MEDIUM" });
+                    break;
+            }
+
+            return new
+            {
+                equipmentType = equipmentType,
+                maintenanceType = prediction.RiskLevel == "Critical" ? "Emergency" : prediction.RiskLevel == "High" ? "Accelerated" : "Standard",
+                scheduledTasks = schedule,
+                totalEstimatedCost = schedule.Count * 150, // Rough estimate
+                nextCriticalDate = schedule.Where(s => s.GetType().GetProperty("priority")?.GetValue(s)?.ToString() == "CRITICAL")
+                                         .Select(s => s.GetType().GetProperty("nextDue")?.GetValue(s)?.ToString())
+                                         .FirstOrDefault() ?? DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd")
+            };
+        }
+
+        private object GenerateRiskAssessment(string equipmentType, Equipment equipment, PredictionResult prediction, double equipmentAge)
+        {
+            var criticalRisks = new List<string>();
+            var warnings = new List<string>();
+            var mitigationStrategies = new List<string>();
+
+            // Age-based risks
+            if (equipmentAge > 10)
+            {
+                criticalRisks.Add("Equipment approaching end of useful life - replacement planning critical");
+                mitigationStrategies.Add("Develop replacement timeline and budget allocation");
+            }
+            else if (equipmentAge > 5)
+            {
+                warnings.Add("Equipment entering mature phase - increased maintenance needed");
+                mitigationStrategies.Add("Implement more frequent inspection schedule");
+            }
+
+            // Risk-based assessment
+            if (prediction.FailureProbability > 0.8)
+            {
+                criticalRisks.Add("Immediate failure risk - service disruption highly likely");
+                mitigationStrategies.Add("Prepare backup equipment and emergency procedures");
+            }
+            else if (prediction.FailureProbability > 0.6)
+            {
+                warnings.Add("Elevated failure risk - proactive intervention recommended");
+                mitigationStrategies.Add("Schedule comprehensive diagnostic and repair");
+            }
+
+            // Equipment-specific risks
+            switch (equipmentType.ToLower())
+            {
+                case var type when type.Contains("projector"):
+                    if (equipmentAge > 3)
+                        warnings.Add("Lamp replacement likely needed soon");
+                    if (prediction.FailureProbability > 0.7)
+                        criticalRisks.Add("Potential classroom disruption from projector failure");
+                    break;
+
+                case var type when type.Contains("air") || type.Contains("conditioner"):
+                    if (equipmentAge > 12)
+                        criticalRisks.Add("Climate control failure risk - occupant comfort and equipment protection at risk");
+                    if (prediction.FailureProbability > 0.6)
+                        warnings.Add("Energy efficiency degradation increasing operational costs");
+                    break;
+
+                case var type when type.Contains("podium"):
+                    if (equipmentAge > 8)
+                        warnings.Add("Control interface may become obsolete or unreliable");
+                    break;
+            }
+
+            return new
+            {
+                overallRiskLevel = prediction.RiskLevel,
+                riskScore = Math.Round(prediction.FailureProbability * 100, 1),
+                criticalRisks = criticalRisks,
+                warnings = warnings,
+                mitigationStrategies = mitigationStrategies,
+                businessImpact = prediction.FailureProbability > 0.7 ? "HIGH - Service disruption likely" : 
+                                 prediction.FailureProbability > 0.4 ? "MEDIUM - Reduced performance expected" : "LOW - Minimal operational impact",
+                costImpact = equipmentAge > 10 ? "HIGH - Major repairs or replacement needed" : 
+                             prediction.FailureProbability > 0.6 ? "MEDIUM - Significant maintenance required" : "LOW - Routine maintenance only"
+            };
+        }
+
+        private string CalculateDataQuality(Equipment equipment, int maintenanceRecords, int alertRecords)
+        {
+            var score = 0;
+            if (equipment.InstallationDate.HasValue) score += 20;
+            if (!string.IsNullOrEmpty(equipment.Building?.BuildingName)) score += 20;
+            if (!string.IsNullOrEmpty(equipment.Room?.RoomName)) score += 20;
+            if (maintenanceRecords > 0) score += 20;
+            if (alertRecords > 0) score += 10;
+            if (equipment.EquipmentModel?.ModelName != null) score += 10;
+
+            return score switch
+            {
+                >= 90 => "Excellent",
+                >= 70 => "Good",
+                >= 50 => "Fair",
+                _ => "Limited"
+            };
+        }
+
+        private double CalculateAverageAge(List<Equipment> equipment)
+        {
+            var currentDate = DateTime.Now;
+            var validInstallDates = equipment
+                .Where(e => e.InstallationDate.HasValue)
+                .Select(e => (currentDate - e.InstallationDate.Value).TotalDays / 365.25)
+                .ToList();
+
+            return validInstallDates.Any() ? validInstallDates.Average() : 0;
+        }
+
+        private List<string> GetCommonLocations(List<Equipment> equipment)
+        {
+            return equipment
+                .Where(e => e.Building != null)
+                .GroupBy(e => $"{e.Building.BuildingName} - {e.Room?.RoomName ?? "Unknown Room"}")
+                .OrderByDescending(g => g.Count())
+                .Take(3)
+                .Select(g => $"{g.Key} ({g.Count()} units)")
+                .ToList();
+        }
+
+        private async Task<List<object>> GenerateModelBasedRecommendations(EquipmentModel equipmentModel, 
+            List<Equipment> similarEquipment, PredictionResult prediction)
+        {
+            var recommendations = new List<object>();
+
+            // Model-specific recommendations
+            if (prediction.RiskLevel == "High" || prediction.RiskLevel == "Critical")
+            {
+                recommendations.Add(new
+                {
+                    category = "Immediate Action",
+                    description = $"Schedule immediate inspection for all {equipmentModel.ModelName} units",
+                    priority = "IMMEDIATE",
+                    icon = "bi-exclamation-triangle-fill",
+                    affectedUnits = similarEquipment.Count,
+                    estimatedCost = similarEquipment.Count * 150
+                });
+            }
+
+            // Age-based recommendations
+            var averageAge = CalculateAverageAge(similarEquipment);
+            if (averageAge > 5)
+            {
+                recommendations.Add(new
+                {
+                    category = "Lifecycle Management",
+                    description = $"Consider replacement planning for {equipmentModel.ModelName} (avg. age: {averageAge:F1} years)",
+                    priority = "HIGH",
+                    icon = "bi-arrow-repeat",
+                    affectedUnits = similarEquipment.Count,
+                    estimatedCost = similarEquipment.Count * 2500
+                });
+            }
+
+            // Preventive maintenance recommendation
+            recommendations.Add(new
+            {
+                category = "Preventive Maintenance",
+                description = $"Implement standardized maintenance schedule for {equipmentModel.ModelName}",
+                priority = "MEDIUM",
+                icon = "bi-calendar-check",
+                affectedUnits = similarEquipment.Count,
+                estimatedCost = similarEquipment.Count * 75
+            });
+
+            return recommendations;
+        }
+
+        private async Task<List<string>> GenerateModelRiskFactors(EquipmentModel equipmentModel, 
+            List<Equipment> similarEquipment, PredictionResult prediction)
+        {
+            var riskFactors = new List<string>();
+
+            // Age-based risk
+            var averageAge = CalculateAverageAge(similarEquipment);
+            if (averageAge > 3)
+            {
+                riskFactors.Add($"Model age: Average {averageAge:F1} years across {similarEquipment.Count} units");
+            }
+
+            // Usage distribution risk
+            var locationCount = similarEquipment.Select(e => e.Building?.BuildingName).Distinct().Count();
+            if (locationCount > 3)
+            {
+                riskFactors.Add($"Wide distribution: Equipment spread across {locationCount} different buildings");
+            }
+
+            // Model-specific risk
+            if (equipmentModel.ModelName.ToLower().Contains("projector"))
+            {
+                riskFactors.Add("High-usage component: Projector lamps have limited lifespan");
+                riskFactors.Add("Environmental sensitivity: Performance affected by dust and temperature");
+            }
+            else if (equipmentModel.ModelName.ToLower().Contains("ac") || equipmentModel.ModelName.ToLower().Contains("air"))
+            {
+                riskFactors.Add("Filter maintenance critical: Regular filter replacement required");
+                riskFactors.Add("Seasonal usage patterns: Higher failure risk during peak seasons");
+            }
+
+            // Default model risk
+            riskFactors.Add($"Model consistency: {similarEquipment.Count} units of same model share common failure patterns");
+
+            return riskFactors;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSmartRecommendations()
+        {
+            try
+            {
+                var recommendations = await _aiInsightService.GetSmartRecommendationsAsync();
+                return Json(new { success = true, recommendations = recommendations });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting smart recommendations");
+                return Json(new { success = false, error = "Error getting recommendations" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPredictiveTrends()
+        {
+            try
+            {
+                var trends = await _aiInsightService.GetPredictiveTrendsAsync();
+                return Json(new { success = true, trends = trends });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting predictive trends");
+                return Json(new { success = false, error = "Error getting trends" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExplainRiskFactors(int equipmentId)
+        {
+            try
+            {
+                var equipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .FirstOrDefaultAsync(e => e.EquipmentId == equipmentId);
+
+                if (equipment == null)
+                {
+                    return Json(new { success = false, error = "Equipment not found" });
+                }
+
+                var predictionData = EquipmentPredictionData.FromEquipment(equipment);
+                var prediction = await _predictionService.PredictEquipmentFailureAsync(predictionData);
+
+                if (prediction.Success)
+                {
+                    var explanation = await _aiInsightService.ExplainRiskFactorsAsync(equipmentId, prediction);
+                    return Json(new { success = true, explanation = explanation });
+                }
+
+                return Json(new { success = false, error = "Failed to generate explanation" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error explaining risk factors for equipment {EquipmentId}", equipmentId);
+                return Json(new { success = false, error = "Error generating explanation" });
+            }
+        }
+
+        private async Task<MLDashboardViewModel> CreateMLDashboardViewModel()
+        {
+            var viewModel = new MLDashboardViewModel();
+
+            try
+            {
+                _logger.LogInformation("🤖 Starting MLDashboard ViewModel creation with REAL ML predictions");
+
+                // Get model info from the REAL ML API
+                var modelInfo = await _predictionService.GetModelInfoAsync();
+                viewModel.ModelVersion = modelInfo.ModelVersion;
+                viewModel.ModelAccuracy = modelInfo.Accuracy;
+                viewModel.ApiHealthy = await _predictionService.IsApiHealthyAsync();
+
+                _logger.LogInformation($"✅ Model Info Retrieved - Version: {modelInfo.ModelVersion}, Accuracy: {modelInfo.Accuracy:P2}, API Healthy: {viewModel.ApiHealthy}");
+
+                // Get all active equipment for real-time analysis
+                var allActiveEquipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .Include(e => e.Building)
+                    .Include(e => e.Room)
+                    .Where(e => e.Status == EquipmentStatus.Active)
+                    .ToListAsync();
+
+                viewModel.TotalEquipmentAnalyzed = allActiveEquipment.Count;
+
+                _logger.LogInformation($"📊 Found {allActiveEquipment.Count} active equipment items for analysis");
+
+                // Make REAL predictions for all equipment using the trained model
+                var realTimePredictions = new List<EquipmentWithMLPrediction>();
+                var riskCounts = new Dictionary<string, int> { ["Critical"] = 0, ["High"] = 0, ["Medium"] = 0, ["Low"] = 0 };
+                var totalFailureProbability = 0.0;
+                var totalConfidence = 0.0;
+                var successfulPredictions = 0;
+
+                foreach (var equipment in allActiveEquipment.Take(56)) // Analyze up to 56 equipment items
+                {
+                    try
+                    {
+                        var predictionData = EquipmentPredictionData.FromEquipment(equipment);
+                        var prediction = await _predictionService.PredictEquipmentFailureAsync(predictionData);
+                        
+                        if (prediction != null && prediction.Success)
+                        {
+                            var equipmentWithPrediction = new EquipmentWithMLPrediction
+                            {
+                                Equipment = equipment,
+                                Prediction = prediction
+                            };
+
+                            realTimePredictions.Add(equipmentWithPrediction);
+
+                            // Update risk counts
+                            if (riskCounts.ContainsKey(prediction.RiskLevel))
+                            {
+                                riskCounts[prediction.RiskLevel]++;
+                            }
+
+                            // Accumulate metrics
+                            totalFailureProbability += prediction.FailureProbability;
+                            totalConfidence += prediction.ConfidenceScore;
+                            successfulPredictions++;
+
+                            _logger.LogDebug($"✅ Prediction for Equipment {equipment.EquipmentId}: {prediction.RiskLevel} risk, {prediction.FailureProbability:P2} probability");
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"⚠️ Failed prediction for Equipment {equipment.EquipmentId}: {prediction?.ErrorMessage}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"❌ Error making prediction for Equipment {equipment.EquipmentId}");
+                    }
+                }
+
+                _logger.LogInformation($"🎯 Completed {successfulPredictions} successful real-time predictions");
+
+                // Set risk distribution from REAL predictions
+                viewModel.HighRiskEquipment = riskCounts["Critical"] + riskCounts["High"];
+                viewModel.MediumRiskEquipment = riskCounts["Medium"];
+                viewModel.LowRiskEquipment = riskCounts["Low"];
+
+                // Calculate real metrics from live predictions
+                if (successfulPredictions > 0)
+                {
+                    viewModel.AverageFailureProbability = totalFailureProbability / successfulPredictions;
+                    viewModel.AverageConfidence = (totalConfidence / successfulPredictions) * 100; // Convert to percentage
+                }
+                else
+                {
+                    viewModel.AverageFailureProbability = 0.0;
+                    viewModel.AverageConfidence = 0.0;
+                }
+
+                // Get high-risk equipment (Critical and High risk) from REAL predictions
+                viewModel.HighRiskEquipmentList = realTimePredictions
+                    .Where(p => p.Prediction?.RiskLevel == "Critical" || p.Prediction?.RiskLevel == "High")
+                    .OrderByDescending(p => p.Prediction?.FailureProbability ?? 0)
+                    .Take(10)
+                    .ToList();
+
+                // Set additional properties for the dashboard
+                viewModel.ModelStatus = viewModel.ApiHealthy ? "Healthy" : "Offline";
+                viewModel.LastPredictionUpdate = DateTime.Now;
+                viewModel.CriticalPredictionsCount = riskCounts["Critical"] + riskCounts["High"];
+
+                // Create risk level distribution dictionary
+                viewModel.RiskLevelDistribution = new Dictionary<string, int>
+                {
+                    ["Critical"] = riskCounts["Critical"],
+                    ["High"] = riskCounts["High"], 
+                    ["Medium"] = riskCounts["Medium"],
+                    ["Low"] = riskCounts["Low"]
+                };
+
+                // Get recent predictions from database for trend analysis with no navigation properties
+                var recentPredictions = await _context.FailurePredictions
+                    .OrderByDescending(fp => fp.CreatedDate)
+                    .Take(10)
+                    .Select(fp => new
+                    {
+                        PredictionId = fp.PredictionId,
+                        EquipmentId = fp.EquipmentId,
+                        PredictedFailureDate = fp.PredictedFailureDate,
+                        ConfidenceLevel = fp.ConfidenceLevel,
+                        Status = fp.Status,
+                        CreatedDate = fp.CreatedDate,
+                        AnalysisNotes = fp.AnalysisNotes,
+                        ContributingFactors = fp.ContributingFactors
+                    })
+                    .ToListAsync();
+
+                viewModel.RecentPredictions = new List<FailurePrediction>(); // Set to empty to avoid circular reference
+
+                // Add trend data for charts
+                viewModel.FailureProbabilityTrend.Add(new ViewModels.ChartDataPoint 
+                { 
+                    Label = "Real-Time", 
+                    Value = viewModel.AverageFailureProbability 
+                });
+
+                _logger.LogInformation($"🎯 ML Dashboard Summary - Total: {viewModel.TotalEquipmentAnalyzed}, High Risk: {viewModel.HighRiskEquipment}, Medium: {viewModel.MediumRiskEquipment}, Low: {viewModel.LowRiskEquipment}");
+                _logger.LogInformation($"📈 Avg Failure Probability: {viewModel.AverageFailureProbability:P2}, Avg Confidence: {viewModel.AverageConfidence:F1}%");
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error creating ML dashboard view model with real predictions");
+                
+                // Fallback to basic data if ML predictions fail
+                viewModel.TotalEquipmentAnalyzed = await _context.Equipment.CountAsync(e => e.Status == EquipmentStatus.Active);
+                viewModel.ModelStatus = "Error";
+                viewModel.ApiHealthy = false;
+            }
+
+            return viewModel;
+        }
+        
+        private async Task<int?> FindSimilarEquipmentId(int requestedId)
+        {
+            // Strategy 1: Find equipment with similar ID patterns (e.g., 112 -> find 111, 113, 110, etc.)
+            var similarIds = new List<int>();
+            
+            // Generate similar IDs within +/- 10 range
+            for (int offset = 1; offset <= 10; offset++)
+            {
+                similarIds.Add(requestedId - offset);
+                similarIds.Add(requestedId + offset);
+            }
+            
+            // Find the first existing equipment ID from our similar list
+            var foundEquipmentId = await _context.Equipment
+                .Where(e => similarIds.Contains(e.EquipmentId) && e.EquipmentModel != null)
+                .Select(e => e.EquipmentId)
+                .FirstOrDefaultAsync();
+                
+            if (foundEquipmentId != 0)
+            {
+                return foundEquipmentId;
+            }
+            
+            // Strategy 2: Find equipment from same ID range (e.g., 112 -> find equipment in 100-199 range)
+            var rangeStart = (requestedId / 100) * 100; // e.g., 112 -> 100, 205 -> 200
+            var rangeEnd = rangeStart + 99;
+            
+            var rangeEquipmentId = await _context.Equipment
+                .Where(e => e.EquipmentId >= rangeStart && e.EquipmentId <= rangeEnd && e.EquipmentModel != null)
+                .Select(e => e.EquipmentId)
+                .FirstOrDefaultAsync();
+                
+            return rangeEquipmentId == 0 ? null : rangeEquipmentId;
+        }
+    }
+}

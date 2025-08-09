@@ -15,35 +15,61 @@ namespace FEENALOoFINALE.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Wait 6 minutes before first run to reduce startup load
-            await Task.Delay(TimeSpan.FromMinutes(6), stoppingToken);
-
-            while (!stoppingToken.IsCancellationRequested)
+            _logger.LogInformation("Maintenance Scheduling Background Service started");
+            
+            try
             {
-                try
-                {
-                    _logger.LogInformation("Maintenance scheduling background service running at: {time}", DateTimeOffset.Now);
+                // Wait 1 minute before first run to reduce startup load
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
 
-                    using (var scope = _serviceProvider.CreateScope())
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    try
                     {
-                        var schedulingService = scope.ServiceProvider.GetRequiredService<MaintenanceSchedulingService>();
-                        
-                        var tasksCreated = await schedulingService.ScheduleRoutineMaintenanceAsync();
-                        
-                        if (tasksCreated > 0)
+                        _logger.LogInformation("Maintenance scheduling background service running at: {time}", DateTimeOffset.Now);
+
+                        using (var scope = _serviceProvider.CreateScope())
                         {
-                            _logger.LogInformation("Created {count} new maintenance tasks", tasksCreated);
+                            var schedulingService = scope.ServiceProvider.GetRequiredService<MaintenanceSchedulingService>();
+                            
+                            var tasksCreated = await schedulingService.ScheduleRoutineMaintenanceAsync();
+                            
+                            if (tasksCreated > 0)
+                            {
+                                _logger.LogInformation("Created {count} new maintenance tasks", tasksCreated);
+                            }
+                        }
+
+                        // Run every 6 hours
+                        await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Expected when cancellation is requested
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error occurred executing maintenance scheduling background service");
+                        try
+                        {
+                            // Wait 1 hour before retry on error
+                            await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred executing maintenance scheduling background service");
-                }
-
-                // Run every 6 hours
-                await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
             }
+            catch (OperationCanceledException)
+            {
+                // Expected when cancellation is requested during startup delay
+                _logger.LogInformation("Maintenance Scheduling Service cancelled during startup");
+            }
+            
+            _logger.LogInformation("Maintenance Scheduling Background Service stopped");
         }
     }
 }

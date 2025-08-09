@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Azure;
+using Azure.Core;
+using Azure.AI.FormRecognizer.DocumentAnalysis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +60,57 @@ builder.Services.AddScoped<IPdfTimetableExtractionService, PdfTimetableExtractio
 
 // Register document processing service
 builder.Services.AddScoped<IDocumentProcessingService, DocumentProcessingService>();
+
+// Register Azure Form Recognizer DocumentAnalysis client (with fallback to stub service)
+builder.Services.AddSingleton<DocumentAnalysisClient?>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var endpoint = config["FormRecognizer:Endpoint"];
+    var apiKey = config["FormRecognizer:ApiKey"];
+    
+    // Check if configuration is properly set
+    if (string.IsNullOrEmpty(endpoint) || string.IsNullOrEmpty(apiKey) ||
+        endpoint.Contains("<your-formrecognizer-resource>") || 
+        apiKey.Contains("<your-formrecognizer-api-key>"))
+    {
+        return null; // Return null when not configured
+    }
+    
+    try
+    {
+        return new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
+    }
+    catch
+    {
+        return null; // Return null if configuration is invalid
+    }
+});
+
+// Register FormRecognizerService with fallback to stub
+builder.Services.AddScoped<IFormRecognizerService>(sp =>
+{
+    var client = sp.GetService<DocumentAnalysisClient?>();
+    if (client == null)
+    {
+        return new StubFormRecognizerService();
+    }
+    return new FormRecognizerService(client);
+});
+
+// Register ML Prediction Service
+builder.Services.AddHttpClient<IEquipmentPredictionService, EquipmentPredictionService>();
+
+// Register Prediction Metrics Service for ML monitoring
+builder.Services.AddSingleton<PredictionMetricsService>();
+
+// Register Model Interpretability Service
+builder.Services.AddScoped<IModelInterpretabilityService, ModelInterpretabilityService>();
+
+// Register AI Insight Service for enhanced ML analysis
+builder.Services.AddScoped<IEquipmentAIInsightService, EquipmentAIInsightService>();
+
+// Enhanced Equipment Tracking Service - NEW
+builder.Services.AddScoped<EnhancedEquipmentTrackingService>();
 
 // Authentication is handled by ASP.NET Core Identity with cookie authentication
 

@@ -12,6 +12,21 @@
 
 @await Html.PartialAsync("_Breadcrumb", breadcrumbs)
 
+@* Model Interpretability Notice *@
+@if (Context.Request.Query.ContainsKey("modelInterpretability"))
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">🧠 Model Interpretability Integration</h4>
+        <p><strong>Model Interpretability is now integrated with Equipment Management!</strong></p>
+        <hr>
+        <p class="mb-0">
+            Look for the <span class="badge badge-info">🧠 AI Analysis</span> button next to equipment that has predictive data available.
+            This connects to the 5000+ equipment dataset and predictive model in the "Predictive Model" folder.
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -24,6 +39,14 @@
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["InfoMessage"] != null)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <i class="fas fa-info-circle"></i> @TempData["InfoMessage"]
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
@@ -193,6 +216,10 @@
                                         <a asp-controller="MaintenanceLog" asp-action="Create" asp-route-equipmentId="@item.EquipmentId" class="btn btn-outline-success btn-sm" title="Schedule Maintenance">
                                             <i class="bi bi-plus"></i>
                                         </a>
+                                        @* Model Interpretability Integration *@
+                                        <button class="btn btn-outline-info btn-sm" onclick="analyzeEquipment(@item.EquipmentId)" title="AI Model Analysis - Predictive Model Integration">
+                                            <i class="bi bi-brain"></i>
+                                        </button>
                                         <a asp-action="Delete" asp-route-id="@item.EquipmentId" class="btn btn-outline-danger btn-sm" title="Delete">
                                             <i class="bi bi-trash"></i>
                                         </a>
@@ -293,5 +320,187 @@
                 // $('#filterForm').submit();
             });
         });
+        
+        // Model Interpretability Analysis Function
+        function analyzeEquipment(equipmentId) {
+            // Show loading modal
+            const modal = `
+                <div class="modal fade" id="analysisModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-brain"></i> AI Model Interpretability Analysis
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="analysisContent">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-info" role="status">
+                                            <span class="visually-hidden">Analyzing...</span>
+                                        </div>
+                                        <p class="mt-3">Analyzing equipment with AI predictive model...</p>
+                                        <small class="text-muted">Connecting to Predictive Model folder dataset</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <a href="/ModelInterpretability/EquipmentAnalysis/${equipmentId}" class="btn btn-info" target="_blank">
+                                    Open Full Analysis
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            $('#analysisModal').remove();
+            
+            // Add modal to page
+            $('body').append(modal);
+            
+            // Show modal
+            $('#analysisModal').modal('show');
+            
+            // Call the Equipment controller's GetEquipmentExplanation API
+            $.ajax({
+                url: `/Equipment/GetEquipmentExplanation/${equipmentId}`,
+                type: 'POST',
+                success: function(data) {
+                    if (data.isSuccessful) {
+                        displayAnalysisResults(data);
+                    } else {
+                        showAnalysisError(data.errorMessage || 'Analysis failed');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showAnalysisError('Unable to connect to AI model. Please ensure the Predictive Model service is running.');
+                }
+            });
+        }
+        
+        function displayAnalysisResults(data) {
+            const html = `
+                <div class="alert alert-success">
+                    <h6><i class="bi bi-check-circle"></i> Analysis Complete</h6>
+                    <p class="mb-0">Equipment analyzed using 5000+ dataset from Predictive Model folder</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-header">Risk Assessment</div>
+                            <div class="card-body">
+                                <h5>Equipment: ${data.equipmentName || 'Equipment #' + data.equipmentId}</h5>
+                                <p><strong>Failure Probability:</strong> <span class="badge bg-${getRiskBadgeClass(data.failureProbability)}">${(data.failureProbability * 100).toFixed(1)}%</span></p>
+                                <p><strong>Risk Level:</strong> <span class="badge bg-${getRiskLevelBadgeClass(data.riskLevel)}">${data.riskLevel}</span></p>
+                                <p><strong>Recommendation:</strong></p>
+                                <p class="text-muted">${data.recommendation}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card border-info">
+                            <div class="card-header">Key Factors</div>
+                            <div class="card-body">
+                                ${displayTopFactors(data.shapValues)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="card border-success">
+                        <div class="card-header">Business Interpretation</div>
+                        <div class="card-body">
+                            ${displayBusinessInterpretation(data.businessInterpretation)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#analysisContent').html(html);
+        }
+        
+        function showAnalysisError(message) {
+            const html = `
+                <div class="alert alert-warning">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Analysis Unavailable</h6>
+                    <p>${message}</p>
+                    <hr>
+                    <p class="mb-0"><strong>Note:</strong> Model Interpretability requires the Predictive Model service to be running. 
+                    The AI analysis connects to the 5000+ equipment dataset in the "Predictive Model" folder.</p>
+                </div>
+            `;
+            
+            $('#analysisContent').html(html);
+        }
+        
+        function displayTopFactors(shapValues) {
+            if (!shapValues || shapValues.length === 0) {
+                return '<p class="text-muted">No feature importance data available.</p>';
+            }
+            
+            let html = '<ul class="list-group list-group-flush">';
+            shapValues.slice(0, 5).forEach(function(factor) {
+                const impact = factor.value > 0 ? 'Increases Risk' : 'Decreases Risk';
+                const badgeClass = factor.value > 0 ? 'bg-danger' : 'bg-success';
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${factor.feature}</strong><br>
+                            <small class="text-muted">${impact}</small>
+                        </div>
+                        <span class="badge ${badgeClass}">${factor.value > 0 ? '+' : ''}${factor.value.toFixed(3)}</span>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            return html;
+        }
+        
+        function displayBusinessInterpretation(interpretation) {
+            if (!interpretation) {
+                return '<p class="text-muted">Business interpretation not available.</p>';
+            }
+            
+            let html = '';
+            if (interpretation.primaryConcerns && interpretation.primaryConcerns.length > 0) {
+                html += '<h6>Primary Concerns:</h6><ul>';
+                interpretation.primaryConcerns.forEach(function(concern) {
+                    html += `<li>${concern}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            if (interpretation.recommendations && interpretation.recommendations.length > 0) {
+                html += '<h6>Recommended Actions:</h6><ul>';
+                interpretation.recommendations.forEach(function(rec) {
+                    html += `<li>${rec}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            return html || '<p class="text-muted">Business interpretation not available.</p>';
+        }
+        
+        function getRiskBadgeClass(probability) {
+            if (probability >= 0.7) return 'danger';
+            if (probability >= 0.4) return 'warning';
+            return 'success';
+        }
+        
+        function getRiskLevelBadgeClass(riskLevel) {
+            switch(riskLevel?.toLowerCase()) {
+                case 'high': return 'danger';
+                case 'medium': return 'warning';
+                case 'low': return 'success';
+                default: return 'secondary';
+            }
+        }
     </script>
 }

@@ -27,22 +27,45 @@ namespace FEENALOoFINALE.Services
         {
             _logger.LogInformation("Scheduled Maintenance Service started");
 
-            // Wait 4 minutes before first check to reduce startup load
-            await Task.Delay(TimeSpan.FromMinutes(4), stoppingToken);
-
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
+                // Wait 4 minutes before first check to reduce startup load
+                await Task.Delay(TimeSpan.FromMinutes(4), stoppingToken);
+
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    await ProcessScheduledMaintenance();
-                    await Task.Delay(_checkPeriod, stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred during scheduled maintenance processing");
-                    await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken); // Wait 30 minutes before retry
+                    try
+                    {
+                        await ProcessScheduledMaintenance();
+                        await Task.Delay(_checkPeriod, stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Service is being stopped, this is expected
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error occurred during scheduled maintenance processing");
+                        try
+                        {
+                            await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken); // Wait 30 minutes before retry
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // Service is being stopped during retry wait
+                            break;
+                        }
+                    }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // Service is being stopped during initialization
+                _logger.LogInformation("Scheduled Maintenance Service stopped during initialization");
+            }
+
+            _logger.LogInformation("Scheduled Maintenance Service stopped");
         }
 
         private async Task ProcessScheduledMaintenance()
@@ -64,18 +87,22 @@ namespace FEENALOoFINALE.Services
                 .Where(e => e.Status == EquipmentStatus.Active)
                 .ToListAsync();
 
+            // Batch query to check for pending tasks for all equipment at once
+            var equipmentIds = equipment.Select(e => e.EquipmentId).ToList();
+            var equipmentWithPendingTasks = await dbContext.MaintenanceTasks
+                .Where(mt => equipmentIds.Contains(mt.EquipmentId) && mt.Status == MaintenanceStatus.Pending)
+                .Select(mt => mt.EquipmentId)
+                .Distinct()
+                .ToHashSetAsync();
+
             var newTasks = new List<MaintenanceTask>();
 
             foreach (var item in equipment)
             {
                 try
                 {
-                    var pendingTasks = await dbContext.MaintenanceTasks
-                        .Where(mt => mt.EquipmentId == item.EquipmentId && mt.Status == MaintenanceStatus.Pending)
-                        .ToListAsync();
-
                     // Don't create new tasks if there are already pending ones
-                    if (pendingTasks.Any()) continue;
+                    if (equipmentWithPendingTasks.Contains(item.EquipmentId)) continue;
 
                     var lastMaintenance = item.MaintenanceLogs?
                         .OrderByDescending(ml => ml.LogDate)
@@ -191,16 +218,23 @@ namespace FEENALOoFINALE.Services
                 .Where(e => e.Status == EquipmentStatus.Active)
                 .ToListAsync();
 
+            // Batch query to get future task counts for all equipment at once
+            var equipmentIds = equipment.Select(e => e.EquipmentId).ToList();
+            var futureTasksCounts = await dbContext.MaintenanceTasks
+                .Where(mt => equipmentIds.Contains(mt.EquipmentId) &&
+                            mt.ScheduledDate > DateTime.Now && 
+                            mt.ScheduledDate <= DateTime.Now.AddDays(90) && 
+                            mt.Status == MaintenanceStatus.Pending)
+                .GroupBy(mt => mt.EquipmentId)
+                .Select(g => new { EquipmentId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.EquipmentId, x => x.Count);
+
             var newScheduledTasks = new List<MaintenanceTask>();
 
             foreach (var item in equipment)
             {
-                // Check if we have scheduled tasks for the next 3 months
-                var futureTasksCount = await dbContext.MaintenanceTasks
-                    .CountAsync(mt => mt.EquipmentId == item.EquipmentId &&
-                                     mt.ScheduledDate > DateTime.Now && 
-                                     mt.ScheduledDate <= DateTime.Now.AddDays(90) && 
-                                     mt.Status == MaintenanceStatus.Pending);
+                // Get the count from the batch query result (0 if no entry exists)
+                var futureTasksCount = futureTasksCounts.GetValueOrDefault(item.EquipmentId, 0);
 
                 if (futureTasksCount < 2) // Ensure at least 2 tasks scheduled in the next 3 months
                 {

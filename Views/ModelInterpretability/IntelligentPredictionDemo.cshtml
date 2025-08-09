@@ -1,0 +1,448 @@
+@model List<FEENALOoFINALE.Models.Equipment>
+@{
+    ViewData["Title"] = "Intelligent Prediction System Demo";
+}
+
+<div class="container-fluid">
+    <!-- Demo Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-1">
+                                <i class="fas fa-brain me-2"></i>
+                                Intelligent Prediction System Demo
+                            </h2>
+                            <p class="mb-0">Experience the power of AI-driven equipment failure prediction with automatic maintenance scheduling</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <img src="https://via.placeholder.com/120x80/ffffff/007bff?text=AI+Brain" class="img-fluid rounded" alt="AI Brain">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Highlights -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>
+                        System Capabilities
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach (var feature in ViewBag.Features as List<string>)
+                        {
+                            <div class="col-lg-6 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-3"></i>
+                                    <span>@feature</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Equipment Selection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-play me-2"></i>
+                        Try the Intelligent Prediction System
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Select equipment below to see the complete AI-powered analysis in action:</p>
+                    
+                    @if (Model.Any())
+                    {
+                        <div class="row">
+                            @foreach (var equipment in Model)
+                            {
+                                <div class="col-lg-4 col-md-6 mb-3">
+                                    <div class="card border-primary h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title text-primary mb-0">
+                                                    @equipment.EquipmentType?.EquipmentTypeName
+                                                </h6>
+                                                <span class="badge bg-primary">#@equipment.EquipmentId</span>
+                                            </div>
+                                            
+                                            <div class="text-muted mb-3">
+                                                <small>
+                                                    <i class="fas fa-building me-1"></i>@equipment.Building?.BuildingName<br>
+                                                    <i class="fas fa-door-open me-1"></i>@equipment.Room?.RoomName<br>
+                                                    <i class="fas fa-cogs me-1"></i>@equipment.EquipmentModel?.ModelName
+                                                </small>
+                                            </div>
+                                            
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        onclick="runEnhancedPrediction(@equipment.EquipmentId, '@equipment.EquipmentType?.EquipmentTypeName')">
+                                                    <i class="fas fa-brain me-1"></i>Analyze with AI
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-circle fa-2x text-warning mb-3"></i>
+                            <h6>No Equipment Available for Demo</h6>
+                            <p class="text-muted">Please ensure there is equipment data in the system to run the demo.</p>
+                            <a href="@Url.Action("Index", "Equipment")" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add Equipment
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        How the Intelligent System Works
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 text-center mb-4">
+                            <div class="card border-0 h-100">
+                                <div class="card-body">
+                                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                         style="width: 60px; height: 60px;">
+                                        <i class="fas fa-database fa-lg"></i>
+                                    </div>
+                                    <h6 class="text-primary">1. Data Collection</h6>
+                                    <p class="small text-muted">Gathers equipment features: age, temperature, vibration, power consumption, location, and usage patterns</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6 text-center mb-4">
+                            <div class="card border-0 h-100">
+                                <div class="card-body">
+                                    <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                         style="width: 60px; height: 60px;">
+                                        <i class="fas fa-brain fa-lg"></i>
+                                    </div>
+                                    <h6 class="text-info">2. AI Analysis</h6>
+                                    <p class="small text-muted">Random Forest ML model analyzes patterns and predicts failure probability with 91% accuracy</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6 text-center mb-4">
+                            <div class="card border-0 h-100">
+                                <div class="card-body">
+                                    <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                         style="width: 60px; height: 60px;">
+                                        <i class="fas fa-search fa-lg"></i>
+                                    </div>
+                                    <h6 class="text-warning">3. Cause Analysis</h6>
+                                    <p class="small text-muted">Identifies potential failure causes based on equipment type, age, operating conditions, and maintenance history</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6 text-center mb-4">
+                            <div class="card border-0 h-100">
+                                <div class="card-body">
+                                    <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                         style="width: 60px; height: 60px;">
+                                        <i class="fas fa-calendar-check fa-lg"></i>
+                                    </div>
+                                    <h6 class="text-success">4. Auto-Scheduling</h6>
+                                    <p class="small text-muted">Automatically schedules maintenance 5-7 days before predicted failure, assigns technicians, and sends notifications</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benefits Section -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-primary h-100">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Key Benefits
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-arrow-up text-success me-2"></i>
+                            <strong>Reduces Equipment Downtime</strong><br>
+                            <small class="text-muted">Predictive maintenance prevents unexpected failures</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-dollar-sign text-success me-2"></i>
+                            <strong>Lowers Maintenance Costs</strong><br>
+                            <small class="text-muted">Optimal scheduling reduces emergency repairs</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-shield-alt text-success me-2"></i>
+                            <strong>Improves Equipment Lifespan</strong><br>
+                            <small class="text-muted">Proactive care extends equipment life</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-users text-success me-2"></i>
+                            <strong>Optimizes Technician Workload</strong><br>
+                            <small class="text-muted">Intelligent task assignment and scheduling</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card border-info h-100">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Technical Specifications
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-microchip text-primary me-2"></i>
+                            <strong>Random Forest ML Model</strong><br>
+                            <small class="text-muted">91% accuracy with 8 key features</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-primary me-2"></i>
+                            <strong>Real-time Processing</strong><br>
+                            <small class="text-muted">Instant predictions and scheduling</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-bell text-primary me-2"></i>
+                            <strong>Live Notifications</strong><br>
+                            <small class="text-muted">SignalR-powered real-time alerts</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-sync text-primary me-2"></i>
+                            <strong>Integrated Workflow</strong><br>
+                            <small class="text-muted">Seamless integration with existing systems</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Output Preview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>
+                        Sample Prediction Output Preview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <h6 class="text-primary">Equipment Analysis</h6>
+                            <div class="bg-light p-3 rounded">
+                                <p><strong>Equipment:</strong> Projector - Model XYZ123</p>
+                                <p><strong>Location:</strong> Main Building - Room 101</p>
+                                <p><strong>Risk Level:</strong> <span class="badge bg-warning">High (75%)</span></p>
+                                <p><strong>Confidence:</strong> 89%</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <h6 class="text-warning">Potential Causes</h6>
+                            <div class="bg-light p-3 rounded">
+                                <ul class="small mb-0">
+                                    <li>High operating temperature (68°C)</li>
+                                    <li>Equipment age (4.2 years)</li>
+                                    <li>Elevated power consumption</li>
+                                    <li>Cooling system inefficiency detected</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <h6 class="text-success">Maintenance Plan</h6>
+                            <div class="bg-light p-3 rounded">
+                                <p><strong>Recommended Date:</strong> Dec 15, 2024</p>
+                                <p><strong>Priority:</strong> <span class="badge bg-warning">High</span></p>
+                                <p><strong>Type:</strong> Emergency Preventive</p>
+                                <p><strong>Buffer:</strong> 5 days before failure</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Interpretability
+                    </a>
+                    <a href="@Url.Action("MaintenanceDashboard")" class="btn btn-outline-primary ms-2">
+                        <i class="fas fa-tachometer-alt me-2"></i>View Dashboard
+                    </a>
+                </div>
+                <div>
+                    <button class="btn btn-success" onclick="runFullDemo()">
+                        <i class="fas fa-play me-2"></i>Run Full System Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="demoLoadingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h6 class="modal-title">
+                    <i class="fas fa-brain me-2 text-primary"></i>
+                    AI Analysis in Progress
+                </h6>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h6 id="analysisStep">Initializing AI model...</h6>
+                <div class="progress mt-3">
+                    <div id="analysisProgress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <p class="text-muted mt-2 mb-0">
+                    <small id="analysisDescription">Collecting equipment data and sensor readings...</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function runEnhancedPrediction(equipmentId, equipmentType) {
+        // Show loading modal with realistic progress steps
+        $('#demoLoadingModal').modal('show');
+        
+        const steps = [
+            { step: "Collecting equipment data...", description: "Gathering " + equipmentType + " specifications and history", progress: 20 },
+            { step: "Analyzing sensor readings...", description: "Processing temperature, vibration, and power data", progress: 40 },
+            { step: "Running AI prediction model...", description: "Random Forest analysis with 91% accuracy", progress: 60 },
+            { step: "Identifying failure causes...", description: "Analyzing equipment-specific risk factors", progress: 80 },
+            { step: "Generating maintenance plan...", description: "Optimizing scheduling and technician assignment", progress: 100 }
+        ];
+
+        let currentStep = 0;
+
+        function updateProgress() {
+            if (currentStep < steps.length) {
+                const step = steps[currentStep];
+                document.getElementById('analysisStep').textContent = step.step;
+                document.getElementById('analysisDescription').textContent = step.description;
+                document.getElementById('analysisProgress').style.width = step.progress + '%';
+                document.getElementById('analysisProgress').setAttribute('aria-valuenow', step.progress);
+                
+                currentStep++;
+                setTimeout(updateProgress, 1500);
+            } else {
+                // Analysis complete - redirect to results
+                setTimeout(() => {
+                    $('#demoLoadingModal').modal('hide');
+                    window.location.href = '@Url.Action("EnhancedPrediction")?equipmentId=' + equipmentId;
+                }, 500);
+            }
+        }
+
+        // Start the progress simulation
+        setTimeout(updateProgress, 1000);
+    }
+
+    function runFullDemo() {
+        if (confirm('This will run the complete AI analysis system on all available equipment. This process may take several minutes. Continue?')) {
+            // Show loading modal
+            $('#demoLoadingModal').modal('show');
+            document.getElementById('analysisStep').textContent = 'Running Full System Demo...';
+            document.getElementById('analysisDescription').textContent = 'Analyzing all equipment with AI predictions and maintenance scheduling';
+            document.getElementById('analysisProgress').style.width = '100%';
+            
+            // Redirect to dashboard after delay
+            setTimeout(() => {
+                $('#demoLoadingModal').modal('hide');
+                window.location.href = '@Url.Action("MaintenanceDashboard")';
+            }, 4000);
+        }
+    }
+
+    // Add some interactive demonstrations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Highlight features on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate__fadeInUp');
+                }
+            });
+        });
+
+        document.querySelectorAll('.card').forEach(card => {
+            observer.observe(card);
+        });
+    });
+</script>
+
+<style>
+    .animate__fadeInUp {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+    }
+</style>

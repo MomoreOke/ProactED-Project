@@ -27,22 +27,45 @@ namespace FEENALOoFINALE.Services
         {
             _logger.LogInformation("Equipment Monitoring Service started");
 
-            // Wait 2 minutes before first monitoring to reduce startup load
-            await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
-
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
+                // Wait 2 minutes before first monitoring to reduce startup load
+                await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
+
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    await MonitorEquipment();
-                    await Task.Delay(_monitoringPeriod, stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred during equipment monitoring");
-                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Wait 1 minute before retry
+                    try
+                    {
+                        await MonitorEquipment();
+                        await Task.Delay(_monitoringPeriod, stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Service is being stopped, this is expected
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error occurred during equipment monitoring");
+                        try
+                        {
+                            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Wait 1 minute before retry
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // Service is being stopped during retry wait
+                            break;
+                        }
+                    }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // Service is being stopped during initialization
+                _logger.LogInformation("Equipment Monitoring Service stopped during initialization");
+            }
+
+            _logger.LogInformation("Equipment Monitoring Service stopped");
         }
 
         private async Task MonitorEquipment()

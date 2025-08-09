@@ -27,22 +27,45 @@ namespace FEENALOoFINALE.Services
         {
             _logger.LogInformation("Automated Alert Service started");
 
-            // Wait 2 hours before first check to avoid generating alerts on startup
-            await Task.Delay(TimeSpan.FromHours(2), stoppingToken);
-
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
+                // Wait 2 hours before first check to avoid generating alerts on startup
+                await Task.Delay(TimeSpan.FromHours(2), stoppingToken);
+
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    await CheckAndGenerateAlerts();
-                    await Task.Delay(_checkPeriod, stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred during alert generation");
-                    await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken); // Wait 2 minutes before retry
+                    try
+                    {
+                        await CheckAndGenerateAlerts();
+                        await Task.Delay(_checkPeriod, stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Service is being stopped, this is expected
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error occurred during alert generation");
+                        try
+                        {
+                            await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken); // Wait 2 minutes before retry
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // Service is being stopped during retry wait
+                            break;
+                        }
+                    }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // Service is being stopped during initialization
+                _logger.LogInformation("Automated Alert Service stopped during initialization");
+            }
+
+            _logger.LogInformation("Automated Alert Service stopped");
         }
 
         private async Task CheckAndGenerateAlerts()

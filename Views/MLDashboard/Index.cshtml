@@ -1,0 +1,459 @@
+@model FEENALOoFINALE.ViewModels.MLDashboardViewModel
+@{
+    ViewData["Title"] = "ML Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <!-- Loading Screen - Always shown initially -->
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <h2 class="mt-3">🤖 Loading ML Predictions</h2>
+            <p class="text-muted">Analyzing 62+ equipment items with trained Random Forest model...</p>
+            <p class="text-info"><strong>This may take 2-3 minutes for complete analysis</strong></p>
+            
+            <!-- DEBUG: Manual trigger button -->
+            <button id="manual-trigger" class="btn btn-warning" onclick="loadDashboardData()">🔄 Manual Load (DEBUG)</button>
+            <div id="debug-log" class="mt-3 p-2 bg-light small" style="max-height: 200px; overflow-y: auto;"></div>
+            
+            <div class="mt-4">
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                         role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="loading-progress"></div>
+                </div>
+                <small class="text-muted mt-2 d-block" id="loading-status">Initializing ML model...</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Screen - Hidden initially -->
+    <div id="error-screen" style="display: none;">
+        <div class="text-center">
+            <div class="alert alert-danger">
+                <h3>❌ Error Loading ML Dashboard</h3>
+                <p id="error-message">An error occurred while loading the ML predictions.</p>
+                <button class="btn btn-primary" onclick="loadDashboardData()">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Content - Hidden initially, shown after data loads -->
+    <div id="dashboard-content" style="display: none;">
+        <h1>🤖 ML Prediction Dashboard</h1>
+    
+        <div class="alert alert-success">
+            <h3>✅ Dashboard Data Loaded</h3>
+            
+            <div class="row" id="dashboard-metrics">
+                <!-- Metrics will be populated by JavaScript -->
+            </div>
+            
+            <div id="high-risk-equipment" class="mt-4">
+                <!-- High risk equipment table will be populated by JavaScript -->
+            </div>
+            
+            <!-- Recent Predictions Section -->
+            <div id="recent-predictions-section" class="mt-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-clock-history"></i>
+                            Recent Predictions
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <label for="prediction-filter" class="form-label me-2 mb-0">Show:</label>
+                            <select id="prediction-filter" class="form-select form-select-sm" onchange="filterPredictions()" style="width: 150px;">
+                                <option value="all">All Predictions</option>
+                                <option value="critical">Critical Only</option>
+                                <option value="high">High Risk Only</option>
+                                <option value="5">Top 5</option>
+                                <option value="10">Top 10</option>
+                                <option value="20">Top 20</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="recent-predictions-content">
+                            <!-- Recent predictions table will be populated by JavaScript -->
+                            <div class="text-center">
+                                <div class="spinner-border text-info" role="status">
+                                    <span class="visually-hidden">Loading predictions...</span>
+                                </div>
+                                <p class="text-muted mt-2">Loading recent predictions...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Insights Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightbulb-fill text-warning"></i>
+                        AI Insights & Recommendations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Quick Insights</h6>
+                            <div id="quick-insights">
+                                <div class="d-flex justify-content-center">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-success">Smart Recommendations</h6>
+                            <div id="quick-recommendations">
+                                <div class="d-flex justify-content-center">
+                                    <div class="spinner-border spinner-border-sm text-success" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Analysis Modal -->
+<div class="modal fade" id="aiAnalysisModal" tabindex="-1" aria-labelledby="aiAnalysisModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiAnalysisModalLabel">
+                    <i class="bi bi-lightbulb-fill text-warning"></i>
+                    AI Model Analysis
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="aiAnalysisContent">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading AI analysis...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="scheduleMaintenanceBtn" onclick="scheduleMaintenanceFromModal()">
+                    <i class="bi bi-calendar-plus"></i> Schedule Maintenance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function debugLog(message) {
+    console.log('[ML Dashboard]', message);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    debugLog('🚀 Page loaded - Starting dashboard immediately');
+    loadDashboardNow();
+});
+
+function loadDashboardNow() {
+    debugLog('⚡ Loading dashboard with fast method');
+    
+    // Update loading status
+    updateLoadingStatus('Connecting to ML service...', 20);
+    
+    // Make the API call immediately
+    fetch('/MLDashboard/GetDashboardData', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        debugLog('📡 Response received: ' + response.status);
+        updateLoadingStatus('Processing response...', 70);
+        return response.json();
+    })
+    .then(data => {
+        debugLog('✅ Data received successfully');
+        updateLoadingStatus('Loading dashboard...', 90);
+        
+        if (data.success) {
+            debugLog('✅ Success - showing dashboard');
+            showDashboard(data.data);
+        } else {
+            debugLog('❌ Error in data: ' + (data.error || 'Unknown error'));
+            showError('Failed to load ML predictions: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        debugLog('❌ Network error: ' + error.message);
+        showError('Network error: ' + error.message);
+    });
+}
+
+function updateLoadingStatus(message, progress) {
+    const statusElement = document.getElementById('loading-status');
+    const progressBar = document.getElementById('loading-progress');
+    
+    if (statusElement) statusElement.textContent = message;
+    if (progressBar) {
+        progressBar.style.width = progress + '%';
+        progressBar.setAttribute('aria-valuenow', progress);
+    }
+}
+
+function showDashboard(data) {
+    debugLog('🎨 Showing dashboard with data');
+    
+    // Complete progress
+    updateLoadingStatus('Dashboard loaded successfully!', 100);
+    
+    // Hide loading, show content
+    setTimeout(() => {
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('error-screen').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'block';
+        
+        // Populate the dashboard
+        populateDashboard(data);
+    }, 500);
+}
+
+function showError(errorMessage) {
+    debugLog('❌ Showing error: ' + errorMessage);
+    document.getElementById('error-message').textContent = errorMessage;
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('error-screen').style.display = 'block';
+}
+
+function loadDashboardData() {
+    debugLog('🔄 Manual reload triggered');
+    document.getElementById('loading-screen').style.display = 'block';
+    document.getElementById('error-screen').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'none';
+    loadDashboardNow();
+}
+
+function populateDashboard(data) {
+    debugLog('📊 Populating dashboard metrics');
+    
+    // Populate metrics
+    const metricsContainer = document.getElementById('dashboard-metrics');
+    metricsContainer.innerHTML = `
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Equipment</h5>
+                    <h2 class="text-primary">${data.totalEquipmentAnalyzed || 0}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">High Risk Equipment</h5>
+                    <h2 class="text-danger">${data.highRiskEquipment || 0}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Recent Predictions</h5>
+                    <h2 class="text-info">${data.recentPredictions?.length || 0}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Model Status</h5>
+                    <h2 class="text-success">${data.modelStatus || 'Unknown'}</h2>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Populate high risk equipment
+    populateHighRiskEquipment(data.highRiskEquipmentList || []);
+    
+    // Populate recent predictions
+    populateRecentPredictions(data.recentPredictions || []);
+    
+    debugLog('✅ Dashboard populated successfully');
+}
+
+function populateHighRiskEquipment(equipmentList) {
+    const container = document.getElementById('high-risk-equipment');
+    
+    if (!equipmentList || equipmentList.length === 0) {
+        container.innerHTML = '<h4>High Risk Equipment</h4><p class="text-muted">No high-risk equipment identified.</p>';
+        return;
+    }
+    
+    let tableHtml = `
+        <h4>High Risk Equipment</h4>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Risk Level</th>
+                        <th>Failure Probability</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    equipmentList.forEach(item => {
+        tableHtml += `
+            <tr>
+                <td>
+                    <strong>${item.equipmentModel || 'Unknown Model'}</strong>
+                    <br><small class="text-muted">ID: ${item.equipmentId}</small>
+                </td>
+                <td>${item.equipmentType || 'Unknown'}</td>
+                <td>
+                    <strong>${item.building || 'Unknown'}</strong>
+                    <br><small class="text-muted">${item.room || 'Unknown'}</small>
+                </td>
+                <td><span class="badge bg-danger">${item.riskLevel || 'High'}</span></td>
+                <td>
+                    <strong>${item.failureProbability ? (item.failureProbability * 100).toFixed(1) + '%' : 'N/A'}</strong>
+                    <br><small class="text-muted">Confidence: ${item.confidenceScore ? (item.confidenceScore * 100).toFixed(1) + '%' : 'N/A'}</small>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="showAIAnalysis(${item.equipmentId})">
+                        <i class="bi bi-lightbulb"></i> AI Analysis
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="scheduleMaintenance(${item.equipmentId})">
+                        <i class="bi bi-calendar-plus"></i> Schedule
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableHtml += '</tbody></table></div>';
+    container.innerHTML = tableHtml;
+}
+
+// Global variable to store all predictions for filtering
+let allPredictions = [];
+
+function populateRecentPredictions(predictions) {
+    allPredictions = predictions;
+    const container = document.getElementById('recent-predictions-content');
+    
+    if (!predictions || predictions.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="bi bi-info-circle fs-1"></i>
+                <p class="mt-2">No recent predictions available</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let tableHtml = `
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Risk Level</th>
+                        <th>Failure Probability</th>
+                        <th>Confidence</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    predictions.forEach(prediction => {
+        const riskBadgeClass = getRiskBadgeClass(prediction.riskLevel);
+        
+        tableHtml += `
+            <tr>
+                <td>
+                    <strong>${prediction.equipmentModel || 'Unknown Model'}</strong>
+                    <br><small class="text-muted">ID: ${prediction.equipmentId}</small>
+                </td>
+                <td><span class="text-primary">${prediction.equipmentType || 'Unknown'}</span></td>
+                <td>
+                    <strong>${prediction.building || 'Unknown'}</strong>
+                    <br><small class="text-muted">${prediction.room || 'Unknown'}</small>
+                </td>
+                <td>
+                    <span class="badge ${riskBadgeClass}">
+                        <i class="${prediction.riskIcon || 'fas fa-exclamation'}"></i> ${prediction.riskLevel || 'Unknown'}
+                    </span>
+                </td>
+                <td>
+                    <strong style="color: ${prediction.riskColor || '#6c757d'}">
+                        ${prediction.failureProbability ? (prediction.failureProbability * 100).toFixed(1) + '%' : 'N/A'}
+                    </strong>
+                </td>
+                <td>
+                    <span class="text-success">${prediction.confidenceScore ? (prediction.confidenceScore * 100).toFixed(1) + '%' : 'N/A'}</span>
+                </td>
+                <td>
+                    <button class="btn btn-outline-primary btn-sm" onclick="showAIAnalysis(${prediction.equipmentId})">
+                        <i class="bi bi-lightbulb"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableHtml += '</tbody></table></div>';
+    container.innerHTML = tableHtml;
+}
+
+function getRiskBadgeClass(riskLevel) {
+    switch (riskLevel?.toLowerCase()) {
+        case 'critical': return 'bg-danger';
+        case 'high': return 'bg-warning';
+        case 'medium': return 'bg-info';
+        case 'low': return 'bg-success';
+        default: return 'bg-secondary';
+    }
+}
+
+// Placeholder functions for actions
+function showAIAnalysis(equipmentId) {
+    alert(`AI Analysis for equipment ${equipmentId} - Feature coming soon!`);
+}
+
+function scheduleMaintenance(equipmentId) {
+    alert(`Schedule maintenance for equipment ${equipmentId} - Feature coming soon!`);
+}
+
+function filterPredictions() {
+    debugLog('Filter functionality not implemented yet');
+}
+
+function refreshPredictions() {
+    debugLog('🔄 Refreshing predictions');
+    loadDashboardData();
+}
+
+function exportPredictions() {
+    alert('Export functionality coming soon!');
+}
+</script>

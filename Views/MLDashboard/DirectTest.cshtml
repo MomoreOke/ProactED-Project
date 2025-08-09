@@ -1,0 +1,106 @@
+@model FEENALOoFINALE.ViewModels.MLDashboardViewModel
+@{
+    ViewData["Title"] = "ML Dashboard (Direct)";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h1>🤖 ML Prediction Dashboard (Direct Load)</h1>
+    
+    <div class="alert alert-success">
+        <h3>✅ Dashboard Data Loaded Directly</h3>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Equipment</h5>
+                        <h2 class="text-primary" id="total-equipment">Loading...</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">High Risk Equipment</h5>
+                        <h2 class="text-danger" id="high-risk-equipment">Loading...</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Model Status</h5>
+                        <h2 class="text-success" id="model-status">Loading...</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">API Status</h5>
+                        <h2 class="text-info" id="api-status">Loading...</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h4>High Risk Equipment</h4>
+            <div id="equipment-table">Loading equipment data...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load data immediately when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Loading dashboard data directly');
+    
+    fetch('/MLDashboard/GetDashboardData')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Data received:', data);
+            
+            if (data.success) {
+                // Update metrics
+                document.getElementById('total-equipment').textContent = data.data.totalEquipmentAnalyzed || 0;
+                document.getElementById('high-risk-equipment').textContent = data.data.highRiskEquipment || 0;
+                document.getElementById('model-status').textContent = data.data.modelStatus || 'Unknown';
+                document.getElementById('api-status').textContent = data.apiHealthy ? 'Healthy' : 'Offline';
+                
+                // Create equipment table
+                let tableHtml = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Equipment ID</th><th>Type</th><th>Model</th><th>Location</th><th>Risk Level</th><th>Failure Probability</th></tr></thead><tbody>';
+                
+                if (data.data.highRiskEquipmentList && data.data.highRiskEquipmentList.length > 0) {
+                    data.data.highRiskEquipmentList.forEach(item => {
+                        tableHtml += `
+                            <tr>
+                                <td>${item.equipmentId || 'N/A'}</td>
+                                <td>${item.equipmentType || 'Unknown'}</td>
+                                <td>${item.equipmentModel || 'Unknown'}</td>
+                                <td>${(item.building || 'Unknown') + ' - ' + (item.room || 'Unknown')}</td>
+                                <td><span class="badge bg-danger">${item.riskLevel || 'High'}</span></td>
+                                <td>${item.failureProbability ? (item.failureProbability * 100).toFixed(1) + '%' : 'N/A'}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tableHtml += '<tr><td colspan="6" class="text-center text-muted">No high-risk equipment data available</td></tr>';
+                }
+                
+                tableHtml += '</tbody></table></div>';
+                document.getElementById('equipment-table').innerHTML = tableHtml;
+                
+                console.log('✅ Dashboard populated successfully');
+            } else {
+                console.error('❌ API returned success=false:', data.message);
+                document.getElementById('equipment-table').innerHTML = '<div class="alert alert-danger">Error: ' + (data.message || 'Unknown error') + '</div>';
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error loading data:', error);
+            document.getElementById('equipment-table').innerHTML = '<div class="alert alert-danger">Network error: ' + error.message + '</div>';
+        });
+});
+</script>

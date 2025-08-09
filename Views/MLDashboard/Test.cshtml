@@ -1,0 +1,63 @@
+@model FEENALOoFINALE.ViewModels.MLDashboardViewModel
+@{
+    ViewData["Title"] = "ML Dashboard Test";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <h1>ML Dashboard Test</h1>
+    <p>This is a simple test view to verify the controller and routing are working.</p>
+    
+    @if (Model != null)
+    {
+        <div class="alert alert-success">
+            <h3>✅ Model Data Available</h3>
+            <div style="margin: 10px 0;">
+                <strong>Total Equipment Analyzed:</strong> @Model.TotalEquipmentAnalyzed
+            </div>
+            <div style="margin: 10px 0;">
+                <strong>High Risk Equipment List Count:</strong> @(Model.HighRiskEquipmentList?.Count ?? 0)
+            </div>
+            <div style="margin: 10px 0;">
+                <strong>Recent Predictions Count:</strong> @(Model.RecentPredictions?.Count ?? 0)
+            </div>
+            <div style="margin: 10px 0;">
+                <strong>Critical Predictions Count:</strong> @Model.CriticalPredictionsCount
+            </div>
+            <div style="margin: 10px 0;">
+                <strong>Model Status:</strong> @Model.ModelStatus
+            </div>
+            <div style="margin: 10px 0;">
+                <strong>Average Confidence:</strong> @(Model.AverageConfidence > 0 ? Model.AverageConfidence.ToString("F2") + "%" : "N/A")
+            </div>
+            <div style="margin: 10px 0;">
+                <strong>Model Version:</strong> @Model.ModelVersion
+            </div>
+            
+            @if (Model.HighRiskEquipmentList?.Any() == true)
+            {
+                <h4>Sample High Risk Equipment:</h4>
+                <ul>
+                    @foreach (var equipment in Model.HighRiskEquipmentList.Take(3))
+                    {
+                        <li>ID: @equipment.EquipmentId - @(equipment.EquipmentType?.EquipmentTypeName ?? "Unknown") in @(equipment.Building?.BuildingName ?? "Unknown")</li>
+                    }
+                </ul>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <h3>❌ No Model Data</h3>
+            <p>The model object is null. Controller may not be passing data correctly.</p>
+        </div>
+    }
+    
+    <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+        <h4>Debug Information:</h4>
+        <p><strong>Current Time:</strong> @DateTime.Now</p>
+        <p><strong>View Rendered:</strong> ✅ Successfully</p>
+        <p><strong>Request Path:</strong> @Context.Request.Path</p>
+    </div>
+</div>

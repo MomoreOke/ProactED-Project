@@ -1,0 +1,408 @@
+@using FEENALOoFINALE.ViewModels
+@model EquipmentRiskAnalysisViewModel
+@{
+    ViewData["Title"] = "Equipment Risk Analysis";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+            Equipment Risk Analysis
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-primary" onclick="refreshAnalysis()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Refresh Analysis
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="exportReport()">
+                    <i class="fas fa-download me-1"></i>
+                    Export Report
+                </button>
+            </div>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.Error as string))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @ViewBag.Error
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Equipment
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Summary.TotalEquipment
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cogs fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                High Risk
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Summary.HighRiskCount
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Medium Risk
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Summary.MediumRiskCount
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Low Risk
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Summary.LowRiskCount
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Avg Risk
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Summary.AverageFailureProbability.ToString("P1")
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-pie fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Immediate Actions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Summary.RecommendedImmediateActions
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bell fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Distribution Chart -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Risk Level Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="riskChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Failure Probability Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="probabilityChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Equipment Risk Assessment Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-table me-2"></i>
+                Equipment Risk Assessment
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="riskTable">
+                    <thead>
+                        <tr>
+                            <th>Equipment ID</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>Age (Months)</th>
+                            <th>Risk Level</th>
+                            <th>Failure Probability</th>
+                            <th>Confidence</th>
+                            <th>Recommended Action</th>
+                            <th>Prediction Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var assessment in Model.RiskAssessments)
+                        {
+                            var riskClass = assessment.RiskLevel.ToLower() switch
+                            {
+                                "critical" => "danger",
+                                "high" => "warning", 
+                                "medium" => "info",
+                                "low" => "success",
+                                _ => "secondary"
+                            };
+
+                            <tr class="@(assessment.RiskLevel == "Critical" ? "table-danger" : "")">
+                                <td>@assessment.EquipmentId</td>
+                                <td>@assessment.Name</td>
+                                <td>@assessment.Type</td>
+                                <td>@assessment.Location</td>
+                                <td>@assessment.AgeMonths</td>
+                                <td>
+                                    <span class="badge bg-@riskClass">@assessment.RiskLevel</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">@assessment.FailureProbability.ToString("P1")</span>
+                                        <div class="progress flex-grow-1" style="height: 10px;">
+                                            <div class="progress-bar bg-@riskClass" 
+                                                 style="width: @(assessment.FailureProbability * 100)%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@assessment.ConfidenceScore.ToString("P1")</td>
+                                <td>
+                                    <small class="text-wrap">@assessment.RecommendedAction</small>
+                                </td>
+                                <td>@assessment.PredictionDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Actions -->
+    @if (Model.RiskAssessments.Any(r => r.RiskLevel == "Critical" || r.RiskLevel == "High"))
+    {
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-warning">
+                <h6 class="m-0 font-weight-bold text-white">
+                    <i class="fas fa-bolt me-2"></i>
+                    Priority Actions Required
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var critical in Model.RiskAssessments.Where(r => r.RiskLevel == "Critical" || r.RiskLevel == "High").Take(6))
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-@(critical.RiskLevel == "Critical" ? "danger" : "warning")">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">
+                                        <span class="badge bg-@(critical.RiskLevel == "Critical" ? "danger" : "warning") me-2">
+                                            @critical.RiskLevel
+                                        </span>
+                                        @critical.Name
+                                    </h6>
+                                    <p class="card-text small">
+                                        <strong>Location:</strong> @critical.Location<br>
+                                        <strong>Failure Risk:</strong> @critical.FailureProbability.ToString("P1")<br>
+                                        <strong>Action:</strong> @critical.RecommendedAction
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Risk Level Distribution Chart
+        const riskCtx = document.getElementById('riskChart').getContext('2d');
+        new Chart(riskCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low'],
+                datasets: [{
+                    data: [
+                        @Model.RiskAssessments.Count(r => r.RiskLevel == "Critical"),
+                        @Model.RiskAssessments.Count(r => r.RiskLevel == "High"), 
+                        @Model.RiskAssessments.Count(r => r.RiskLevel == "Medium"),
+                        @Model.RiskAssessments.Count(r => r.RiskLevel == "Low")
+                    ],
+                    backgroundColor: [
+                        '#dc3545', // Red for Critical
+                        '#ffc107', // Yellow for High  
+                        '#17a2b8', // Blue for Medium
+                        '#28a745'  // Green for Low
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Failure Probability Distribution
+        const probCtx = document.getElementById('probabilityChart').getContext('2d');
+        const probabilities = [@string.Join(",", Model.RiskAssessments.Select(r => r.FailureProbability.ToString("F3")))];
+        
+        new Chart(probCtx, {
+            type: 'bar',
+            data: {
+                labels: ['0-20%', '20-40%', '40-60%', '60-80%', '80-100%'],
+                datasets: [{
+                    label: 'Equipment Count',
+                    data: [
+                        probabilities.filter(p => p < 0.2).length,
+                        probabilities.filter(p => p >= 0.2 && p < 0.4).length,
+                        probabilities.filter(p => p >= 0.4 && p < 0.6).length,
+                        probabilities.filter(p => p >= 0.6 && p < 0.8).length,
+                        probabilities.filter(p => p >= 0.8).length
+                    ],
+                    backgroundColor: [
+                        '#28a745', // Green
+                        '#17a2b8', // Blue  
+                        '#ffc107', // Yellow
+                        '#fd7e14', // Orange
+                        '#dc3545'  // Red
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Initialize DataTable
+        $(document).ready(function() {
+            if ($.fn.DataTable) {
+                $('#riskTable').DataTable({
+                    responsive: true,
+                    pageLength: 25,
+                    order: [[6, 'desc']], // Order by failure probability desc
+                    columnDefs: [
+                        { targets: [8], orderable: false }
+                    ]
+                });
+            }
+        });
+
+        function refreshAnalysis() {
+            location.reload();
+        }
+
+        function exportReport() {
+            // Simple CSV export
+            let csv = 'Equipment ID,Name,Type,Location,Age (Months),Risk Level,Failure Probability,Confidence,Recommended Action\n';
+            
+            @foreach (var assessment in Model.RiskAssessments)
+            {
+                @:csv += '@assessment.EquipmentId,"@assessment.Name","@assessment.Type","@assessment.Location",@assessment.AgeMonths,"@assessment.RiskLevel",@assessment.FailureProbability.ToString("F3"),@assessment.ConfidenceScore.ToString("F3"),"@assessment.RecommendedAction"\n';
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `equipment_risk_analysis_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+}

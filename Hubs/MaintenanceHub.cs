@@ -150,5 +150,59 @@ namespace FEENALOoFINALE.Hubs
             await Clients.Group("Dashboard").SendAsync("AlertUpdated", alertDto);
             await Clients.Group("Alerts").SendAsync("AlertUpdated", alertDto);
         }
+
+        /// <summary>
+        /// Send real-time prediction update
+        /// </summary>
+        public async Task SendPredictionUpdate(int equipmentId, string riskLevel, double failureProbability, double confidence)
+        {
+            if (equipmentId <= 0) return;
+
+            await Clients.Group("Dashboard").SendAsync("PredictionUpdate", new
+            {
+                EquipmentId = equipmentId,
+                RiskLevel = riskLevel,
+                FailureProbability = failureProbability,
+                ConfidenceScore = confidence,
+                Timestamp = DateTime.UtcNow
+            });
+
+            await Clients.Group("Predictions").SendAsync("PredictionUpdate", new
+            {
+                EquipmentId = equipmentId,
+                RiskLevel = riskLevel,
+                FailureProbability = failureProbability,
+                ConfidenceScore = confidence,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        /// <summary>
+        /// Send batch prediction completion notification
+        /// </summary>
+        public async Task SendBatchPredictionComplete(int totalCount, int successCount, int failureCount)
+        {
+            await Clients.Group("Dashboard").SendAsync("BatchPredictionComplete", new
+            {
+                TotalCount = totalCount,
+                SuccessCount = successCount,
+                FailureCount = failureCount,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        /// <summary>
+        /// Send model information update
+        /// </summary>
+        public async Task SendModelInfoUpdate(string modelVersion, double accuracy, string trainingDate)
+        {
+            await Clients.Group("Dashboard").SendAsync("ModelInfoUpdate", new
+            {
+                ModelVersion = modelVersion,
+                Accuracy = accuracy,
+                TrainingDate = trainingDate,
+                Timestamp = DateTime.UtcNow
+            });
+        }
     }
 }

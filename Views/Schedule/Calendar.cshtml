@@ -1,0 +1,352 @@
+@model FEENALOoFINALE.ViewModels.ScheduleCalendarViewModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-calendar me-2"></i>@Model.PageTitle
+                    </h1>
+                    <p class="text-muted mb-0">@Model.PageDescription</p>
+                </div>
+                <div class="btn-group">
+                    <a asp-action="Index" class="btn btn-outline-primary">
+                        <i class="bi bi-list me-1"></i>List View
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+                        <i class="bi bi-plus-circle me-1"></i>Schedule Maintenance
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Calendar Legend -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-auto">
+                            <strong>Legend:</strong>
+                        </div>
+                        <div class="col-md">
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2" style="width: 20px; height: 20px; background-color: #007bff; border-radius: 3px;"></div>
+                                    <span>Pending</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2" style="width: 20px; height: 20px; background-color: #dc3545; border-radius: 3px;"></div>
+                                    <span>Overdue</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2" style="width: 20px; height: 20px; background-color: #ffc107; border-radius: 3px;"></div>
+                                    <span>In Progress</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2" style="width: 20px; height: 20px; background-color: #28a745; border-radius: 3px;"></div>
+                                    <span>Completed</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2" style="width: 20px; height: 20px; background-color: #6c757d; border-radius: 3px;"></div>
+                                    <span>Cancelled</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Container -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Details Modal -->
+<div class="modal fade" id="taskDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-gear me-2"></i>Maintenance Task Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="taskDetailsContent">
+                    <div class="text-center py-3">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" id="viewDetailsLink" class="btn btn-primary">
+                    <i class="bi bi-eye me-2"></i>View Full Details
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Task Modal (same as in Index) -->
+<div class="modal fade" id="createTaskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>Create Maintenance Task
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="CreateTask" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Equipment <span class="text-danger">*</span></label>
+                        <select name="EquipmentId" class="form-select" required>
+                            <option value="">Select Equipment</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea name="Description" class="form-control" rows="3" placeholder="Enter maintenance task description" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Priority</label>
+                            <select name="Priority" class="form-select">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Scheduled Date</label>
+                            <input type="datetime-local" name="ScheduledDate" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check me-2"></i>Create Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css' rel='stylesheet' />
+    <style>
+        #calendar {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .fc-event {
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .fc-event:hover {
+            opacity: 0.8;
+        }
+
+        .fc-event-title {
+            font-weight: 600;
+        }
+
+        .fc-toolbar {
+            margin-bottom: 1rem;
+        }
+
+        .fc-toolbar .fc-button-group {
+            margin-bottom: 0.5rem;
+        }
+
+        .fc-header-toolbar {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        @@media (max-width: 768px) {
+            .fc-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .fc-toolbar-chunk {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+                },
+                height: 'auto',
+                events: {
+                    url: '@Url.Action("GetCalendarEvents")',
+                    method: 'GET',
+                    failure: function() {
+                        alert('There was an error while fetching events!');
+                    }
+                },
+                eventClick: function(info) {
+                    showTaskDetails(info.event);
+                },
+                eventDidMount: function(info) {
+                    // Add tooltip with task details
+                    info.el.setAttribute('title', 
+                        info.event.extendedProps.equipmentName + ' - ' + 
+                        info.event.extendedProps.description + '\n' +
+                        'Status: ' + info.event.extendedProps.status + '\n' +
+                        'Priority: ' + info.event.extendedProps.priority + '\n' +
+                        'Assigned to: ' + info.event.extendedProps.assignedTo
+                    );
+                },
+                dayMaxEvents: 3,
+                moreLinkClick: 'popover',
+                selectMirror: true,
+                weekends: true,
+                businessHours: {
+                    daysOfWeek: [ 1, 2, 3, 4, 5 ],
+                    startTime: '08:00',
+                    endTime: '17:00',
+                },
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }
+            });
+
+            calendar.render();
+
+            // Refresh calendar when modal closes after creating task
+            $('#createTaskModal').on('hidden.bs.modal', function() {
+                calendar.refetchEvents();
+            });
+
+            // Auto-dismiss alerts
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+
+        function showTaskDetails(event) {
+            var modal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
+            var content = document.getElementById('taskDetailsContent');
+            var viewLink = document.getElementById('viewDetailsLink');
+
+            // Set the view details link
+            viewLink.href = '@Url.Action("Details", "Schedule")' + '/' + event.id;
+
+            // Build the content
+            var statusBadgeClass = getStatusBadgeClass(event.extendedProps.status);
+            var priorityBadgeClass = getPriorityBadgeClass(event.extendedProps.priority);
+
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="mb-3">${event.extendedProps.equipmentName}</h5>
+                        <p class="text-muted">${event.extendedProps.equipmentType}</p>
+                        <p><strong>Description:</strong><br/>${event.extendedProps.description}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>Status:</strong><br/>
+                            <span class="badge ${statusBadgeClass}">${event.extendedProps.status}</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Priority:</strong><br/>
+                            <span class="badge ${priorityBadgeClass}">${event.extendedProps.priority}</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Scheduled:</strong><br/>
+                            ${event.start.toLocaleDateString()} ${event.start.toLocaleTimeString()}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Assigned to:</strong><br/>
+                            ${event.extendedProps.assignedTo}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.show();
+        }
+
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'Pending': return 'bg-info';
+                case 'InProgress': return 'bg-warning';
+                case 'Completed': return 'bg-success';
+                case 'Cancelled': return 'bg-dark';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function getPriorityBadgeClass(priority) {
+            switch(priority) {
+                case 'Critical': return 'bg-danger';
+                case 'High': return 'bg-warning';
+                case 'Medium': return 'bg-primary';
+                case 'Low': return 'bg-secondary';
+                default: return 'bg-secondary';
+            }
+        }
+    </script>
+}

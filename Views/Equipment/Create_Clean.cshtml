@@ -1,0 +1,621 @@
+@using FEENALOoFINALE.Models
+@model FEENALOoFINALE.Models.Equipment
+
+@{
+    ViewData["Title"] = "Add Equipment";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Dashboard")">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index")">Equipment</a></li>
+                    <li class="breadcrumb-item active">Add Equipment</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Add New Equipment</h1>
+                    <p class="text-muted mb-0">Register new equipment and upload related documents</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            @{await Html.RenderPartialAsync("_ValidationErrors", ViewData.ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToArray());}
+            <form asp-action="Create" class="loading-enabled" id="equipmentCreateForm" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <!-- Equipment Information Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-gear me-2"></i>Equipment Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EquipmentTypeId" class="form-label">Equipment Type <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <select asp-for="EquipmentTypeId" class="form-control" asp-items="ViewBag.EquipmentTypeId" id="EquipmentTypeId">
+                                            <option value="">-- Select Equipment Type --</option>
+                                        </select>
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addEquipmentTypeModal">Add New</button>
+                                    </div>
+                                    <span asp-validation-for="EquipmentTypeId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EquipmentModelId" class="form-label">Equipment Model <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <select asp-for="EquipmentModelId" class="form-control" asp-items="ViewBag.EquipmentModelId" id="EquipmentModelId">
+                                            <option value="">-- Select Equipment Model --</option>
+                                        </select>
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addEquipmentModelModal">Add New</button>
+                                    </div>
+                                    <span asp-validation-for="EquipmentModelId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="BuildingId" class="form-label">Building <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <select asp-for="BuildingId" class="form-control" asp-items="ViewBag.BuildingId" id="BuildingId">
+                                            <option value="">-- Select Building --</option>
+                                        </select>
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addBuildingModal">Add New</button>
+                                    </div>
+                                    <span asp-validation-for="BuildingId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="RoomId" class="form-label">Room <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <select asp-for="RoomId" class="form-control" asp-items="ViewBag.RoomId" id="RoomId">
+                                            <option value="">-- Select Room --</option>
+                                        </select>
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#addRoomModal">Add New</button>
+                                    </div>
+                                    <span asp-validation-for="RoomId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="InstallationDate" class="form-label">Installation Date</label>
+                                    <input asp-for="InstallationDate" class="form-control" type="date" />
+                                    <span asp-validation-for="InstallationDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ExpectedLifespanMonths" class="form-label">Expected Lifespan (Months) <span class="text-danger">*</span></label>
+                                    <input asp-for="ExpectedLifespanMonths" class="form-control" type="number" min="1" max="600" placeholder="e.g., 60" />
+                                    <small class="form-text text-muted">Expected operational lifespan in months</small>
+                                    <span asp-validation-for="ExpectedLifespanMonths" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Status" class="form-label">Status <span class="text-danger">*</span></label>
+                                    <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<FEENALOoFINALE.Models.EquipmentStatus>()">
+                                        <option value="">-- Select Status --</option>
+                                    </select>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Additional notes, maintenance instructions, or special requirements..."></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Upload Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-file-earmark-text me-2"></i>Document Upload (Optional)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Upload Documents</label>
+                            <input type="file" class="form-control" name="ManufacturerDocuments" multiple accept=".pdf,.doc,.docx,.txt" />
+                            <small class="form-text text-muted">
+                                Upload manufacturer manuals, spec sheets, or maintenance guides. Supported formats: PDF, DOC, DOCX, TXT. Maximum 5 files, 10MB each.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card">
+                    <div class="card-body d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-plus-circle"></i> Create Equipment
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary ms-2">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Information Sidebar -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Equipment Creation Info
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Fill all required fields marked with <span class="text-danger">*</span></li>
+                        <li>Upload manufacturer documents for better maintenance recommendations</li>
+                        <li>Set realistic expected lifespan for accurate planning</li>
+                        <li>Use notes field for special maintenance requirements</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="addEquipmentTypeModal" tabindex="-1" aria-labelledby="addEquipmentTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEquipmentTypeModalLabel">Add New Equipment Type</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newEquipmentTypeName" class="form-label">Equipment Type Name</label>
+                    <input type="text" class="form-control" id="newEquipmentTypeName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveNewEquipmentType">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addEquipmentModelModal" tabindex="-1" aria-labelledby="addEquipmentModelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEquipmentModelModalLabel">Add New Equipment Model</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newEquipmentModelName" class="form-label">Equipment Model Name</label>
+                    <input type="text" class="form-control" id="newEquipmentModelName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveNewEquipmentModel">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addBuildingModal" tabindex="-1" aria-labelledby="addBuildingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBuildingModalLabel">Add New Building</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newBuildingName" class="form-label">Building Name</label>
+                    <input type="text" class="form-control" id="newBuildingName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveNewBuilding">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addRoomModal" tabindex="-1" aria-labelledby="addRoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRoomModalLabel">Add New Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newRoomName" class="form-label">Room Name</label>
+                    <input type="text" class="form-control" id="newRoomName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveNewRoom">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            console.log('Create form JavaScript initialized');
+            
+            // Initialize form validation and interactions
+            initializeFormValidation();
+            initializeDependentDropdowns();
+            
+            // Building change handler
+            $('#BuildingId').change(function() {
+                console.log('Building changed:', $(this).val());
+                const buildingId = $(this).val();
+                loadRoomsForBuilding(buildingId);
+                
+                // Clear room selection when building changes
+                if (!buildingId) {
+                    $('#RoomId').val('');
+                }
+            });
+
+            // Equipment Type change handler  
+            $('#EquipmentTypeId').change(function() {
+                console.log('Equipment type changed:', $(this).val());
+                const equipmentTypeId = $(this).val();
+                loadModelsForEquipmentType(equipmentTypeId);
+                
+                // Clear model selection when type changes
+                if (!equipmentTypeId) {
+                    $('#EquipmentModelId').val('');
+                }
+            });
+
+            // Add New Equipment Type
+            $('#saveNewEquipmentType').click(function() {
+                var typeName = $('#newEquipmentTypeName').val().trim();
+                if (!typeName) {
+                    alert('Please enter an equipment type name');
+                    return;
+                }
+                
+                $.ajax({
+                    url: '@Url.Action("CreateEquipmentType", "Equipment")',
+                    type: 'POST',
+                    data: { name: typeName },
+                    success: function(response) {
+                        if (response.success) {
+                            // Add new option to select
+                            var $select = $('#EquipmentTypeId');
+                            $select.append($('<option>', {
+                                value: response.id,
+                                text: typeName,
+                                selected: true
+                            }));
+                            
+                            // Close modal and clear input
+                            $('#addEquipmentTypeModal').modal('hide');
+                            $('#newEquipmentTypeName').val('');
+                            
+                            // Show success message
+                            showSuccessMessage('Equipment type added successfully!');
+                        } else {
+                            alert('Error: ' + (response.message || 'Failed to create equipment type'));
+                        }
+                    },
+                    error: function() {
+                        alert('Error connecting to server. Please try again.');
+                    }
+                });
+            });
+
+            // Add New Equipment Model
+            $('#saveNewEquipmentModel').click(function() {
+                var modelName = $('#newEquipmentModelName').val().trim();
+                var equipmentTypeId = $('#EquipmentTypeId').val();
+                
+                if (!modelName) {
+                    alert('Please enter an equipment model name');
+                    return;
+                }
+                
+                if (!equipmentTypeId || equipmentTypeId === '') {
+                    alert('Please select an equipment type first');
+                    return;
+                }
+                
+                $.ajax({
+                    url: '@Url.Action("CreateEquipmentModel", "Equipment")',
+                    type: 'POST',
+                    data: { 
+                        name: modelName,
+                        equipmentTypeId: equipmentTypeId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Add new option to select
+                            var $select = $('#EquipmentModelId');
+                            $select.append($('<option>', {
+                                value: response.id,
+                                text: modelName,
+                                selected: true
+                            }));
+                            
+                            // Close modal and clear input
+                            $('#addEquipmentModelModal').modal('hide');
+                            $('#newEquipmentModelName').val('');
+                            
+                            // Show success message
+                            showSuccessMessage('Equipment model added successfully!');
+                        } else {
+                            alert('Error: ' + (response.message || 'Failed to create equipment model'));
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        if (xhr.status === 400) {
+                            alert('Please make sure you have selected an equipment type first.');
+                        } else {
+                            alert('Error connecting to server. Please try again.');
+                        }
+                    }
+                });
+            });
+
+            // Add New Building
+            $('#saveNewBuilding').click(function() {
+                var buildingName = $('#newBuildingName').val().trim();
+                if (!buildingName) {
+                    alert('Please enter a building name');
+                    return;
+                }
+                
+                $.ajax({
+                    url: '@Url.Action("CreateBuilding", "Equipment")',
+                    type: 'POST',
+                    data: { name: buildingName },
+                    success: function(response) {
+                        if (response.success) {
+                            // Add new option to select
+                            var $select = $('#BuildingId');
+                            $select.append($('<option>', {
+                                value: response.id,
+                                text: buildingName,
+                                selected: true
+                            }));
+                            
+                            // Trigger change to load rooms for new building
+                            $select.trigger('change');
+                            
+                            // Close modal and clear input
+                            $('#addBuildingModal').modal('hide');
+                            $('#newBuildingName').val('');
+                            
+                            // Show success message
+                            showSuccessMessage('Building added successfully!');
+                        } else {
+                            alert('Error: ' + (response.message || 'Failed to create building'));
+                        }
+                    },
+                    error: function() {
+                        alert('Error connecting to server. Please try again.');
+                    }
+                });
+            });
+
+            // Add New Room
+            $('#saveNewRoom').click(function() {
+                var roomName = $('#newRoomName').val().trim();
+                var buildingId = $('#BuildingId').val();
+                
+                if (!roomName) {
+                    alert('Please enter a room name');
+                    return;
+                }
+                if (!buildingId) {
+                    alert('Please select a building first');
+                    return;
+                }
+                
+                $.ajax({
+                    url: '@Url.Action("CreateRoom", "Equipment")',
+                    type: 'POST',
+                    data: { name: roomName, buildingId: buildingId },
+                    success: function(response) {
+                        if (response.success) {
+                            // Add new option to select
+                            var $select = $('#RoomId');
+                            $select.append($('<option>', {
+                                value: response.id,
+                                text: roomName,
+                                selected: true
+                            }));
+                            
+                            // Close modal and clear input
+                            $('#addRoomModal').modal('hide');
+                            $('#newRoomName').val('');
+                            
+                            // Show success message
+                            showSuccessMessage('Room added successfully!');
+                        } else {
+                            alert('Error: ' + (response.message || 'Failed to create room'));
+                        }
+                    },
+                    error: function() {
+                        alert('Error connecting to server. Please try again.');
+                    }
+                });
+            });
+        });
+
+        function initializeFormValidation() {
+            $('#equipmentCreateForm').on('submit', function(e) {
+                const isValid = validateForm();
+                if (!isValid) {
+                    e.preventDefault();
+                    showValidationErrors();
+                }
+            });
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = ['EquipmentTypeId', 'EquipmentModelId', 'BuildingId', 'RoomId', 'ExpectedLifespanMonths', 'Status'];
+            
+            requiredFields.forEach(field => {
+                const element = $(`#${field}`);
+                if (!element.val() || element.val().trim() === '') {
+                    element.addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    element.removeClass('is-invalid');
+                }
+            });
+            
+            return isValid;
+        }
+
+        function showValidationErrors() {
+            const errorAlert = $(`
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Please fill in all required fields before creating the equipment.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+            $('.container-fluid').prepend(errorAlert);
+            $('html, body').animate({ scrollTop: 0 }, 500);
+        }
+
+        function initializeDependentDropdowns() {
+            console.log('Initializing dependent dropdowns');
+            
+            // Load initial models if equipment type is selected
+            const equipmentTypeId = $('#EquipmentTypeId').val();
+            if (equipmentTypeId) {
+                loadModelsForEquipmentType(equipmentTypeId);
+            } else {
+                // Clear model dropdown if no type is selected
+                $('#EquipmentModelId').html('<option value="">-- Select Equipment Model --</option>');
+            }
+
+            // Load initial rooms if building is selected
+            const buildingId = $('#BuildingId').val();
+            if (buildingId) {
+                loadRoomsForBuilding(buildingId);
+            } else {
+                // Clear room dropdown if no building is selected
+                $('#RoomId').html('<option value="">-- Select Room --</option>');
+            }
+        }
+
+        function loadRoomsForBuilding(buildingId) {
+            console.log('Loading rooms for building:', buildingId);
+            const roomSelect = $('#RoomId');
+            
+            roomSelect.html('<option value="">Loading...</option>');
+            
+            if (!buildingId) {
+                roomSelect.html('<option value="">-- Select Room --</option>');
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("GetRoomsByBuilding", "Equipment")',
+                data: { buildingId: buildingId },
+                success: function(rooms) {
+                    console.log('Rooms loaded:', rooms);
+                    roomSelect.html('<option value="">-- Select Room --</option>');
+                    
+                    rooms.forEach(room => {
+                        roomSelect.append(`<option value="${room.value}">${room.text}</option>`);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading rooms:', error);
+                    roomSelect.html('<option value="">-- Error loading rooms --</option>');
+                }
+            });
+        }
+
+        function loadModelsForEquipmentType(equipmentTypeId) {
+            console.log('Loading models for equipment type:', equipmentTypeId);
+            const modelSelect = $('#EquipmentModelId');
+            
+            modelSelect.html('<option value="">Loading...</option>');
+            
+            if (!equipmentTypeId) {
+                modelSelect.html('<option value="">-- Select Equipment Model --</option>');
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("GetModelsByEquipmentType", "Equipment")',
+                data: { equipmentTypeId: equipmentTypeId },
+                success: function(models) {
+                    console.log('Models loaded:', models);
+                    modelSelect.html('<option value="">-- Select Equipment Model --</option>');
+                    
+                    models.forEach(model => {
+                        modelSelect.append(`<option value="${model.value}">${model.text}</option>`);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading models:', error);
+                    modelSelect.html('<option value="">-- Error loading models --</option>');
+                }
+            });
+        }
+
+        // Utility function to show success messages
+        function showSuccessMessage(message) {
+            // Create and show a temporary success alert
+            var alert = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                '<i class="bi bi-check-circle me-2"></i>' + message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                '</div>');
+            
+            $('.container-fluid').prepend(alert);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(function() {
+                alert.alert('close');
+            }, 3000);
+        }
+    </script>
+}

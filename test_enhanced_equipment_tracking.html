@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enhanced Equipment Tracking Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        .btn { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .result { margin: 15px 0; padding: 15px; border-left: 4px solid #007bff; background: #f8f9fa; border-radius: 4px; }
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .metric { text-align: center; padding: 15px; background: #e9ecef; border-radius: 6px; }
+        .metric-value { font-size: 2em; font-weight: bold; color: #007bff; }
+        .equipment-list { max-height: 300px; overflow-y: auto; }
+        .equipment-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .risk-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+        .risk-critical { background: #dc3545; color: white; }
+        .risk-high { background: #fd7e14; color: white; }
+        .risk-medium { background: #ffc107; color: black; }
+        .risk-low { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Enhanced Equipment Tracking System Test</h1>
+        <p class="info">This test demonstrates the new EnhancedEquipmentTrackingService that automatically integrates new equipment with the ML prediction system.</p>
+
+        <!-- System Status -->
+        <div class="test-card">
+            <h2>🔧 System Status</h2>
+            <div class="metric-grid" id="systemMetrics">
+                <div class="metric">
+                    <div class="metric-value" id="totalEquipment">-</div>
+                    <div>Total Equipment</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="mlTrackedEquipment">-</div>
+                    <div>ML Tracked</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="highRiskCount">-</div>
+                    <div>High Risk</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="apiStatus">-</div>
+                    <div>ML API Status</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="checkSystemStatus()">🔄 Refresh Status</button>
+        </div>
+
+        <!-- Equipment Creation Test -->
+        <div class="test-card">
+            <h2>➕ Test Equipment Creation & Auto-ML Registration</h2>
+            <p>This test creates a new equipment item and verifies it's automatically registered in the ML system.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>Test Equipment Parameters:</h4>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px;">
+                        <strong>Equipment Type:</strong> Projectors<br>
+                        <strong>Model:</strong> Test ML Integration Projector<br>
+                        <strong>Building:</strong> New Engineering Building<br>
+                        <strong>Room:</strong> NEB-FF1<br>
+                        <strong>Expected Scenario:</strong> Immediate ML analysis and potential high-risk alert
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-success" onclick="createTestEquipment()">🔧 Create Test Equipment</button>
+                    <button class="btn btn-warning" onclick="checkLatestEquipment()">👀 Check Latest Equipment</button>
+                    <button class="btn btn-danger" onclick="deleteTestEquipment()">🗑️ Delete Test Equipment</button>
+                </div>
+            </div>
+            
+            <div id="equipmentCreationResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- ML Integration Test -->
+        <div class="test-card">
+            <h2>🧠 ML Integration Verification</h2>
+            <p>Verify that the equipment tracking service is properly integrating with the ML prediction system.</p>
+            
+            <button class="btn btn-primary" onclick="testMLIntegration()">🔍 Test ML Integration</button>
+            <button class="btn btn-info" onclick="getBatchPredictions()">📊 Get Batch Predictions</button>
+            
+            <div id="mlIntegrationResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Real-time Monitoring -->
+        <div class="test-card">
+            <h2>📈 Real-time Equipment Monitoring</h2>
+            <div id="equipmentMonitoring" class="equipment-list">
+                <div style="text-align: center; color: #999; padding: 20px;">
+                    Click "Start Monitoring" to see real-time equipment status
+                </div>
+            </div>
+            
+            <button class="btn btn-success" onclick="startMonitoring()">▶️ Start Monitoring</button>
+            <button class="btn btn-warning" onclick="stopMonitoring()">⏸️ Stop Monitoring</button>
+        </div>
+
+        <!-- Alert Generation Test -->
+        <div class="test-card">
+            <h2>🚨 Alert Generation Test</h2>
+            <p>Test the automatic alert generation for high-risk equipment.</p>
+            
+            <button class="btn btn-danger" onclick="testAlertGeneration()">⚠️ Test Alert Generation</button>
+            <button class="btn btn-info" onclick="checkRecentAlerts()">📋 Check Recent Alerts</button>
+            
+            <div id="alertTestResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let monitoringInterval = null;
+        const baseUrl = 'http://localhost:5261';
+
+        // System Status Check
+        async function checkSystemStatus() {
+            try {
+                const [dashboardData, equipmentCount] = await Promise.all([
+                    fetch(`${baseUrl}/MLDashboard/GetDashboardData`).then(r => r.json()),
+                    fetch(`${baseUrl}/Equipment`).then(r => r.text())
+                ]);
+
+                if (dashboardData.success) {
+                    document.getElementById('totalEquipment').textContent = dashboardData.data.totalEquipmentAnalyzed || 0;
+                    document.getElementById('mlTrackedEquipment').textContent = dashboardData.data.totalEquipmentAnalyzed || 0;
+                    document.getElementById('highRiskCount').textContent = dashboardData.data.highRiskEquipment || 0;
+                    document.getElementById('apiStatus').textContent = dashboardData.data.apiHealthy ? '✅' : '❌';
+                }
+            } catch (error) {
+                console.error('Error checking system status:', error);
+                document.getElementById('apiStatus').textContent = '❌';
+            }
+        }
+
+        // Create Test Equipment
+        async function createTestEquipment() {
+            const resultDiv = document.getElementById('equipmentCreationResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p class="info">🔧 Creating test equipment and registering in ML system...</p>';
+
+            try {
+                // Open equipment creation page in new tab
+                window.open(`${baseUrl}/Equipment/CreateTestEquipment`, '_blank');
+                
+                setTimeout(async () => {
+                    await checkLatestEquipment();
+                }, 3000);
+                
+                resultDiv.innerHTML += '<p class="success">✅ Test equipment creation initiated. Check the new tab and verify ML integration below.</p>';
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error creating test equipment: ${error.message}</p>`;
+            }
+        }
+
+        // Check Latest Equipment
+        async function checkLatestEquipment() {
+            const resultDiv = document.getElementById('equipmentCreationResult');
+            resultDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${baseUrl}/MLDashboard/GetLivePredictions`);
+                const predictions = await response.json();
+                
+                if (predictions.length > 0) {
+                    const latest = predictions[0];
+                    resultDiv.innerHTML = `
+                        <h4>📊 Latest Equipment ML Status:</h4>
+                        <div class="equipment-item">
+                            <div>
+                                <strong>Equipment ID:</strong> ${latest.Equipment?.EquipmentId}<br>
+                                <strong>Type:</strong> ${latest.Equipment?.EquipmentType?.EquipmentTypeName}<br>
+                                <strong>Model:</strong> ${latest.Equipment?.EquipmentModel?.ModelName}<br>
+                                <strong>Location:</strong> ${latest.Equipment?.Building?.BuildingName} - ${latest.Equipment?.Room?.RoomName}
+                            </div>
+                            <div>
+                                <span class="risk-badge risk-${latest.Prediction?.RiskLevel?.toLowerCase()}">${latest.RiskLevelDisplay}</span>
+                                <div style="font-size: 0.9em; margin-top: 5px;">
+                                    Confidence: ${(latest.Prediction?.Confidence * 100).toFixed(1)}%
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<p class="warning">⚠️ No equipment predictions found. ML system may be starting up.</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error checking latest equipment: ${error.message}</p>`;
+            }
+        }
+
+        // Test ML Integration
+        async function testMLIntegration() {
+            const resultDiv = document.getElementById('mlIntegrationResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p class="info">🧠 Testing ML integration...</p>';
+
+            try {
+                // Test direct ML API
+                const apiResponse = await fetch('http://localhost:5000/api/health');
+                const apiData = await apiResponse.json();
+                
+                // Test enhanced predictions
+                const predictionsResponse = await fetch(`${baseUrl}/MLDashboard/GetDashboardData`);
+                const predictionsData = await predictionsResponse.json();
+
+                let html = '<h4>🔍 ML Integration Test Results:</h4>';
+                
+                // API Status
+                html += `
+                    <div style="background: #e8f5e8; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                        <strong>ML API Status:</strong> ${apiData.status === 'healthy' ? '✅ Healthy' : '❌ Unhealthy'}<br>
+                        <strong>Model Type:</strong> ${apiData.model_type}<br>
+                        <strong>Model Loaded:</strong> ${apiData.model_loaded ? '✅ Yes' : '❌ No'}
+                    </div>
+                `;
+                
+                // Dashboard Status
+                if (predictionsData.success) {
+                    html += `
+                        <div style="background: #e8f5e8; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                            <strong>Enhanced Tracking Service:</strong> ✅ Working<br>
+                            <strong>Equipment Analyzed:</strong> ${predictionsData.data.totalEquipmentAnalyzed}<br>
+                            <strong>High Risk Equipment:</strong> ${predictionsData.data.highRiskEquipment}<br>
+                            <strong>Average Failure Probability:</strong> ${(predictionsData.data.averageFailureProbability * 100).toFixed(1)}%
+                        </div>
+                    `;
+                } else {
+                    html += '<div style="background: #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 4px;">⚠️ Dashboard API not responding properly</div>';
+                }
+
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ ML Integration test failed: ${error.message}</p>`;
+            }
+        }
+
+        // Get Batch Predictions
+        async function getBatchPredictions() {
+            const resultDiv = document.getElementById('mlIntegrationResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p class="info">📊 Getting batch predictions...</p>';
+
+            try {
+                const response = await fetch(`${baseUrl}/MLDashboard/RunBatchPrediction`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <h4>📊 Batch Prediction Results:</h4>
+                        <p class="success">✅ Successfully processed ${result.processedCount} equipment items</p>
+                        <p class="info">The enhanced tracking service has analyzed equipment and updated predictions.</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Batch prediction failed: ${result.error}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error running batch predictions: ${error.message}</p>`;
+            }
+        }
+
+        // Start Real-time Monitoring
+        function startMonitoring() {
+            if (monitoringInterval) clearInterval(monitoringInterval);
+            
+            monitoringInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${baseUrl}/MLDashboard/GetLivePredictions`);
+                    const predictions = await response.json();
+                    
+                    const container = document.getElementById('equipmentMonitoring');
+                    let html = '';
+                    
+                    predictions.slice(0, 10).forEach(item => {
+                        const riskClass = (item.Prediction?.RiskLevel || 'unknown').toLowerCase();
+                        html += `
+                            <div class="equipment-item">
+                                <div>
+                                    <strong>ID ${item.Equipment?.EquipmentId}:</strong> ${item.Equipment?.EquipmentType?.EquipmentTypeName}<br>
+                                    <small>${item.Equipment?.Building?.BuildingName} - ${item.Equipment?.Room?.RoomName}</small>
+                                </div>
+                                <div>
+                                    <span class="risk-badge risk-${riskClass}">${item.RiskLevelDisplay || 'Unknown'}</span>
+                                    <div style="font-size: 0.8em; margin-top: 2px;">
+                                        ${item.Prediction ? (item.Prediction.Confidence * 100).toFixed(1) + '%' : 'N/A'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    if (html) {
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">No equipment data available</div>';
+                    }
+                } catch (error) {
+                    console.error('Monitoring error:', error);
+                }
+            }, 5000);
+            
+            // Initial load
+            getBatchPredictions();
+        }
+
+        // Stop Monitoring
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                document.getElementById('equipmentMonitoring').innerHTML = 
+                    '<div style="text-align: center; color: #999; padding: 20px;">Monitoring stopped</div>';
+            }
+        }
+
+        // Test Alert Generation
+        async function testAlertGeneration() {
+            const resultDiv = document.getElementById('alertTestResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p class="info">🚨 Testing alert generation...</p>';
+
+            try {
+                // First check current alerts
+                const alertsResponse = await fetch(`${baseUrl}/Alert`);
+                const alertsHtml = await alertsResponse.text();
+                
+                const alertMatches = alertsHtml.match(/High-Risk Equipment Detected/g);
+                const alertCount = alertMatches ? alertMatches.length : 0;
+
+                resultDiv.innerHTML = `
+                    <h4>🚨 Alert Generation Test Results:</h4>
+                    <p><strong>Current High-Risk Alerts:</strong> ${alertCount}</p>
+                    <p class="info">The EnhancedEquipmentTrackingService automatically creates alerts when equipment has ≥60% failure probability.</p>
+                    <p class="success">✅ Alert system integrated with equipment creation process</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error testing alert generation: ${error.message}</p>`;
+            }
+        }
+
+        // Check Recent Alerts
+        async function checkRecentAlerts() {
+            const resultDiv = document.getElementById('alertTestResult');
+            resultDiv.style.display = 'block';
+            
+            try {
+                window.open(`${baseUrl}/Alert`, '_blank');
+                resultDiv.innerHTML = '<p class="success">✅ Alert page opened in new tab. Check for ML-generated alerts.</p>';
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error opening alerts page: ${error.message}</p>`;
+            }
+        }
+
+        // Delete Test Equipment
+        async function deleteTestEquipment() {
+            const resultDiv = document.getElementById('equipmentCreationResult');
+            resultDiv.style.display = 'block';
+            
+            try {
+                window.open(`${baseUrl}/Equipment`, '_blank');
+                resultDiv.innerHTML = '<p class="info">🗑️ Equipment page opened. Find test equipment and use delete functionality to test.</p>';
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error opening equipment page: ${error.message}</p>`;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+@{
+    ViewData["Title"] = ViewBag.Title ?? "Equipment AI Model Analysis";
+    var equipmentId = ViewBag.EquipmentId ?? 0;
+    var isServiceRunning = ViewBag.ServiceStatus ?? false;
+    var interpretabilityUrl = ViewBag.InterpretabilityUrl ?? "";
+    var integrationInfo = ViewBag.IntegrationInfo;
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">🧠 @ViewData["Title"]</h1>
+                    <p class="text-muted">@ViewBag.Description</p>
+                    @if (integrationInfo != null)
+                    {
+                        <small class="text-info">
+                            <i class="bi bi-database"></i> Connected to Predictive Model dataset (@integrationInfo.TotalRecords records)
+                        </small>
+                    }
+                </div>
+                <div>
+                    <a href="@Url.Action("Index", "Equipment")" class="btn btn-secondary me-2">
+                        <i class="bi bi-arrow-left"></i> Back to Equipment Management
+                    </a>
+                    <button type="button" class="btn btn-info" onclick="refreshAnalysis()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Status Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div id="serviceStatus" class="card border-left-@(isServiceRunning ? "success" : "warning")">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="font-weight-bold text-@(isServiceRunning ? "success" : "warning")">
+                                <i class="bi bi-@(isServiceRunning ? "check-circle-fill" : "exclamation-triangle-fill")"></i> 
+                                Model Interpretability Service
+                            </h6>
+                            <p class="mb-0" id="serviceMessage">
+                                @if (isServiceRunning)
+                                {
+                                    <span class="text-success">Service is running and ready for analysis</span>
+                                }
+                                else
+                                {
+                                    <span class="text-warning">Service is not running. Click 'Start Service' to begin analysis.</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-info btn-sm" onclick="checkServiceStatus()">
+                                    <i class="bi bi-arrow-clockwise"></i> Check Status
+                                </button>
+                                @if (!isServiceRunning)
+                                {
+                                    <button class="btn btn-success btn-sm" onclick="startService()">
+                                        <i class="bi bi-play-fill"></i> Start Service
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        🤖 AI Model Analysis for Equipment #@equipmentId
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (isServiceRunning)
+                    {
+                        <!-- Embedded Streamlit Interface -->
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Loading AI Analysis...</strong> 
+                                This may take a few moments to initialize the model interpretability interface.
+                            </div>
+                        </div>
+                        
+                        <div class="embed-responsive" style="height: 800px; border: 1px solid #ddd; border-radius: 0.375rem;">
+                            <iframe 
+                                src="@interpretabilityUrl" 
+                                class="embed-responsive-item w-100 h-100"
+                                style="border: none;"
+                                title="Model Interpretability Analysis for Equipment @equipmentId">
+                            </iframe>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-graph-up text-primary" style="font-size: 2rem;"></i>
+                                        <h6 class="mt-2">Feature Importance</h6>
+                                        <p class="small text-muted">See which factors influenced the prediction</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-lightbulb text-warning" style="font-size: 2rem;"></i>
+                                        <h6 class="mt-2">SHAP Values</h6>
+                                        <p class="small text-muted">Detailed explanation of prediction logic</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-question-circle text-info" style="font-size: 2rem;"></i>
+                                        <h6 class="mt-2">What-If Analysis</h6>
+                                        <p class="small text-muted">Explore how changes affect predictions</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Service Not Running -->
+                        <div class="text-center py-5">
+                            <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 4rem;"></i>
+                            <h4 class="mt-3 text-warning">Model Interpretability Service Required</h4>
+                            <p class="text-muted mb-4">
+                                To analyze this equipment's prediction, the AI interpretability service needs to be running.
+                                <br>This service provides detailed explanations of how the machine learning model makes its predictions.
+                            </p>
+                            
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6 class="card-title">🚀 Get Started</h6>
+                                            <p class="card-text">
+                                                Click the button below to start the interpretability service. 
+                                                It will take a few moments to initialize.
+                                            </p>
+                                            <button class="btn btn-success btn-lg" onclick="startService()">
+                                                <i class="bi bi-play-fill"></i> Start Model Interpretability Service
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Benefits -->
+                            <div class="row mt-4 text-left">
+                                <div class="col-md-6">
+                                    <h6>📊 What You'll Get:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check-circle text-success"></i> Feature importance rankings</li>
+                                        <li><i class="bi bi-check-circle text-success"></i> SHAP value explanations</li>
+                                        <li><i class="bi bi-check-circle text-success"></i> Prediction confidence analysis</li>
+                                        <li><i class="bi bi-check-circle text-success"></i> Interactive what-if scenarios</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>🎯 Why It Matters:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-lightbulb text-warning"></i> Understand AI decisions</li>
+                                        <li><i class="bi bi-lightbulb text-warning"></i> Build trust in predictions</li>
+                                        <li><i class="bi bi-lightbulb text-warning"></i> Identify key maintenance factors</li>
+                                        <li><i class="bi bi-lightbulb text-warning"></i> Improve maintenance planning</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let serviceStatusCheckInterval;
+
+        function checkServiceStatus() {
+            fetch('/ModelInterpretability/CheckService')
+                .then(response => response.json())
+                .then(data => {
+                    updateServiceStatus(data.isRunning, data.message);
+                })
+                .catch(error => {
+                    console.error('Error checking service status:', error);
+                    updateServiceStatus(false, 'Error checking service status');
+                });
+        }
+
+        function startService() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i> Starting...';
+            button.disabled = true;
+
+            fetch('/ModelInterpretability/StartService', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', data.message);
+                        // Start checking service status periodically
+                        setTimeout(() => {
+                            serviceStatusCheckInterval = setInterval(checkServiceStatus, 3000);
+                        }, 5000);
+                    } else {
+                        showAlert('danger', data.message);
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    showAlert('danger', 'Error starting service');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+        }
+
+        function updateServiceStatus(isRunning, message) {
+            const statusCard = document.getElementById('serviceStatus');
+            const statusMessage = document.getElementById('serviceMessage');
+            
+            if (isRunning) {
+                statusCard.className = 'card border-left-success';
+                statusMessage.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> ' + message + '</span>';
+                
+                // Service is running, reload the page to show the interface
+                if (!@Json.Serialize(isServiceRunning)) {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                }
+                
+                // Clear the interval
+                if (serviceStatusCheckInterval) {
+                    clearInterval(serviceStatusCheckInterval);
+                }
+            } else {
+                statusCard.className = 'card border-left-warning';
+                statusMessage.innerHTML = '<span class="text-warning"><i class="bi bi-exclamation-triangle-fill"></i> ' + message + '</span>';
+            }
+        }
+
+        function refreshAnalysis() {
+            if (@Json.Serialize(isServiceRunning)) {
+                window.location.reload();
+            } else {
+                checkServiceStatus();
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.container-fluid');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Check service status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkServiceStatus();
+        });
+    </script>
+}
+
+<style>
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    
+    .embed-responsive {
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    .embed-responsive-item {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>

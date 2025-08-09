@@ -5,6 +5,7 @@ using FEENALOoFINALE.Data;
 using FEENALOoFINALE.Models;
 using FEENALOoFINALE.Models.ViewModels;
 using FEENALOoFINALE.ViewModels;
+using FEENALOoFINALE.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using iText.Kernel.Pdf;
@@ -23,17 +24,23 @@ namespace FEENALOoFINALE.Controllers
         private readonly UserManager<User> _userManager;
         private readonly ILogger<TimetableController> _logger;
         private readonly IWebHostEnvironment _environment;
+        private readonly IFormRecognizerService _formRecognizerService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
         public TimetableController(
             ApplicationDbContext context,
             UserManager<User> userManager,
             ILogger<TimetableController> logger,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            IFormRecognizerService formRecognizerService,
+            IServiceScopeFactory serviceScopeFactory)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
             _environment = environment;
+            _formRecognizerService = formRecognizerService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         // GET: Timetable Management Dashboard
@@ -1228,11 +1235,17 @@ namespace FEENALOoFINALE.Controllers
         private async Task ProcessTimetableFile(int semesterId)
         {
             var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(10)); // 10-minute timeout
+            
+            // Create a new scope for the background task to get fresh DI instances
+            using var scope = _serviceScopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var formRecognizerService = scope.ServiceProvider.GetRequiredService<IFormRecognizerService>();
+            
             try
             {
                 _logger.LogInformation("Starting ProcessTimetableFile for semester {SemesterId}", semesterId);
                 
-                var semester = await _context.Semesters.FindAsync(semesterId, cancellationTokenSource.Token);
+                var semester = await context.Semesters.FindAsync(semesterId, cancellationTokenSource.Token);
                 if (semester == null || string.IsNullOrEmpty(semester.TimetableFilePath))
                 {
                     _logger.LogWarning("Semester not found or no file path for semester {SemesterId}", semesterId);
@@ -1243,7 +1256,7 @@ namespace FEENALOoFINALE.Controllers
                 semester.ProcessingStatus = SemesterProcessingStatus.Processing;
                 semester.ProcessingMessage = "Processing timetable file...";
                 semester.LastModified = DateTime.UtcNow;
-                await _context.SaveChangesAsync(cancellationTokenSource.Token);
+                await context.SaveChangesAsync(cancellationTokenSource.Token);
 
                 // Extract text from PDF
                 _logger.LogInformation("Extracting text from PDF for semester {SemesterId}", semesterId);
@@ -1258,23 +1271,40 @@ namespace FEENALOoFINALE.Controllers
                 _logger.LogInformation("Extracted {TextLength} characters from PDF for semester {SemesterId}", 
                     timetableText?.Length ?? 0, semesterId);
 
-                if (string.IsNullOrEmpty(timetableText))
+                // Try to extract tables using FormRecognizer for additional structure
+                var tables = new List<TableResult>();
+                try
                 {
-                    throw new InvalidOperationException("No text could be extracted from the PDF file");
+                    using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                    {
+                        tables = await formRecognizerService.ExtractTablesAsync(fileStream);
+                        _logger.LogInformation("Extracted {TableCount} tables from timetable PDF for semester {SemesterId}", 
+                            tables.Count, semesterId);
+                    }
+                }
+                catch (Exception tableEx)
+                {
+                    _logger.LogWarning(tableEx, "Could not extract tables from timetable PDF for semester {SemesterId}: {Error}", 
+                        semesterId, tableEx.Message);
                 }
 
-                // Parse timetable text
-                _logger.LogInformation("Parsing timetable text for semester {SemesterId}", semesterId);
-                var equipmentUsage = await ParseTimetableText(timetableText, semester.NumberOfWeeks);
+                if (string.IsNullOrEmpty(timetableText) && !tables.Any())
+                {
+                    throw new InvalidOperationException("No text or tables could be extracted from the PDF file");
+                }
+
+                // Parse timetable text and tables
+                _logger.LogInformation("Parsing timetable text and tables for semester {SemesterId}", semesterId);
+                var equipmentUsage = await ParseTimetableData(timetableText, tables, semester.NumberOfWeeks, context);
                 _logger.LogInformation("Parsed {EquipmentCount} equipment items for semester {SemesterId}", 
                     equipmentUsage.Count, semesterId);
 
                 // Clear existing usage data
                 _logger.LogInformation("Clearing existing usage data for semester {SemesterId}", semesterId);
-                var existingUsage = await _context.SemesterEquipmentUsages
+                var existingUsage = await context.SemesterEquipmentUsages
                     .Where(seu => seu.SemesterId == semesterId)
                     .ToListAsync();
-                _context.SemesterEquipmentUsages.RemoveRange(existingUsage);
+                context.SemesterEquipmentUsages.RemoveRange(existingUsage);
 
                 // Save new usage data
                 _logger.LogInformation("Saving new usage data for semester {SemesterId}", semesterId);
@@ -1291,7 +1321,7 @@ namespace FEENALOoFINALE.Controllers
                             LastUpdated = DateTime.UtcNow
                         };
 
-                        _context.SemesterEquipmentUsages.Add(semesterUsage);
+                        context.SemesterEquipmentUsages.Add(semesterUsage);
                         totalHours += usage.Value * semester.NumberOfWeeks;
                     }
                 }
@@ -1303,7 +1333,7 @@ namespace FEENALOoFINALE.Controllers
                 semester.LastModified = DateTime.UtcNow;
 
                 _logger.LogInformation("Saving final results for semester {SemesterId}", semesterId);
-                await _context.SaveChangesAsync(cancellationTokenSource.Token);
+                await context.SaveChangesAsync(cancellationTokenSource.Token);
                 _logger.LogInformation("Successfully completed processing for semester {SemesterId}", semesterId);
             }
             catch (OperationCanceledException)
@@ -1312,13 +1342,13 @@ namespace FEENALOoFINALE.Controllers
                 
                 try
                 {
-                    var semester = await _context.Semesters.FindAsync(semesterId);
+                    var semester = await context.Semesters.FindAsync(semesterId);
                     if (semester != null)
                     {
                         semester.ProcessingStatus = SemesterProcessingStatus.Failed;
                         semester.ProcessingMessage = "Processing failed: Operation timed out after 10 minutes.";
                         semester.LastModified = DateTime.UtcNow;
-                        await _context.SaveChangesAsync();
+                        await context.SaveChangesAsync();
                     }
                 }
                 catch (Exception saveEx)
@@ -1333,13 +1363,13 @@ namespace FEENALOoFINALE.Controllers
                 
                 try
                 {
-                    var semester = await _context.Semesters.FindAsync(semesterId);
+                    var semester = await context.Semesters.FindAsync(semesterId);
                     if (semester != null)
                     {
                         semester.ProcessingStatus = SemesterProcessingStatus.Failed;
                         semester.ProcessingMessage = $"Processing failed: {ex.Message}";
                         semester.LastModified = DateTime.UtcNow;
-                        await _context.SaveChangesAsync();
+                        await context.SaveChangesAsync();
                         _logger.LogInformation("Updated semester {SemesterId} status to Failed", semesterId);
                     }
                 }
@@ -1369,7 +1399,116 @@ namespace FEENALOoFINALE.Controllers
             }
         }
 
-        private async Task<Dictionary<string, double>> ParseTimetableText(string text, int semesterWeeks)
+        private async Task<Dictionary<string, double>> ParseTimetableData(string text, List<TableResult> tables, int semesterWeeks, ApplicationDbContext context)
+        {
+            var roomWeeklyUsage = new Dictionary<string, double>();
+
+            // First, parse text-based data (existing logic)
+            if (!string.IsNullOrEmpty(text))
+            {
+                var textUsage = await ParseTimetableText(text, semesterWeeks, context);
+                foreach (var kvp in textUsage)
+                {
+                    roomWeeklyUsage[kvp.Key] = roomWeeklyUsage.GetValueOrDefault(kvp.Key, 0) + kvp.Value;
+                }
+            }
+
+            // Then, parse table-based data using FormRecognizer results
+            if (tables.Any())
+            {
+                var tableUsage = await ParseTimetableTables(tables, semesterWeeks, context);
+                foreach (var kvp in tableUsage)
+                {
+                    roomWeeklyUsage[kvp.Key] = roomWeeklyUsage.GetValueOrDefault(kvp.Key, 0) + kvp.Value;
+                }
+            }
+
+            return roomWeeklyUsage;
+        }
+
+        private async Task<Dictionary<string, double>> ParseTimetableTables(List<TableResult> tables, int semesterWeeks, ApplicationDbContext context)
+        {
+            var roomWeeklyUsage = new Dictionary<string, double>();
+
+            foreach (var table in tables)
+            {
+                // Find rows that contain room and time information
+                var roomPattern = new Regex(@"\b[A-Z]{1,3}\d{3,4}\b", RegexOptions.IgnoreCase); // Room codes like PB001, LAB203
+                var timePattern = new Regex(@"(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})", RegexOptions.IgnoreCase); // Time ranges like 09:00-11:00
+
+                foreach (var cell in table.Cells)
+                {
+                    var content = cell.Content.Trim();
+                    
+                    // Check if cell contains room code
+                    var roomMatch = roomPattern.Match(content);
+                    if (roomMatch.Success)
+                    {
+                        var roomName = roomMatch.Value.ToUpper();
+                        
+                        // Look for time information in the same row or nearby cells
+                        var sameCellTimeMatch = timePattern.Match(content);
+                        if (sameCellTimeMatch.Success)
+                        {
+                            var startTime = TimeSpan.Parse(sameCellTimeMatch.Groups[1].Value);
+                            var endTime = TimeSpan.Parse(sameCellTimeMatch.Groups[2].Value);
+                            var duration = (endTime - startTime).TotalHours;
+
+                            if (duration > 0)
+                            {
+                                roomWeeklyUsage[roomName] = roomWeeklyUsage.GetValueOrDefault(roomName, 0) + duration;
+                            }
+                        }
+                        else
+                        {
+                            // Look for time in adjacent cells (same row, different columns)
+                            var adjacentCells = table.Cells
+                                .Where(c => c.RowIndex == cell.RowIndex && Math.Abs(c.ColumnIndex - cell.ColumnIndex) <= 2)
+                                .ToList();
+
+                            foreach (var adjacentCell in adjacentCells)
+                            {
+                                var timeMatch = timePattern.Match(adjacentCell.Content);
+                                if (timeMatch.Success)
+                                {
+                                    var startTime = TimeSpan.Parse(timeMatch.Groups[1].Value);
+                                    var endTime = TimeSpan.Parse(timeMatch.Groups[2].Value);
+                                    var duration = (endTime - startTime).TotalHours;
+
+                                    if (duration > 0)
+                                    {
+                                        roomWeeklyUsage[roomName] = roomWeeklyUsage.GetValueOrDefault(roomName, 0) + duration;
+                                        break; // Only count the first valid time range found
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Map room usage to equipment using async query
+            var equipmentUsage = new Dictionary<string, double>();
+            if (roomWeeklyUsage.Any())
+            {
+                var allEquipmentInRooms = await context.Equipment
+                    .Where(e => e.Room != null && roomWeeklyUsage.Keys.Contains(e.Room.RoomName.ToUpper()))
+                    .Include(e => e.Room)
+                    .ToListAsync();
+
+                foreach (var equipment in allEquipmentInRooms)
+                {
+                    if (equipment.Room != null && roomWeeklyUsage.TryGetValue(equipment.Room.RoomName.ToUpper(), out var weeklyHours))
+                    {
+                        equipmentUsage[equipment.EquipmentId.ToString()] = weeklyHours;
+                    }
+                }
+            }
+
+            return equipmentUsage;
+        }
+
+        private async Task<Dictionary<string, double>> ParseTimetableText(string text, int semesterWeeks, ApplicationDbContext context)
         {
             var roomWeeklyUsage = new Dictionary<string, double>();
             var lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -1396,7 +1535,7 @@ namespace FEENALOoFINALE.Controllers
 
             // Map room usage to equipment using async query
             var equipmentUsage = new Dictionary<string, double>();
-            var allEquipmentInRooms = await _context.Equipment
+            var allEquipmentInRooms = await context.Equipment
                 .Where(e => e.Room != null && roomWeeklyUsage.Keys.Contains(e.Room.RoomName.ToUpper()))
                 .Include(e => e.Room)
                 .ToListAsync();

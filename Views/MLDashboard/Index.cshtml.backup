@@ -1,0 +1,830 @@
+@model FEENALOoFINALE.ViewModels.MLDashboardViewModel
+@{
+    ViewData["Title"] = "ML Prediction Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .dashboard-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .metric-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .metric-card.high-risk {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+    }
+
+    .metric-card.medium-risk {
+        background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+        color: white;
+    }
+
+    .metric-card.low-risk {
+        background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+        color: white;
+    }
+
+    .metric-card.model-info {
+        background: linear-gradient(135deg, #5f27cd 0%, #341f97 100%);
+        color: white;
+    }
+
+    .metric-number {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .metric-label {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: 600;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+    }
+
+    .dashboard-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-indicator {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin-left: 1rem;
+        animation: pulse 2s infinite;
+    }
+
+    .status-online {
+        background: #00ff41;
+        box-shadow: 0 0 20px #00ff41;
+    }
+
+    .status-offline {
+        background: #ff4757;
+        box-shadow: 0 0 20px #ff4757;
+        animation: none;
+    }
+
+    @@keyframes pulse {
+        0% { 
+            box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7), 0 0 20px #00ff41; 
+        }
+        70% { 
+            box-shadow: 0 0 0 10px rgba(0, 255, 65, 0), 0 0 20px #00ff41; 
+        }
+        100% { 
+            box-shadow: 0 0 0 0 rgba(0, 255, 65, 0), 0 0 20px #00ff41; 
+        }
+    }
+
+    .control-panel {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .chart-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        min-height: 400px;
+        position: relative;
+    }
+
+    .chart-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+    }
+
+    .predictions-table {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+
+    .table-responsive {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .risk-high { 
+        color: #e74c3c; 
+        font-weight: 700; 
+    }
+
+    .risk-medium { 
+        color: #f39c12; 
+        font-weight: 700; 
+    }
+
+    .risk-low { 
+        color: #27ae60; 
+        font-weight: 700; 
+    }
+
+    .btn-modern {
+        padding: 12px 30px;
+        border-radius: 50px;
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .chart-loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        padding: 1rem;
+        border-radius: 10px;
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @@keyframes slideIn {
+        from { 
+            transform: translateX(100%); 
+            opacity: 0; 
+        }
+        to { 
+            transform: translateX(0); 
+            opacity: 1; 
+        }
+    }
+
+    .equipment-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        border-left: 5px solid;
+        transition: all 0.3s ease;
+    }
+
+    .equipment-card:hover {
+        transform: translateX(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .equipment-card.high-risk { border-left-color: #e74c3c; }
+    .equipment-card.medium-risk { border-left-color: #f39c12; }
+    .equipment-card.low-risk { border-left-color: #27ae60; }
+
+    .status-badge {
+        padding: 6px 16px;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .status-online-badge { 
+        background: #d5f4e6; 
+        color: #27ae60; 
+    }
+
+    .status-offline-badge { 
+        background: #fadbd8; 
+        color: #e74c3c; 
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                <i class="fas fa-robot me-3"></i>
+                ML Prediction Dashboard
+                <span class="status-indicator @(Model.ApiHealthy ? "status-online" : "status-offline")"></span>
+            </h1>
+            <p class="lead">
+                Advanced Machine Learning Predictive Maintenance System
+                <span class="badge @(Model.ApiHealthy ? "bg-success" : "bg-danger") ms-3">
+                    @(Model.ApiHealthy ? "API ONLINE" : "API OFFLINE")
+                </span>
+            </p>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h4 class="text-white mb-2">
+                        <i class="fas fa-cogs me-2"></i>Real-time Controls
+                    </h4>
+                    <p class="text-white-50 mb-0">Live monitoring and batch processing</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary btn-modern me-2" id="refreshData">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                    </button>
+                    <button class="btn btn-success btn-modern me-2" id="batchProcess">
+                        <span class="loading-spinner d-none me-2"></span>
+                        <i class="fas fa-play me-2"></i>Batch Analysis
+                    </button>
+                    <div class="form-check form-switch d-inline-block ms-3">
+                        <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                        <label class="form-check-label text-white" for="autoRefresh">
+                            Auto Refresh
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card model-info">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-number">@Model.ModelAccuracy.ToString("P1")</div>
+                            <div class="metric-label">Model Accuracy</div>
+                        </div>
+                        <i class="fas fa-brain fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card high-risk">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-number">@Model.HighRiskEquipment</div>
+                            <div class="metric-label">High Risk</div>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card medium-risk">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-number">@Model.MediumRiskEquipment</div>
+                            <div class="metric-label">Medium Risk</div>
+                        </div>
+                        <i class="fas fa-eye fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card low-risk">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="metric-number">@Model.LowRiskEquipment</div>
+                            <div class="metric-label">Low Risk</div>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-pie me-2"></i>Risk Distribution
+                    </h3>
+                    <div class="chart-loading" id="riskChartLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading risk analysis...</p>
+                    </div>
+                    <canvas id="riskChart" height="300" style="display: none;"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-line me-2"></i>Prediction Trends
+                    </h3>
+                    <div class="chart-loading" id="trendsChartLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading trend analysis...</p>
+                    </div>
+                    <canvas id="trendsChart" height="300" style="display: none;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Predictions -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="predictions-table">
+                    <div class="table-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            Live Equipment Predictions
+                            <span class="badge bg-light text-dark ms-2" id="predictionCount">
+                                Loading...
+                            </span>
+                        </h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="predictionsTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Equipment</th>
+                                    <th>Location</th>
+                                    <th>Risk Level</th>
+                                    <th>Failure Probability</th>
+                                    <th>Confidence</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="predictionsBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-3 text-muted">Loading live predictions...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="predictions-table h-100">
+                    <div class="table-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Critical Alerts
+                        </h3>
+                    </div>
+                    <div class="p-3" style="max-height: 500px; overflow-y: auto;">
+                        @if (Model.HighRiskEquipmentList.Any())
+                        {
+                            @foreach (var item in Model.HighRiskEquipmentList)
+                            {
+                                <div class="equipment-card high-risk">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="mb-1">
+                                            @(item.Equipment.EquipmentModel?.ModelName ?? 
+                                              item.Equipment.EquipmentType?.EquipmentTypeName ?? "Unknown")
+                                        </h5>
+                                        <span class="status-badge status-online-badge">
+                                            @item.Equipment.Status
+                                        </span>
+                                    </div>
+                                    <p class="text-muted small mb-2">
+                                        @item.Equipment.Building?.BuildingName - @item.Equipment.Room?.RoomName
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="risk-high">@item.RiskLevelDisplay</span>
+                                        <span class="badge bg-danger">@item.FailureProbabilityDisplay</span>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                                <h5 class="text-muted">All Systems Normal</h5>
+                                <p class="text-muted">No critical alerts detected</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
+    <script>
+        // Global variables
+        let riskChart = null;
+        let trendsChart = null;
+        let connection = null;
+        let refreshInterval = null;
+
+        $(document).ready(function() {
+            initializeDashboard();
+        });
+
+        function initializeDashboard() {
+            // Initialize SignalR
+            initializeSignalR();
+            
+            // Initialize charts
+            initializeCharts();
+            
+            // Load initial data
+            loadAllData();
+            
+            // Setup auto-refresh
+            setupAutoRefresh();
+            
+            // Setup event handlers
+            setupEventHandlers();
+        }
+
+        function initializeSignalR() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/maintenanceHub")
+                .build();
+
+            connection.start().then(function () {
+                console.log("SignalR Connected");
+                connection.invoke("JoinGroup", "MLDashboard");
+            }).catch(function (err) {
+                console.error("SignalR Error:", err);
+                showNotification("SignalR connection failed", "danger");
+            });
+
+            connection.on("BatchPredictionComplete", function (data) {
+                showNotification(`Batch analysis completed! Processed ${data.ProcessedCount} items.`, "success");
+                loadAllData();
+            });
+
+            connection.on("PredictionUpdate", function (data) {
+                loadLivePredictions();
+            });
+        }
+
+        function initializeCharts() {
+            if (typeof Chart === 'undefined') {
+                setTimeout(initializeCharts, 500);
+                return;
+            }
+
+            // Risk Distribution Chart
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            riskChart = new Chart(riskCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#e74c3c', '#f39c12', '#27ae60'],
+                        borderWidth: 0,
+                        hoverOffset: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 30,
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Trends Chart
+            const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+            trendsChart = new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Average Failure Probability',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 30,
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadAllData() {
+            loadRiskDistribution();
+            loadPredictionTrends();
+            loadLivePredictions();
+        }
+
+        function loadRiskDistribution() {
+            $.get('/MLDashboard/GetRiskDistribution')
+                .done(function(data) {
+                    if (riskChart) {
+                        riskChart.data.datasets[0].data = [
+                            data['High Risk'] || 0,
+                            data['Medium Risk'] || 0,
+                            data['Low Risk'] || 0
+                        ];
+                        riskChart.update();
+                    }
+                    $('#riskChartLoading').hide();
+                    $('#riskChart').show();
+                })
+                .fail(function() {
+                    showNotification("Failed to load risk distribution", "danger");
+                    $('#riskChartLoading').hide();
+                    $('#riskChart').show();
+                });
+        }
+
+        function loadPredictionTrends() {
+            $.get('/MLDashboard/GetPredictionTrends')
+                .done(function(data) {
+                    if (trendsChart && data && data.length > 0) {
+                        trendsChart.data.labels = data.map(item => item.date);
+                        trendsChart.data.datasets[0].data = data.map(item => item.averageFailureProbability);
+                        trendsChart.update();
+                    }
+                    $('#trendsChartLoading').hide();
+                    $('#trendsChart').show();
+                })
+                .fail(function() {
+                    showNotification("Failed to load prediction trends", "danger");
+                    $('#trendsChartLoading').hide();
+                    $('#trendsChart').show();
+                });
+        }
+
+        function loadLivePredictions() {
+            $.get('/MLDashboard/GetLivePredictions')
+                .done(function(data) {
+                    updatePredictionsTable(data);
+                    $('#predictionCount').text(data.length + ' active');
+                })
+                .fail(function() {
+                    showNotification("Failed to load live predictions", "danger");
+                    $('#predictionCount').text('Error');
+                });
+        }
+
+        function updatePredictionsTable(predictions) {
+            const tbody = $('#predictionsBody');
+            tbody.empty();
+
+            if (predictions.length === 0) {
+                tbody.append(`
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="fas fa-info-circle text-muted fa-3x mb-3"></i>
+                            <p class="text-muted">No active predictions found</p>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+
+            predictions.forEach(function(item) {
+                const equipment = item.equipment;
+                const prediction = item.prediction;
+                
+                const riskClass = prediction ? 
+                    (prediction.riskLevel === 'Critical' || prediction.riskLevel === 'High' ? 'risk-high' : 
+                     prediction.riskLevel === 'Medium' ? 'risk-medium' : 'risk-low') : '';
+                
+                const badgeClass = prediction ? 
+                    (prediction.riskLevel === 'Critical' || prediction.riskLevel === 'High' ? 'bg-danger' : 
+                     prediction.riskLevel === 'Medium' ? 'bg-warning' : 'bg-success') : 'bg-secondary';
+                
+                const row = `
+                    <tr>
+                        <td>
+                            <div>
+                                <strong>${equipment.equipmentModel?.modelName || equipment.equipmentType?.equipmentTypeName || 'Unknown'}</strong>
+                                <br><small class="text-muted">${equipment.equipmentType?.equipmentTypeName || 'Unknown Type'}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <small>
+                                ${equipment.building?.buildingName || 'N/A'}<br>
+                                ${equipment.room?.roomName || 'N/A'}
+                            </small>
+                        </td>
+                        <td>
+                            <span class="${riskClass}">
+                                ${item.riskLevelDisplay || 'N/A'}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge ${badgeClass}">
+                                ${prediction ? (prediction.failureProbability * 100).toFixed(1) + '%' : 'N/A'}
+                            </span>
+                        </td>
+                        <td>
+                            ${prediction ? (prediction.confidence * 100).toFixed(1) + '%' : 'N/A'}
+                        </td>
+                        <td>
+                            <span class="status-badge ${equipment.status === 'Active' ? 'status-online-badge' : 'status-offline-badge'}">
+                                ${equipment.status}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        function setupAutoRefresh() {
+            if ($('#autoRefresh').is(':checked')) {
+                refreshInterval = setInterval(loadAllData, @Model.RefreshInterval * 1000);
+            }
+        }
+
+        function setupEventHandlers() {
+            $('#refreshData').click(function() {
+                loadAllData();
+                showNotification("Data refreshed successfully", "success");
+            });
+
+            $('#batchProcess').click(function() {
+                const $button = $(this);
+                const $spinner = $button.find('.loading-spinner');
+                const $icon = $button.find('i.fa-play');
+                
+                $button.prop('disabled', true);
+                $spinner.removeClass('d-none');
+                $icon.addClass('d-none');
+                
+                $.post('/MLDashboard/RunBatchPrediction')
+                    .done(function(response) {
+                        if (response.success) {
+                            showNotification(`Batch analysis started! Processing ${response.processedCount} items.`, "success");
+                        } else {
+                            showNotification(`Batch analysis failed: ${response.error}`, "danger");
+                        }
+                    })
+                    .fail(function() {
+                        showNotification("Failed to start batch analysis", "danger");
+                    })
+                    .always(function() {
+                        $button.prop('disabled', false);
+                        $spinner.addClass('d-none');
+                        $icon.removeClass('d-none');
+                    });
+            });
+
+            $('#autoRefresh').change(function() {
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                    refreshInterval = null;
+                }
+                if ($(this).is(':checked')) {
+                    setupAutoRefresh();
+                }
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            const bgColor = type === 'success' ? '#27ae60' : 
+                           type === 'danger' ? '#e74c3c' : 
+                           type === 'warning' ? '#f39c12' : '#3498db';
+            
+            const notification = $(`
+                <div class="notification" style="background-color: ${bgColor};">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>${message}</span>
+                        <button type="button" class="btn-close btn-close-white" aria-label="Close"></button>
+                    </div>
+                </div>
+            `);
+            
+            $('body').append(notification);
+            
+            notification.find('.btn-close').click(function() {
+                notification.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            });
+            
+            setTimeout(function() {
+                notification.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }, 5000);
+        }
+    </script>
+}

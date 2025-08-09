@@ -1,0 +1,631 @@
+@{
+    ViewData["Title"] = "Model Interpretability - Redirecting";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Model Interpretability - Moved</title>
+    <meta http-equiv="refresh" content="3;url=@Url.Action("Index", "Equipment")?modelInterpretability=true">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            animation: loading 3s linear forwards;
+        }
+        @@keyframes loading {
+            to { width: 100%; }
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="icon">🧠➡️🔧</span>
+        <h2>Model Interpretability has been moved!</h2>
+        <p><strong>New Location:</strong> Equipment Management</p>
+        <p>Model Interpretability is now integrated directly with equipment analysis and maintenance scheduling.</p>
+        
+        <div class="progress-bar">
+            <div class="progress"></div>
+        </div>
+        
+        <p><small>Redirecting in 3 seconds...</small></p>
+        <a href="@Url.Action("Index", "Equipment")?modelInterpretability=true" class="btn">
+            🚀 Go to Equipment Management
+        </a>
+        
+        <div style="margin-top: 20px; font-size: 12px; color: #666;">
+            <p>✅ Connected to 5000+ equipment dataset<br>
+            ✅ Integrated with Predictive Model folder<br>
+            ✅ AI analysis next to maintenance scheduling</p>
+        </div>
+    </div>
+</body>
+</html>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">🔧 Equipment with Model Interpretability</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Click the 🧠 brain icon next to any equipment to analyze it with Model Interpretability
+                    </p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Equipment ID</th>
+                                    <th>Equipment Name</th>
+                                    <th>Model</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Projector Unit A</td>
+                                    <td>Epson PowerLite L615U</td>
+                                    <td>Room 101</td>
+                                    <td><span class="badge badge-success">Active</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/ModelInterpretability/EquipmentAnalysis/1" class="btn btn-sm btn-info" title="Model Interpretability Analysis">
+                                                <i class="bi bi-brain"></i> Model Analysis
+                                            </a>
+                                            <button class="btn btn-sm btn-primary" title="Schedule Maintenance">
+                                                <i class="bi bi-calendar-plus"></i> Schedule
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>HVAC System B</td>
+                                    <td>Carrier 30RB Series</td>
+                                    <td>Building A</td>
+                                    <td><span class="badge badge-warning">Maintenance Due</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/ModelInterpretability/EquipmentAnalysis/2" class="btn btn-sm btn-info" title="Model Interpretability Analysis">
+                                                <i class="bi bi-brain"></i> Model Analysis
+                                            </a>
+                                            <button class="btn btn-sm btn-primary" title="Schedule Maintenance">
+                                                <i class="bi bi-calendar-plus"></i> Schedule
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Laboratory Equipment C</td>
+                                    <td>Thermo Fisher Scientific</td>
+                                    <td>Lab 205</td>
+                                    <td><span class="badge badge-danger">High Risk</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/ModelInterpretability/EquipmentAnalysis/3" class="btn btn-sm btn-info" title="Model Interpretability Analysis">
+                                                <i class="bi bi-brain"></i> Model Analysis
+                                            </a>
+                                            <button class="btn btn-sm btn-primary" title="Schedule Maintenance">
+                                                <i class="bi bi-calendar-plus"></i> Schedule
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>Computer Lab Workstation D</td>
+                                    <td>Dell OptiPlex 7090</td>
+                                    <td>Computer Lab 1</td>
+                                    <td><span class="badge badge-success">Active</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/ModelInterpretability/EquipmentAnalysis/4" class="btn btn-sm btn-info" title="Model Interpretability Analysis">
+                                                <i class="bi bi-brain"></i> Model Analysis
+                                            </a>
+                                            <button class="btn btn-sm btn-primary" title="Schedule Maintenance">
+                                                <i class="bi bi-calendar-plus"></i> Schedule
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>Audio System E</td>
+                                    <td>Yamaha MG Series</td>
+                                    <td>Auditorium</td>
+                                    <td><span class="badge badge-info">Scheduled Maintenance</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/ModelInterpretability/EquipmentAnalysis/5" class="btn btn-sm btn-info" title="Model Interpretability Analysis">
+                                                <i class="bi bi-brain"></i> Model Analysis
+                                            </a>
+                                            <button class="btn btn-sm btn-primary" title="Schedule Maintenance">
+                                                <i class="bi bi-calendar-plus"></i> Schedule
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information Cards -->
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                How to Use Model Interpretability
+                            </div>
+                            <div class="text-gray-800">
+                                1. Find the equipment you want to analyze<br>
+                                2. Click the 🧠 <strong>"Model Analysis"</strong> button<br>
+                                3. View AI model explanations and insights<br>
+                                4. Make informed maintenance decisions
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-lightbulb-fill text-gray-300" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Integration Status
+                            </div>
+                            <div class="text-gray-800">
+                                ✅ Model Interpretability Successfully Integrated<br>
+                                ✅ Available in Predictive Maintenance Dashboard<br>
+                                ✅ Equipment-specific analysis ready<br>
+                                ✅ Streamlit service integration complete
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle-fill text-gray-300" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Help -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">📍 Where to Find Model Interpretability in the Main Application</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold">Navigation Path:</h6>
+                            <ol>
+                                <li>Go to main menu → <strong>"Predictive AI"</strong> dropdown</li>
+                                <li>Click <strong>"Predictive Maintenance"</strong></li>
+                                <li>Look for the tabs: Overview, Risk Assessment, Predictions, Planning</li>
+                                <li>Click on any tab to see equipment tables</li>
+                                <li>Find the 🧠 brain icon buttons in the "Actions" column</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold">Direct Links (Demo):</h6>
+                            <div class="btn-group-vertical d-grid gap-2">
+                                <a href="/ModelInterpretability/EquipmentAnalysis/1" class="btn btn-outline-primary">
+                                    🧠 Equipment 1 Analysis
+                                </a>
+                                <a href="/ModelInterpretability/EquipmentAnalysis/2" class="btn btn-outline-primary">
+                                    🧠 Equipment 2 Analysis
+                                </a>
+                                <a href="/ModelInterpretability/EquipmentAnalysis/3" class="btn btn-outline-primary">
+                                    🧠 Equipment 3 Analysis
+                                </a>
+                                <a href="/PredictiveMaintenance" class="btn btn-success">
+                                    📊 Go to Predictive Maintenance Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        font-size: 0.875rem;
+    }
+    .btn-group .btn {
+        margin-right: 5px;
+    }
+    .card {
+        border: none;
+    }
+    .border-left-primary {
+        border-left: 4px solid #4e73df;
+    }
+    .border-left-success {
+        border-left: 4px solid #1cc88a;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-brain"></i>
+                        Model Interpretability Dashboard
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle"></i> About Model Interpretability</h5>
+                        <p class="mb-0">This feature provides explanations for equipment failure predictions using AI interpretability techniques (SHAP and LIME). Select an equipment to understand why the model made specific predictions and which factors contribute most to failure risk.</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-secondary">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-search"></i> Equipment Selection</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="equipmentSelect">Select Equipment to Analyze:</label>
+                                        <select id="equipmentSelect" class="form-control">
+                                            <option value="">Loading equipment...</option>
+                                        </select>
+                                    </div>
+                                    <button id="analyzeBtn" class="btn btn-primary btn-block" disabled>
+                                        <i class="fas fa-analytics"></i> Analyze Equipment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-lightbulb"></i> How It Works</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success"></i> <strong>SHAP Analysis:</strong> Shows feature importance and contribution</li>
+                                        <li><i class="fas fa-check text-success"></i> <strong>LIME Explanation:</strong> Provides local interpretable explanations</li>
+                                        <li><i class="fas fa-check text-success"></i> <strong>Business Impact:</strong> Translates technical insights to actionable recommendations</li>
+                                        <li><i class="fas fa-check text-success"></i> <strong>Risk Assessment:</strong> Evaluates failure probability and risk level</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="resultsSection" class="mt-4" style="display: none;">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Analysis Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="loadingSpinner" class="text-center" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Analyzing...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing equipment and generating explanations...</p>
+                                </div>
+                                
+                                <div id="analysisResults" style="display: none;">
+                                    <!-- Results will be populated here -->
+                                </div>
+                                
+                                <div id="errorSection" class="alert alert-danger" style="display: none;">
+                                    <h6><i class="fas fa-exclamation-triangle"></i> Analysis Error</h6>
+                                    <p id="errorMessage"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            loadEquipmentList();
+            
+            $('#equipmentSelect').change(function() {
+                const equipmentId = $(this).val();
+                $('#analyzeBtn').prop('disabled', !equipmentId);
+            });
+            
+            $('#analyzeBtn').click(function() {
+                const equipmentId = $('#equipmentSelect').val();
+                if (equipmentId) {
+                    analyzeEquipment(equipmentId);
+                }
+            });
+        });
+        
+        function loadEquipmentList() {
+            $.get('/api/Equipment')
+                .done(function(data) {
+                    const select = $('#equipmentSelect');
+                    select.empty();
+                    select.append('<option value="">Select an equipment...</option>');
+                    
+                    data.forEach(function(equipment) {
+                        const displayName = `${equipment.equipmentModel?.modelName || 'Unknown Model'} (${equipment.equipmentType?.equipmentTypeName || 'Unknown Type'}) - ${equipment.room?.roomName || 'Unknown Room'}`;
+                        select.append(`<option value="${equipment.equipmentId}">${displayName}</option>`);
+                    });
+                })
+                .fail(function() {
+                    $('#equipmentSelect').html('<option value="">Error loading equipment</option>');
+                });
+        }
+        
+        function analyzeEquipment(equipmentId) {
+            $('#resultsSection').show();
+            $('#loadingSpinner').show();
+            $('#analysisResults').hide();
+            $('#errorSection').hide();
+            
+            $.post(`/Equipment/GetEquipmentExplanation/${equipmentId}`)
+                .done(function(data) {
+                    $('#loadingSpinner').hide();
+                    if (data.isSuccessful) {
+                        displayResults(data);
+                    } else {
+                        showError(data.errorMessage || 'Analysis failed');
+                    }
+                })
+                .fail(function(xhr) {
+                    $('#loadingSpinner').hide();
+                    const errorMsg = xhr.responseJSON?.message || 'Failed to analyze equipment';
+                    showError(errorMsg);
+                });
+        }
+        
+        function displayResults(data) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-primary mb-3">
+                            <div class="card-header">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Risk Assessment</h6>
+                            </div>
+                            <div class="card-body">
+                                <h5>Equipment: ${data.equipmentName}</h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Failure Probability:</strong><br>
+                                        <span class="badge badge-${getRiskBadgeClass(data.failureProbability)} badge-lg">
+                                            ${(data.failureProbability * 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Risk Level:</strong><br>
+                                        <span class="badge badge-${getRiskLevelBadgeClass(data.riskLevel)} badge-lg">
+                                            ${data.riskLevel}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <strong>Recommendation:</strong>
+                                    <p class="mt-1">${data.recommendation}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card border-info mb-3">
+                            <div class="card-header">
+                                <h6><i class="fas fa-chart-bar"></i> Top Risk Factors</h6>
+                            </div>
+                            <div class="card-body">
+                                ${displayTopFactors(data.shapValues)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card border-success">
+                            <div class="card-header">
+                                <h6><i class="fas fa-lightbulb"></i> Business Interpretation</h6>
+                            </div>
+                            <div class="card-body">
+                                ${displayBusinessInterpretation(data.businessInterpretation)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#analysisResults').html(html).show();
+        }
+        
+        function displayTopFactors(shapValues) {
+            if (!shapValues || shapValues.length === 0) {
+                return '<p>No feature importance data available.</p>';
+            }
+            
+            let html = '<div class="list-group list-group-flush">';
+            shapValues.slice(0, 5).forEach(function(factor, index) {
+                const impact = factor.value > 0 ? 'Increases Risk' : 'Decreases Risk';
+                const badgeClass = factor.value > 0 ? 'badge-danger' : 'badge-success';
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${factor.feature}</strong><br>
+                            <small class="text-muted">${impact}</small>
+                        </div>
+                        <span class="badge ${badgeClass}">
+                            ${factor.value > 0 ? '+' : ''}${factor.value.toFixed(3)}
+                        </span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+        
+        function displayBusinessInterpretation(interpretation) {
+            if (!interpretation) {
+                return '<p>No business interpretation available.</p>';
+            }
+            
+            let html = '';
+            if (interpretation.primaryConcerns && interpretation.primaryConcerns.length > 0) {
+                html += '<h6>Primary Concerns:</h6><ul>';
+                interpretation.primaryConcerns.forEach(function(concern) {
+                    html += `<li>${concern}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            if (interpretation.recommendations && interpretation.recommendations.length > 0) {
+                html += '<h6>Recommended Actions:</h6><ul>';
+                interpretation.recommendations.forEach(function(rec) {
+                    html += `<li>${rec}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            if (interpretation.summary) {
+                html += `<h6>Summary:</h6><p>${interpretation.summary}</p>`;
+            }
+            
+            return html || '<p>Business interpretation not available.</p>';
+        }
+        
+        function getRiskBadgeClass(probability) {
+            if (probability >= 0.7) return 'danger';
+            if (probability >= 0.4) return 'warning';
+            return 'success';
+        }
+        
+        function getRiskLevelBadgeClass(riskLevel) {
+            switch(riskLevel?.toLowerCase()) {
+                case 'high': return 'danger';
+                case 'medium': return 'warning';
+                case 'low': return 'success';
+                default: return 'secondary';
+            }
+        }
+        
+        function showError(message) {
+            $('#errorMessage').text(message);
+            $('#errorSection').show();
+        }
+    </script>
+}
+
+<style>
+    .badge-lg {
+        font-size: 1.1em;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .card-header h5, .card-header h6 {
+        margin-bottom: 0;
+    }
+    
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+    
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+    }
+    
+    .list-group-item:first-child {
+        border-top: none;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+</style>

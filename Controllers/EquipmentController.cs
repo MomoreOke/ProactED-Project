@@ -19,15 +19,23 @@ namespace FEENALOoFINALE.Controllers
         private readonly ICacheService _cacheService;
         private readonly IPerformanceMonitoringService? _performanceMonitor;
         private readonly ILogger<EquipmentController> _logger;
-        private readonly IDocumentProcessingService _documentProcessingService;
+    private readonly IDocumentProcessingService _documentProcessingService;
+        private readonly IFormRecognizerService _formRecognizerService;
         private readonly IWebHostEnvironment _environment;
+        private readonly IModelInterpretabilityService _interpretabilityService;
+        private readonly IEquipmentPredictionService _predictionService;
+        private readonly EnhancedEquipmentTrackingService _equipmentTrackingService;
 
         public EquipmentController(ApplicationDbContext context, 
                                   MaintenanceSchedulingService schedulingService, 
                                   ICacheService cacheService,
                                   ILogger<EquipmentController> logger,
                                   IDocumentProcessingService documentProcessingService,
+                                  IFormRecognizerService formRecognizerService,
                                   IWebHostEnvironment environment,
+                                  IModelInterpretabilityService interpretabilityService,
+                                  IEquipmentPredictionService predictionService,
+                                  EnhancedEquipmentTrackingService equipmentTrackingService,
                                   IPerformanceMonitoringService? performanceMonitor = null)
         {
             _context = context;
@@ -35,7 +43,11 @@ namespace FEENALOoFINALE.Controllers
             _cacheService = cacheService;
             _logger = logger;
             _documentProcessingService = documentProcessingService;
+            _formRecognizerService = formRecognizerService;
             _environment = environment;
+            _interpretabilityService = interpretabilityService;
+            _predictionService = predictionService;
+            _equipmentTrackingService = equipmentTrackingService;
             _performanceMonitor = performanceMonitor;
         }
 
@@ -221,6 +233,25 @@ namespace FEENALOoFINALE.Controllers
 
             _context.Add(equipment);
             await _context.SaveChangesAsync();
+
+                    // 🤖 Auto-register new equipment in ML prediction system
+                    try
+                    {
+                        var mlRegistrationSuccess = await _equipmentTrackingService.AutoRegisterNewEquipmentAsync(equipment);
+                        if (mlRegistrationSuccess)
+                        {
+                            _logger.LogInformation($"✅ Equipment {equipment.EquipmentId} successfully registered in ML system");
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"⚠️ Equipment {equipment.EquipmentId} could not be registered in ML system");
+                        }
+                    }
+                    catch (Exception mlEx)
+                    {
+                        _logger.LogError(mlEx, $"❌ Error registering equipment {equipment.EquipmentId} in ML system");
+                        // Don't fail equipment creation due to ML registration issues
+                    }
 
                     // Clear cache
                     await _cacheService.RemoveAsync("equipment_list");
@@ -1858,6 +1889,25 @@ namespace FEENALOoFINALE.Controllers
                     _context.Add(equipment);
                     await _context.SaveChangesAsync();
 
+                    // 🤖 Auto-register new equipment in ML prediction system
+                    try
+                    {
+                        var mlRegistrationSuccess = await _equipmentTrackingService.AutoRegisterNewEquipmentAsync(equipment);
+                        if (mlRegistrationSuccess)
+                        {
+                            _logger.LogInformation($"✅ Equipment {equipment.EquipmentId} (with docs) successfully registered in ML system");
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"⚠️ Equipment {equipment.EquipmentId} (with docs) could not be registered in ML system");
+                        }
+                    }
+                    catch (Exception mlEx)
+                    {
+                        _logger.LogError(mlEx, $"❌ Error registering equipment {equipment.EquipmentId} (with docs) in ML system");
+                        // Don't fail equipment creation due to ML registration issues
+                    }
+
                     // Handle document uploads if any
                     if (ManufacturerDocuments != null && ManufacturerDocuments.Count > 0)
                     {
@@ -1907,6 +1957,24 @@ namespace FEENALOoFINALE.Controllers
                             await file.CopyToAsync(stream);
                         }
 
+                        // Extract tables using FormRecognizer for documents that might contain them
+                        var tables = new List<TableResult>();
+                        if (file.ContentType == "application/pdf" || file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                                {
+                                    tables = await _formRecognizerService.ExtractTablesAsync(fileStream);
+                                    _logger.LogInformation($"Extracted {tables.Count} tables from document {file.FileName}");
+                                }
+                            }
+                            catch (Exception tableEx)
+                            {
+                                _logger.LogWarning(tableEx, $"Could not extract tables from {file.FileName}: {tableEx.Message}");
+                            }
+                        }
+
                         // Create document record
                         var document = new ManufacturerDocument
                         {
@@ -1930,6 +1998,570 @@ namespace FEENALOoFINALE.Controllers
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        // MARK: - Model Interpretability Actions
+
+        /// <summary>
+        /// 🔍 Get AI explanation for specific equipment
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ExplainPrediction(int id)
+        {
+            try
+            {
+                var equipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .Include(e => e.Building)
+                    .Include(e => e.Room)
+                    .FirstOrDefaultAsync(e => e.EquipmentId == id);
+
+                if (equipment == null)
+                {
+                    return NotFound();
+                }
+
+                var explanation = await _interpretabilityService.GetEquipmentExplanationAsync(equipment);
+                
+                ViewBag.Equipment = equipment;
+                return View(explanation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting explanation for equipment {EquipmentId}", id);
+                TempData["ErrorMessage"] = "Unable to generate AI explanation at this time.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+        }
+
+        /// <summary>
+        /// 🔍 AJAX endpoint for getting equipment explanation
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> GetEquipmentExplanation(int equipmentId)
+        {
+            try
+            {
+                var explanation = await _interpretabilityService.GetEquipmentExplanationAsync(equipmentId);
+                return Json(explanation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting AJAX explanation for equipment {EquipmentId}", equipmentId);
+                return Json(new { 
+                    isSuccessful = false, 
+                    errorMessage = "Unable to generate explanation" 
+                });
+            }
+        }
+
+        /// <summary>
+        /// 📊 Get equipment data for Model Interpretability analysis in Predictive Maintenance Dashboard
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetEquipmentForAnalysis()
+        {
+            try
+            {
+                var equipment = await _context.Equipment
+                    .Include(e => e.EquipmentModel)
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.Room)
+                        .ThenInclude(r => r!.Building)
+                    .Where(e => e.Status == EquipmentStatus.Active)
+                    .Select(e => new
+                    {
+                        equipmentId = e.EquipmentId,
+                        serialNumber = e.EquipmentId.ToString(), // Use EquipmentId as identifier
+                        equipmentModel = e.EquipmentModel != null ? e.EquipmentModel.ModelName : "Unknown Model",
+                        category = e.EquipmentType != null ? e.EquipmentType.EquipmentTypeName : "Unknown Type",
+                        buildingName = e.Room != null && e.Room.Building != null ? e.Room.Building.BuildingName : "Unknown Building",
+                        roomName = e.Room != null ? e.Room.RoomName : "Unknown Room",
+                        riskLevel = e.Status == EquipmentStatus.Active ? "Unknown" : "Inactive",
+                        riskScore = 0.0, // This will be calculated by the AI service
+                        lastAnalysis = (DateTime?)null // This will be tracked in the future
+                    })
+                    .OrderBy(e => e.equipmentId)
+                    .ToListAsync();
+
+                return Json(new { success = true, data = equipment });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting equipment for analysis");
+                return Json(new { 
+                    success = false, 
+                    error = "Unable to load equipment data for analysis" 
+                });
+            }
+        }
+
+        /// <summary>
+        /// 📊 Global feature importance analysis
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> FeatureImportance()
+        {
+            try
+            {
+                var importance = await _interpretabilityService.GetGlobalFeatureImportanceAsync();
+                return View(importance);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting global feature importance");
+                TempData["ErrorMessage"] = "Unable to load feature importance analysis.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        /// <summary>
+        /// 🔍 Check if interpretability service is available
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> CheckInterpretabilityStatus()
+        {
+            var isAvailable = await _interpretabilityService.IsInterpretabilityServiceAvailableAsync();
+            return Json(new { isAvailable });
+        }
+
+        // ===== ML PREDICTION INTEGRATION METHODS =====
+
+        /// <summary>
+        /// 🤖 Get ML prediction for a single equipment item
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> GetEquipmentPrediction(int equipmentId)
+        {
+            try
+            {
+                var equipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .FirstOrDefaultAsync(e => e.EquipmentId == equipmentId);
+
+                if (equipment == null)
+                {
+                    return Json(new { success = false, error = "Equipment not found" });
+                }
+
+                // Convert equipment to prediction data format
+                var predictionData = EquipmentPredictionData.FromEquipment(equipment);
+
+                // Get prediction from ML service
+                var prediction = await _predictionService.PredictEquipmentFailureAsync(predictionData);
+
+                if (prediction.Success)
+                {
+                    // Store prediction in database for future reference
+                    try
+                    {
+                        var failurePrediction = prediction.ToFailurePrediction(equipmentId);
+                        _context.FailurePredictions.Add(failurePrediction);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to save prediction to database for equipment {EquipmentId}", equipmentId);
+                        // Continue - this is not critical for the API response
+                    }
+                }
+
+                return Json(new { 
+                    success = prediction.Success,
+                    equipmentName = $"{equipment.EquipmentModel?.ModelName} ({equipment.EquipmentType?.EquipmentTypeName})",
+                    prediction = new {
+                        equipmentId = prediction.EquipmentId,
+                        failureProbability = prediction.FailureProbability,
+                        riskLevel = prediction.RiskLevel,
+                        confidenceScore = prediction.ConfidenceScore,
+                        modelVersion = prediction.ModelVersion,
+                        predictionTimestamp = prediction.PredictionTimestamp,
+                        failureProbabilityPercentage = (prediction.FailureProbability * 100).ToString("F1"),
+                        confidencePercentage = (prediction.ConfidenceScore * 100).ToString("F1"),
+                        riskColorClass = GetRiskColorClass(prediction.RiskLevel)
+                    },
+                    error = prediction.ErrorMessage
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting equipment prediction for equipment {EquipmentId}", equipmentId);
+                return Json(new { success = false, error = "Failed to get equipment prediction" });
+            }
+        }
+
+        /// <summary>
+        /// 🤖 Get ML predictions for multiple equipment items
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> GetBatchPredictions([FromBody] int[] equipmentIds)
+        {
+            try
+            {
+                if (equipmentIds == null || !equipmentIds.Any())
+                {
+                    return Json(new { success = false, error = "No equipment IDs provided" });
+                }
+
+                // Limit batch size for performance
+                if (equipmentIds.Length > 20)
+                {
+                    return Json(new { success = false, error = "Batch size too large. Maximum 20 equipment items." });
+                }
+
+                var equipment = await _context.Equipment
+                    .Include(e => e.EquipmentType)
+                    .Include(e => e.EquipmentModel)
+                    .Where(e => equipmentIds.Contains(e.EquipmentId))
+                    .ToListAsync();
+
+                // Convert to prediction data format
+                var predictionDataList = equipment.Select(EquipmentPredictionData.FromEquipment).ToList();
+
+                // Get batch predictions from ML service
+                var batchResult = await _predictionService.PredictBatchEquipmentFailureAsync(predictionDataList);
+
+                if (batchResult.Success && batchResult.Predictions.Any())
+                {
+                    // Store predictions in database
+                    try
+                    {
+                        var failurePredictions = batchResult.Predictions
+                            .Where(p => p.Success)
+                            .Select(p => p.ToFailurePrediction(int.Parse(p.EquipmentId)))
+                            .ToList();
+
+                        _context.FailurePredictions.AddRange(failurePredictions);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to save batch predictions to database");
+                        // Continue - this is not critical for the API response
+                    }
+                }
+
+                return Json(new { 
+                    success = batchResult.Success,
+                    processedCount = batchResult.ProcessedCount,
+                    predictions = batchResult.Predictions.Select(p => new {
+                        equipmentId = p.EquipmentId,
+                        equipmentName = equipment.FirstOrDefault(e => e.EquipmentId.ToString() == p.EquipmentId)?.EquipmentModel?.ModelName ?? "Unknown",
+                        failureProbability = p.FailureProbability,
+                        riskLevel = p.RiskLevel,
+                        confidenceScore = p.ConfidenceScore,
+                        failureProbabilityPercentage = (p.FailureProbability * 100).ToString("F1"),
+                        confidencePercentage = (p.ConfidenceScore * 100).ToString("F1"),
+                        riskColorClass = GetRiskColorClass(p.RiskLevel)
+                    }),
+                    error = batchResult.ErrorMessage
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting batch predictions for equipment IDs: {EquipmentIds}", string.Join(", ", equipmentIds));
+                return Json(new { success = false, error = "Failed to get batch predictions" });
+            }
+        }
+
+        /// <summary>
+        /// 🩺 Check ML API health status
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> CheckPredictionApiHealth()
+        {
+            try
+            {
+                var isHealthy = await _predictionService.IsApiHealthyAsync();
+                var modelInfo = isHealthy ? await _predictionService.GetModelInfoAsync() : null;
+
+                return Json(new { 
+                    success = true,
+                    apiHealthy = isHealthy,
+                    modelInfo = modelInfo?.Success == true ? new {
+                        version = modelInfo.ModelVersion,
+                        accuracy = (modelInfo.Accuracy * 100).ToString("F1") + "%",
+                        trainingDate = modelInfo.TrainingDate.ToString("yyyy-MM-dd"),
+                        featureCount = modelInfo.Features.Count
+                    } : null
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking prediction API health");
+                return Json(new { success = false, error = "Failed to check API health" });
+            }
+        }
+
+        /// <summary>
+        /// Helper method to get CSS class for risk level
+        /// </summary>
+        private string GetRiskColorClass(string riskLevel)
+        {
+            return riskLevel?.ToLower() switch
+            {
+                "critical" or "high" => "danger",
+                "medium" => "warning",
+                "low" => "success",
+                _ => "secondary"
+            };
+        }
+
+        // AJAX Methods for Dynamic Add New functionality
+        [HttpPost, HttpGet]
+        public async Task<IActionResult> CreateEquipmentType(string name)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return Json(new { success = false, message = "Equipment type name is required" });
+                }
+
+                var existingType = await _context.EquipmentTypes
+                    .FirstOrDefaultAsync(et => et.EquipmentTypeName.ToLower() == name.ToLower());
+                
+                if (existingType != null)
+                {
+                    return Json(new { success = false, message = "Equipment type already exists" });
+                }
+
+                var equipmentType = new EquipmentType
+                {
+                    EquipmentTypeName = name.Trim()
+                };
+
+                _context.EquipmentTypes.Add(equipmentType);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, id = equipmentType.EquipmentTypeId, name = equipmentType.EquipmentTypeName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating equipment type: {Name}", name);
+                return Json(new { success = false, message = "An error occurred while creating the equipment type" });
+            }
+        }
+
+        [HttpPost, HttpGet]
+        public async Task<IActionResult> CreateEquipmentModel(string name, int equipmentTypeId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return Json(new { success = false, message = "Equipment model name is required" });
+                }
+
+                if (equipmentTypeId <= 0)
+                {
+                    return Json(new { success = false, message = "Please select an equipment type first" });
+                }
+
+                // Check if equipment type exists
+                var equipmentType = await _context.EquipmentTypes.FindAsync(equipmentTypeId);
+                if (equipmentType == null)
+                {
+                    return Json(new { success = false, message = "Invalid equipment type selected" });
+                }
+
+                var existingModel = await _context.EquipmentModels
+                    .FirstOrDefaultAsync(em => em.ModelName.ToLower() == name.ToLower() && em.EquipmentTypeId == equipmentTypeId);
+                
+                if (existingModel != null)
+                {
+                    return Json(new { success = false, message = "Equipment model already exists for this type" });
+                }
+
+                var equipmentModel = new EquipmentModel
+                {
+                    ModelName = name.Trim(),
+                    EquipmentTypeId = equipmentTypeId
+                };
+
+                _context.EquipmentModels.Add(equipmentModel);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, id = equipmentModel.EquipmentModelId, name = equipmentModel.ModelName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating equipment model: {Name}", name);
+                return Json(new { success = false, message = "An error occurred while creating the equipment model" });
+            }
+        }
+
+        [HttpPost, HttpGet]
+        public async Task<IActionResult> CreateBuilding(string name)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return Json(new { success = false, message = "Building name is required" });
+                }
+
+                var existingBuilding = await _context.Buildings
+                    .FirstOrDefaultAsync(b => b.BuildingName.ToLower() == name.ToLower());
+                
+                if (existingBuilding != null)
+                {
+                    return Json(new { success = false, message = "Building already exists" });
+                }
+
+                var building = new Building
+                {
+                    BuildingName = name.Trim()
+                };
+
+                _context.Buildings.Add(building);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, id = building.BuildingId, name = building.BuildingName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating building: {Name}", name);
+                return Json(new { success = false, message = "An error occurred while creating the building" });
+            }
+        }
+
+        [HttpPost, HttpGet]
+        public async Task<IActionResult> CreateRoom(string name, int buildingId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return Json(new { success = false, message = "Room name is required" });
+                }
+
+                if (buildingId <= 0)
+                {
+                    return Json(new { success = false, message = "Valid building selection is required" });
+                }
+
+                // Check if building exists
+                var building = await _context.Buildings.FindAsync(buildingId);
+                if (building == null)
+                {
+                    return Json(new { success = false, message = "Selected building does not exist" });
+                }
+
+                // Check if room already exists in this building
+                var existingRoom = await _context.Rooms
+                    .FirstOrDefaultAsync(r => r.RoomName.ToLower() == name.ToLower() && r.BuildingId == buildingId);
+                
+                if (existingRoom != null)
+                {
+                    return Json(new { success = false, message = "Room already exists in this building" });
+                }
+
+                var room = new Room
+                {
+                    RoomName = name.Trim(),
+                    BuildingId = buildingId
+                };
+
+                _context.Rooms.Add(room);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, id = room.RoomId, name = room.RoomName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating room: {Name} in building {BuildingId}", name, buildingId);
+                return Json(new { success = false, message = "An error occurred while creating the room" });
+            }
+        }
+
+        // GET: Equipment/GetModelsByEquipmentType
+        public async Task<IActionResult> GetModelsByEquipmentType(int equipmentTypeId)
+        {
+            try
+            {
+                var models = await _context.EquipmentModels
+                    .Where(em => em.EquipmentTypeId == equipmentTypeId)
+                    .Select(em => new { value = em.EquipmentModelId, text = em.ModelName })
+                    .OrderBy(em => em.text)
+                    .ToListAsync();
+
+                return Json(models);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting models for equipment type {EquipmentTypeId}", equipmentTypeId);
+                return Json(new List<object>());
+            }
+        }
+
+        // TEST ACTION: Create sample podium models
+        // TODO: Remove this action in production
+        [HttpGet]
+        public async Task<IActionResult> CreateSamplePodiumModels()
+        {
+            try
+            {
+                // Find or create Podiums equipment type
+                var podiumType = await _context.EquipmentTypes
+                    .FirstOrDefaultAsync(et => et.EquipmentTypeName == "Podiums");
+                
+                if (podiumType == null)
+                {
+                    podiumType = new EquipmentType { EquipmentTypeName = "Podiums" };
+                    _context.EquipmentTypes.Add(podiumType);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Check if models already exist
+                var existingModels = await _context.EquipmentModels
+                    .Where(em => em.EquipmentTypeId == podiumType.EquipmentTypeId)
+                    .ToListAsync();
+
+                if (!existingModels.Any())
+                {
+                    // Add sample podium models
+                    var sampleModels = new[]
+                    {
+                        "Standard Wooden Podium",
+                        "Adjustable Height Podium", 
+                        "Digital Interactive Podium",
+                        "Executive Podium with Microphone",
+                        "Portable Folding Podium",
+                        "Glass Top Modern Podium"
+                    };
+
+                    foreach (var modelName in sampleModels)
+                    {
+                        var model = new EquipmentModel
+                        {
+                            ModelName = modelName,
+                            EquipmentTypeId = podiumType.EquipmentTypeId
+                        };
+                        _context.EquipmentModels.Add(model);
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+
+                // Return the models
+                var models = await _context.EquipmentModels
+                    .Where(em => em.EquipmentTypeId == podiumType.EquipmentTypeId)
+                    .ToListAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = $"Created {models.Count} podium models",
+                    models = models.Select(m => new { id = m.EquipmentModelId, name = m.ModelName })
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating sample podium models");
+                return Json(new { success = false, error = ex.Message });
+            }
         }
     }
 }

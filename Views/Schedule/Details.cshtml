@@ -1,0 +1,381 @@
+@model FEENALOoFINALE.ViewModels.MaintenanceTaskDetailsViewModel
+@{
+    ViewData["Title"] = "Maintenance Task Details";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-gear me-2"></i>Maintenance Task Details
+                    </h1>
+                    <p class="text-muted mb-0">Task ID: #@Model.MaintenanceTask.TaskId</p>
+                </div>
+                <div class="btn-group">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Schedule
+                    </a>
+                    <a asp-action="Calendar" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar me-1"></i>Calendar View
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Task Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Task Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Equipment</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-gear text-primary me-2" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <div class="fw-bold">@(Model.MaintenanceTask.Equipment?.EquipmentModel?.ModelName ?? "Unknown Equipment")</div>
+                                    <small class="text-muted">@(Model.MaintenanceTask.Equipment?.EquipmentType?.EquipmentTypeName ?? "Unknown Type")</small>
+                                </div>
+                            </div>
+
+                            <h6 class="text-muted">Location</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-geo-alt text-info me-2"></i>
+                                <div>
+                                    @if (Model.MaintenanceTask.Equipment?.Room?.Building != null)
+                                    {
+                                        <div>@Model.MaintenanceTask.Equipment.Room.Building.BuildingName</div>
+                                        <small class="text-muted">@Model.MaintenanceTask.Equipment.Room.RoomName</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Location not specified</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <h6 class="text-muted">Assigned To</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-person-circle text-success me-2"></i>
+                                <div>
+                                    @if (Model.MaintenanceTask.AssignedTo != null)
+                                    {
+                                        <div>@Model.MaintenanceTask.AssignedTo.UserName</div>
+                                        <small class="text-muted">Technician</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-warning">Unassigned</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Priority</h6>
+                            <div class="mb-3">
+                                <span class="badge @GetPriorityBadgeClass(Model.MaintenanceTask.Priority) fs-6">
+                                    @Model.MaintenanceTask.Priority
+                                </span>
+                            </div>
+
+                            <h6 class="text-muted">Status</h6>
+                            <div class="mb-3">
+                                <span class="badge @GetStatusBadgeClass(Model.MaintenanceTask.Status) fs-6">
+                                    @Model.MaintenanceTask.Status
+                                </span>
+                                @if (Model.MaintenanceTask.Status == FEENALOoFINALE.Models.MaintenanceStatus.Completed && Model.MaintenanceTask.CompletedDate.HasValue)
+                                {
+                                    <br/><small class="text-muted">Completed: @Model.MaintenanceTask.CompletedDate.Value.ToString("MMM dd, yyyy HH:mm")</small>
+                                }
+                            </div>
+
+                            <h6 class="text-muted">Scheduled Date</h6>
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calendar me-2 text-primary"></i>
+                                    <div>
+                                        <div>@Model.MaintenanceTask.ScheduledDate.ToString("dddd, MMMM dd, yyyy")</div>
+                                        <small class="text-muted">@Model.MaintenanceTask.ScheduledDate.ToString("HH:mm")</small>
+                                    </div>
+                                </div>
+                                @if (Model.MaintenanceTask.ScheduledDate < DateTime.Now && Model.MaintenanceTask.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending)
+                                {
+                                    <div class="mt-2">
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                            @((DateTime.Now - Model.MaintenanceTask.ScheduledDate).Days) days overdue
+                                        </span>
+                                    </div>
+                                }
+                                else if (Model.MaintenanceTask.ScheduledDate.Date == DateTime.Now.Date)
+                                {
+                                    <div class="mt-2">
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-clock me-1"></i>Due today
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <h6 class="text-muted">Description</h6>
+                    <p class="mb-0">@Model.MaintenanceTask.Description</p>
+
+                    @if (Model.MaintenanceTask.OriginatingAlert != null)
+                    {
+                        <hr />
+                        <h6 class="text-muted">Related Alert</h6>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                            <div>
+                                <a asp-controller="Alert" asp-action="Details" asp-route-id="@Model.MaintenanceTask.OriginatingAlert.AlertId" 
+                                   class="text-decoration-none">
+                                    Alert #@Model.MaintenanceTask.OriginatingAlert.AlertId
+                                </a>
+                                <br/><small class="text-muted">@Model.MaintenanceTask.OriginatingAlert.Description</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Maintenance History -->
+            @if (Model.MaintenanceHistory.Any())
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-clock-history me-2"></i>Equipment Maintenance History
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Technician</th>
+                                        <th>Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var log in Model.MaintenanceHistory)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @log.LogDate.ToString("MMM dd, yyyy")
+                                                <br/><small class="text-muted">@log.LogDate.ToString("HH:mm")</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@log.MaintenanceType</span>
+                                            </td>
+                                            <td>
+                                                <div class="text-truncate" style="max-width: 300px;" title="@log.Description">
+                                                    @log.Description
+                                                </div>
+                                            </td>
+                                            <td>@log.Technician</td>
+                                            <td>@log.Cost.ToString("C")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a asp-controller="MaintenanceLog" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-journal-text me-1"></i>View All Maintenance Logs
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar Actions -->
+        <div class="col-lg-4">
+            <div class="card sticky-top">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning me-2"></i>Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.MaintenanceTask.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending)
+                    {
+                        <div class="d-grid gap-2">
+                            <form asp-action="UpdateStatus" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.MaintenanceTask.TaskId" />
+                                <input type="hidden" name="status" value="InProgress" />
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-play-circle me-2"></i>Start Work
+                                </button>
+                            </form>
+
+                            <form asp-action="UpdateStatus" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.MaintenanceTask.TaskId" />
+                                <input type="hidden" name="status" value="Completed" />
+                                <button type="submit" class="btn btn-success" onclick="return confirm('Mark this task as completed?')">
+                                    <i class="bi bi-check-circle me-2"></i>Mark Complete
+                                </button>
+                            </form>
+
+                            <hr />
+
+                            <form asp-action="UpdateStatus" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.MaintenanceTask.TaskId" />
+                                <input type="hidden" name="status" value="Cancelled" />
+                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Cancel this task? This action cannot be undone.')">
+                                    <i class="bi bi-x-circle me-2"></i>Cancel Task
+                                </button>
+                            </form>
+                        </div>
+                    }
+                    else if (Model.MaintenanceTask.Status == FEENALOoFINALE.Models.MaintenanceStatus.InProgress)
+                    {
+                        <div class="d-grid gap-2">
+                            <form asp-action="UpdateStatus" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.MaintenanceTask.TaskId" />
+                                <input type="hidden" name="status" value="Completed" />
+                                <button type="submit" class="btn btn-success" onclick="return confirm('Mark this task as completed?')">
+                                    <i class="bi bi-check-circle me-2"></i>Mark Complete
+                                </button>
+                            </form>
+
+                            <form asp-action="UpdateStatus" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.MaintenanceTask.TaskId" />
+                                <input type="hidden" name="status" value="Pending" />
+                                <button type="submit" class="btn btn-outline-warning">
+                                    <i class="bi bi-pause-circle me-2"></i>Pause Work
+                                </button>
+                            </form>
+                        </div>
+                    }
+                    else if (Model.MaintenanceTask.Status == FEENALOoFINALE.Models.MaintenanceStatus.Completed)
+                    {
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            This task has been completed successfully.
+                        </div>
+                    }
+                    else if (Model.MaintenanceTask.Status == FEENALOoFINALE.Models.MaintenanceStatus.Cancelled)
+                    {
+                        <div class="alert alert-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            This task has been cancelled.
+                        </div>
+                    }
+
+                    @if (Model.MaintenanceTask.Status != FEENALOoFINALE.Models.MaintenanceStatus.Completed)
+                    {
+                        <hr />
+                        <div class="d-grid gap-2">
+                            <a asp-controller="MaintenanceLog" asp-action="Create" asp-route-taskId="@Model.MaintenanceTask.TaskId" 
+                               class="btn btn-outline-info">
+                                <i class="bi bi-journal-plus me-2"></i>Create Maintenance Log
+                            </a>
+                        </div>
+                    }
+
+                    <hr />
+
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Equipment" asp-action="Details" asp-route-id="@Model.MaintenanceTask.EquipmentId" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-gear me-2"></i>View Equipment Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetPriorityBadgeClass(FEENALOoFINALE.Models.TaskPriority priority)
+    {
+        return priority switch
+        {
+            FEENALOoFINALE.Models.TaskPriority.Critical => "bg-danger",
+            FEENALOoFINALE.Models.TaskPriority.High => "bg-warning",
+            FEENALOoFINALE.Models.TaskPriority.Medium => "bg-primary",
+            FEENALOoFINALE.Models.TaskPriority.Low => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetStatusBadgeClass(FEENALOoFINALE.Models.MaintenanceStatus status)
+    {
+        return status switch
+        {
+            FEENALOoFINALE.Models.MaintenanceStatus.Pending => "bg-info",
+            FEENALOoFINALE.Models.MaintenanceStatus.InProgress => "bg-warning",
+            FEENALOoFINALE.Models.MaintenanceStatus.Completed => "bg-success",
+            FEENALOoFINALE.Models.MaintenanceStatus.Cancelled => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+    </script>
+}
+
+<style>
+    .sticky-top {
+        top: 1rem;
+    }
+
+    .badge.fs-6 {
+        font-size: 1rem !important;
+    }
+
+    .text-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>

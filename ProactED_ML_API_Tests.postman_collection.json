@@ -1,0 +1,159 @@
+{
+  "info": {
+    "name": "ProactED ML API Integration Tests",
+    "description": "Complete API test collection for ProactED ML integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2. Model Information",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/model/info",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "model", "info"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "3. Single Equipment Prediction",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"equipment_id\": \"TEST_EQUIP_001\",\n  \"age_months\": 24,\n  \"operating_temperature\": 75.5,\n  \"vibration_level\": 3.2,\n  \"power_consumption\": 1500.0\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/equipment/predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "equipment", "predict"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "4. Batch Equipment Prediction",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"equipment_list\": [\n    {\n      \"equipment_id\": \"BATCH_TEST_001\",\n      \"age_months\": 12,\n      \"operating_temperature\": 65.0,\n      \"vibration_level\": 2.1,\n      \"power_consumption\": 1200.0\n    },\n    {\n      \"equipment_id\": \"BATCH_TEST_002\",\n      \"age_months\": 36,\n      \"operating_temperature\": 85.0,\n      \"vibration_level\": 4.5,\n      \"power_consumption\": 1800.0\n    },\n    {\n      \"equipment_id\": \"BATCH_TEST_003\",\n      \"age_months\": 6,\n      \"operating_temperature\": 55.0,\n      \"vibration_level\": 1.8,\n      \"power_consumption\": 1100.0\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/equipment/batch-predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "equipment", "batch-predict"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "5. High Risk Equipment Test",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"equipment_id\": \"HIGH_RISK_EQUIP\",\n  \"age_months\": 48,\n  \"operating_temperature\": 95.0,\n  \"vibration_level\": 8.5,\n  \"power_consumption\": 2500.0\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/equipment/predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "equipment", "predict"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "6. Low Risk Equipment Test",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"equipment_id\": \"LOW_RISK_EQUIP\",\n  \"age_months\": 3,\n  \"operating_temperature\": 45.0,\n  \"vibration_level\": 1.2,\n  \"power_consumption\": 1000.0\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/equipment/predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "equipment", "predict"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "7. Error Test - Missing Fields",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"equipment_id\": \"INCOMPLETE_DATA\",\n  \"age_months\": 24\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/equipment/predict",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "equipment", "predict"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

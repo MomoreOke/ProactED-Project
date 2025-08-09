@@ -385,7 +385,7 @@ namespace FEENALOoFINALE.Controllers
             // Equipment Uptime Chart
             var equipmentUptime = await _context.Equipment
                 .GroupBy(e => e.Status)
-                .Select(g => new ChartDataPoint
+                .Select(g => new FEENALOoFINALE.Models.ViewModels.ChartDataPoint
                 {
                     Label = g.Key.ToString(),
                     Value = g.Count(),
@@ -397,7 +397,7 @@ namespace FEENALOoFINALE.Controllers
             chartData.EquipmentUptimeChart = equipmentUptime;
 
             // Maintenance Cost Trends (last 12 months)
-            var maintenanceCosts = new List<ChartDataPoint>();
+            var maintenanceCosts = new List<FEENALOoFINALE.Models.ViewModels.ChartDataPoint>();
             for (int i = 11; i >= 0; i--)
             {
                 var date = DateTime.Now.AddMonths(-i);
@@ -405,7 +405,7 @@ namespace FEENALOoFINALE.Controllers
                     .Where(m => m.LogDate.Year == date.Year && m.LogDate.Month == date.Month)
                     .SumAsync(m => m.Cost);
 
-                maintenanceCosts.Add(new ChartDataPoint
+                maintenanceCosts.Add(new FEENALOoFINALE.Models.ViewModels.ChartDataPoint
                 {
                     Label = date.ToString("MMM yyyy"),
                     Value = cost,
@@ -416,7 +416,7 @@ namespace FEENALOoFINALE.Controllers
             chartData.MaintenanceCostTrends = maintenanceCosts;
 
             // Alert Frequency Chart
-            var alertFrequency = new List<ChartDataPoint>();
+            var alertFrequency = new List<FEENALOoFINALE.Models.ViewModels.ChartDataPoint>();
             var alertGroups = await _context.Alerts
                 .GroupBy(a => a.Priority)
                 .Select(g => new { Priority = g.Key, Count = g.Count() })
@@ -432,7 +432,7 @@ namespace FEENALOoFINALE.Controllers
                     _ => "#6c757d"
                 };
 
-                alertFrequency.Add(new ChartDataPoint
+                alertFrequency.Add(new FEENALOoFINALE.Models.ViewModels.ChartDataPoint
                 {
                     Label = group.Priority.ToString(),
                     Value = group.Count,

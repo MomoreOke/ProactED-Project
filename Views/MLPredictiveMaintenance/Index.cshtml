@@ -1,0 +1,615 @@
+@model FEENALOoFINALE.Models.MLPredictionDashboardViewModel
+@{
+    ViewData["Title"] = "ML Predictive Maintenance";
+}
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-cpu-fill text-primary me-2"></i>
+                        ML Predictive Maintenance
+                    </h1>
+                    <p class="text-muted mb-0">AI-powered equipment failure prediction and maintenance optimization</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="checkApiHealth()">
+                        <i class="bi bi-activity me-1"></i>Check API Status
+                    </button>
+                    <button class="btn btn-primary" onclick="runBatchPredictions()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Run Predictions
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Status Alert -->
+    <div id="api-status-alert" class="alert alert-warning alert-dismissible fade show" style="display: none;">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span id="api-status-message"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-robot text-primary" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="text-muted small">Equipment Analyzed</div>
+                            <div class="h4 mb-0" id="total-analyzed">@Model.TotalEquipmentAnalyzed</div>
+                            <small class="text-success">
+                                <i class="bi bi-check-circle me-1"></i>ML Analysis Complete
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="text-muted small">High Risk Equipment</div>
+                            <div class="h4 mb-0 text-danger" id="high-risk-count">@Model.HighRiskEquipment</div>
+                            <small class="text-muted">
+                                Immediate attention required
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-bar-chart text-warning" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="text-muted small">Model Accuracy</div>
+                            <div class="h4 mb-0 text-warning" id="model-accuracy">@Model.ModelAccuracy.ToString("P1")</div>
+                            <small class="text-muted">
+                                ML Confidence Level
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-info border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-graph-up text-info" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="text-muted small">Avg Failure Probability</div>
+                            <div class="h4 mb-0 text-info" id="avg-probability">@Model.AverageFailureProbability.ToString("P1")</div>
+                            <small class="text-muted">
+                                Current risk level
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Risk Level Distribution Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-pie-chart text-primary me-2"></i>
+                        Risk Level Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="riskDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- High Risk Equipment List -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                        Critical Equipment
+                    </h5>
+                    <span class="badge bg-danger">@Model.HighRiskEquipment items</span>
+                </div>
+                <div class="card-body">
+                    <div id="high-risk-equipment-list">
+                        @if (Model.HighRiskEquipmentList.Any())
+                        {
+                            @foreach (var item in Model.HighRiskEquipmentList)
+                            {
+                                <div class="d-flex align-items-center p-3 mb-2 bg-light rounded">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-gear-fill text-danger fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="fw-bold">@item.Equipment.EquipmentModel?.ModelName</div>
+                                        <small class="text-muted">
+                                            @item.Equipment.Building?.BuildingName - @item.Equipment.Room?.RoomName
+                                        </small>
+                                        <div class="mt-1">
+                                            <span class="badge bg-danger me-2">@item.RiskLevelDisplay</span>
+                                            <small class="text-muted">Probability: @item.FailureProbabilityDisplay</small>
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="predictEquipment(@item.Equipment.EquipmentId)">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No high-risk equipment detected</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Predictions and Model Info -->
+    <div class="row">
+        <!-- Recent Predictions -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history text-primary me-2"></i>
+                        Recent ML Predictions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Equipment</th>
+                                    <th>Location</th>
+                                    <th>Risk Level</th>
+                                    <th>Probability</th>
+                                    <th>Confidence</th>
+                                    <th>Timestamp</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-predictions-table">
+                                @foreach (var prediction in Model.RecentPredictions)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@prediction.Equipment.EquipmentModel?.ModelName</div>
+                                            <small class="text-muted">@prediction.Equipment.EquipmentType?.EquipmentTypeName</small>
+                                        </td>
+                                        <td>
+                                            <small>@prediction.Equipment.Building?.BuildingName</small><br>
+                                            <small class="text-muted">@prediction.Equipment.Room?.RoomName</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@prediction.RiskLevelClass">@prediction.RiskLevelDisplay</span>
+                                        </td>
+                                        <td>@prediction.FailureProbabilityDisplay</td>
+                                        <td>@prediction.ConfidenceDisplay</td>
+                                        <td>
+                                            <small>@(prediction.Prediction?.PredictionTimestamp.ToString("MMM dd, HH:mm") ?? "N/A")</small>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="predictEquipment(@prediction.Equipment.EquipmentId)">
+                                                <i class="bi bi-arrow-clockwise"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Information -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-cpu text-primary me-2"></i>
+                        ML Model Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">API Status</span>
+                            <span class="badge bg-@(Model.ApiHealthy ? "success" : "danger")" id="api-status-badge">
+                                @(Model.ApiHealthy ? "Healthy" : "Offline")
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Model Version</span>
+                            <span class="fw-bold" id="model-version">@Model.ModelVersion</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Last Update</span>
+                            <span class="fw-bold" id="last-update">@Model.LastPredictionUpdate.ToString("MMM dd, HH:mm")</span>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <h6 class="mb-2">Quick Actions</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="runBatchPredictions()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh All Predictions
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="generateRecommendations()">
+                                <i class="bi bi-lightbulb me-1"></i>Generate Recommendations
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="exportPredictions()">
+                                <i class="bi bi-download me-1"></i>Export Results
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prediction Modal -->
+<div class="modal fade" id="predictionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Equipment Prediction Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="prediction-modal-content">
+                <!-- Dynamic content loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global variables
+        let riskChart = null;
+
+        // Initialize dashboard
+        $(document).ready(function() {
+            initializeCharts();
+            checkApiHealth();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(refreshDashboard, 300000);
+        });
+
+        // Initialize charts
+        function initializeCharts() {
+            initRiskDistributionChart();
+        }
+
+        // Risk distribution chart
+        function initRiskDistributionChart() {
+            const ctx = document.getElementById('riskDistributionChart').getContext('2d');
+            const data = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RiskLevelDistribution));
+            
+            riskChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: [
+                            '#dc3545', // High - Red
+                            '#ffc107', // Medium - Yellow
+                            '#28a745'  // Low - Green
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Check API health
+        async function checkApiHealth() {
+            try {
+                const response = await fetch('/MLPredictiveMaintenance/CheckApiHealth');
+                const result = await response.json();
+                
+                updateApiStatus(result.healthy, result.modelInfo);
+            } catch (error) {
+                console.error('Error checking API health:', error);
+                updateApiStatus(false, null);
+            }
+        }
+
+        // Update API status display
+        function updateApiStatus(healthy, modelInfo) {
+            const statusBadge = document.getElementById('api-status-badge');
+            const statusAlert = document.getElementById('api-status-alert');
+            const statusMessage = document.getElementById('api-status-message');
+            
+            if (healthy) {
+                statusBadge.className = 'badge bg-success';
+                statusBadge.textContent = 'Healthy';
+                statusAlert.style.display = 'none';
+                
+                if (modelInfo && modelInfo.success) {
+                    document.getElementById('model-version').textContent = modelInfo.modelVersion;
+                    document.getElementById('model-accuracy').textContent = (modelInfo.accuracy * 100).toFixed(1) + '%';
+                }
+            } else {
+                statusBadge.className = 'badge bg-danger';
+                statusBadge.textContent = 'Offline';
+                statusAlert.className = 'alert alert-danger alert-dismissible fade show';
+                statusMessage.textContent = 'ML Prediction API is offline. Predictions may not be available.';
+                statusAlert.style.display = 'block';
+            }
+        }
+
+        // Run batch predictions
+        async function runBatchPredictions() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Processing...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/MLPredictiveMaintenance/RunBatchPredictions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('success', 'Success!', result.message);
+                    setTimeout(refreshDashboard, 2000);
+                } else {
+                    showNotification('error', 'Error', result.message || 'Failed to run batch predictions');
+                }
+            } catch (error) {
+                console.error('Error running batch predictions:', error);
+                showNotification('error', 'Error', 'Network error occurred');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Predict single equipment
+        async function predictEquipment(equipmentId) {
+            try {
+                const response = await fetch(`/MLPredictiveMaintenance/PredictEquipment/${equipmentId}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showPredictionModal(result.data);
+                } else {
+                    showNotification('error', 'Error', result.error || 'Failed to get prediction');
+                }
+            } catch (error) {
+                console.error('Error getting prediction:', error);
+                showNotification('error', 'Error', 'Network error occurred');
+            }
+        }
+
+        // Show prediction in modal
+        function showPredictionModal(data) {
+            const modalContent = document.getElementById('prediction-modal-content');
+            const prediction = data.prediction;
+            const equipment = data.equipment;
+
+            modalContent.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Equipment Information</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Name:</strong> ${equipment.equipmentModel?.modelName || 'Unknown'}</li>
+                            <li><strong>Type:</strong> ${equipment.equipmentType?.equipmentTypeName || 'Unknown'}</li>
+                            <li><strong>Location:</strong> ${equipment.building?.buildingName || 'Unknown'} - ${equipment.room?.roomName || 'Unknown'}</li>
+                            <li><strong>Status:</strong> ${equipment.status}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>ML Prediction Results</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Risk Level:</strong> <span class="badge bg-${getRiskLevelClass(prediction.riskLevel)}">${prediction.riskLevel}</span></li>
+                            <li><strong>Failure Probability:</strong> ${(prediction.failureProbability * 100).toFixed(1)}%</li>
+                            <li><strong>Confidence:</strong> ${(prediction.confidenceScore * 100).toFixed(1)}%</li>
+                            <li><strong>Model:</strong> ${prediction.modelVersion}</li>
+                            <li><strong>Timestamp:</strong> ${new Date(prediction.predictionTimestamp).toLocaleString()}</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <button class="btn btn-primary me-2" onclick="createMaintenanceTask(${equipment.equipmentId})">
+                        <i class="bi bi-wrench me-1"></i>Schedule Maintenance
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="exportPrediction(${equipment.equipmentId})">
+                        <i class="bi bi-download me-1"></i>Export Report
+                    </button>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('predictionModal'));
+            modal.show();
+        }
+
+        // Helper function to get risk level CSS class
+        function getRiskLevelClass(riskLevel) {
+            switch (riskLevel?.toLowerCase()) {
+                case 'critical':
+                case 'high':
+                    return 'danger';
+                case 'medium':
+                    return 'warning';
+                case 'low':
+                    return 'success';
+                default:
+                    return 'secondary';
+            }
+        }
+
+        // Generate recommendations
+        async function generateRecommendations() {
+            try {
+                const response = await fetch('/MLPredictiveMaintenance/GenerateMLRecommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('success', 'Success!', `Generated ${result.count} maintenance recommendations`);
+                    // Could open a modal or redirect to recommendations page
+                } else {
+                    showNotification('error', 'Error', result.error || 'Failed to generate recommendations');
+                }
+            } catch (error) {
+                console.error('Error generating recommendations:', error);
+                showNotification('error', 'Error', 'Network error occurred');
+            }
+        }
+
+        // Refresh dashboard data
+        async function refreshDashboard() {
+            try {
+                const response = await fetch('/MLPredictiveMaintenance/GetPredictionStatistics');
+                const result = await response.json();
+
+                if (result.success) {
+                    updateDashboardMetrics(result.data);
+                    checkApiHealth();
+                }
+            } catch (error) {
+                console.error('Error refreshing dashboard:', error);
+            }
+        }
+
+        // Update dashboard metrics
+        function updateDashboardMetrics(data) {
+            document.getElementById('total-analyzed').textContent = data.totalPredictions || 0;
+            document.getElementById('high-risk-count').textContent = data.highRiskCount || 0;
+            document.getElementById('avg-probability').textContent = (data.averageConfidence || 0) + '%';
+            document.getElementById('last-update').textContent = new Date().toLocaleDateString();
+        }
+
+        // Show notification
+        function showNotification(type, title, message) {
+            // You can integrate with your existing notification system
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+            
+            const notification = `
+                <div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
+                    <i class="bi bi-${icon} me-2"></i>
+                    <strong>${title}</strong> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.alert');
+                if (alerts.length > 0) {
+                    alerts[alerts.length - 1].remove();
+                }
+            }, 5000);
+        }
+
+        // Export functions (placeholders)
+        function exportPredictions() {
+            showNotification('info', 'Export', 'Export functionality will be implemented here');
+        }
+
+        function exportPrediction(equipmentId) {
+            showNotification('info', 'Export', `Export for equipment ${equipmentId} will be implemented here`);
+        }
+
+        function createMaintenanceTask(equipmentId) {
+            // Redirect to maintenance task creation
+            window.location.href = `/MaintenanceLog/Create?equipmentId=${equipmentId}`;
+        }
+
+        // CSS for spinning animation
+        const style = document.createElement('style');
+        style.textContent = \`
+            .spin {
+                animation: spin 1s linear infinite;
+            }
+            @@keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        \`;
+        document.head.appendChild(style);
+    </script>
+}

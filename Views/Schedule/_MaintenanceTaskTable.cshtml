@@ -1,0 +1,256 @@
+@model List<FEENALOoFINALE.Models.MaintenanceTask>
+
+@if (Model?.Any() == true)
+{
+    <table class="table table-hover table-sm">
+        <thead>
+            <tr>
+                <th>Equipment</th>
+                <th>Description</th>
+                <th>Scheduled Date</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in Model)
+            {
+                <tr class="@GetRowClass(task)">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                <i class="bi bi-gear text-muted"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">
+                                    @(task.Equipment?.EquipmentModel?.ModelName ?? "Unknown Equipment")
+                                </div>
+                                <small class="text-muted">
+                                    @(task.Equipment?.EquipmentType?.EquipmentTypeName ?? "Unknown Type")
+                                    @if (task.Equipment?.Room?.Building != null)
+                                    {
+                                        <br/>@($"{task.Equipment.Room.Building.BuildingName} - {task.Equipment.Room.RoomName}")
+                                    }
+                                </small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-truncate" style="max-width: 200px;" title="@task.Description">
+                            @task.Description
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            @task.ScheduledDate.ToString("MMM dd, yyyy")
+                        </div>
+                        <small class="text-muted">
+                            @task.ScheduledDate.ToString("HH:mm")
+                            @if (task.ScheduledDate < DateTime.Now && task.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending)
+                            {
+                                <span class="text-danger">
+                                    <br/><i class="bi bi-exclamation-triangle"></i> 
+                                    @GetOverdueDays(task.ScheduledDate) days overdue
+                                </span>
+                            }
+                            else if (task.ScheduledDate.Date == DateTime.Now.Date)
+                            {
+                                <span class="text-warning">
+                                    <br/><i class="bi bi-clock"></i> Due today
+                                </span>
+                            }
+                            else if (task.ScheduledDate <= DateTime.Now.AddDays(3) && task.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending)
+                            {
+                                <span class="text-info">
+                                    <br/><i class="bi bi-clock-history"></i> Due in @GetDaysUntil(task.ScheduledDate) days
+                                </span>
+                            }
+                        </small>
+                    </td>
+                    <td>
+                        <span class="badge @GetPriorityBadgeClass(task.Priority)">
+                            @task.Priority
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge @GetStatusBadgeClass(task.Status)">
+                            @task.Status
+                        </span>
+                        @if (task.Status == FEENALOoFINALE.Models.MaintenanceStatus.Completed && task.CompletedDate.HasValue)
+                        {
+                            <br/><small class="text-muted">@task.CompletedDate.Value.ToString("MMM dd, HH:mm")</small>
+                        }
+                    </td>
+                    <td>
+                        @if (task.AssignedTo != null)
+                        {
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-circle me-1"></i>
+                                <span>@task.AssignedTo.UserName</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                <i class="bi bi-person-dash me-1"></i>Unassigned
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a asp-controller="Schedule" asp-action="Details" asp-route-id="@task.TaskId" 
+                               class="btn btn-outline-primary" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            
+                            @if (task.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending)
+                            {
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-gear"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form asp-controller="Schedule" asp-action="UpdateStatus" method="post" class="dropdown-item-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@task.TaskId" />
+                                                <input type="hidden" name="status" value="InProgress" />
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="bi bi-play-circle text-warning me-2"></i>Start Work
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form asp-controller="Schedule" asp-action="UpdateStatus" method="post" class="dropdown-item-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@task.TaskId" />
+                                                <input type="hidden" name="status" value="Completed" />
+                                                <button type="submit" class="dropdown-item" onclick="return confirm('Mark this task as completed?')">
+                                                    <i class="bi bi-check-circle text-success me-2"></i>Mark Complete
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form asp-controller="Schedule" asp-action="UpdateStatus" method="post" class="dropdown-item-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@task.TaskId" />
+                                                <input type="hidden" name="status" value="Cancelled" />
+                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Cancel this task?')">
+                                                    <i class="bi bi-x-circle me-2"></i>Cancel Task
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                            else if (task.Status == FEENALOoFINALE.Models.MaintenanceStatus.InProgress)
+                            {
+                                <form asp-controller="Schedule" asp-action="UpdateStatus" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@task.TaskId" />
+                                    <input type="hidden" name="status" value="Completed" />
+                                    <button type="submit" class="btn btn-outline-success btn-sm" 
+                                            title="Mark Complete" onclick="return confirm('Mark this task as completed?')">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                            }
+                            
+                            @if (task.Status != FEENALOoFINALE.Models.MaintenanceStatus.Completed)
+                            {
+                                <a asp-controller="MaintenanceLog" asp-action="Create" asp-route-taskId="@task.TaskId" 
+                                   class="btn btn-outline-info btn-sm" title="Create Maintenance Log">
+                                    <i class="bi bi-journal-plus"></i>
+                                </a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="text-center py-4">
+        <i class="bi bi-calendar-x display-6 text-muted"></i>
+        <p class="text-muted mt-2">No maintenance tasks found.</p>
+    </div>
+}
+
+@functions {
+    string GetRowClass(FEENALOoFINALE.Models.MaintenanceTask task)
+    {
+        if (task.Status == FEENALOoFINALE.Models.MaintenanceStatus.Pending && task.ScheduledDate < DateTime.Now)
+            return "table-danger"; // Overdue
+        if (task.Status == FEENALOoFINALE.Models.MaintenanceStatus.InProgress)
+            return "table-warning"; // In progress
+        if (task.Status == FEENALOoFINALE.Models.MaintenanceStatus.Completed)
+            return "table-success"; // Completed
+        if (task.ScheduledDate.Date == DateTime.Now.Date)
+            return "table-info"; // Due today
+        return "";
+    }
+
+    string GetPriorityBadgeClass(FEENALOoFINALE.Models.TaskPriority priority)
+    {
+        return priority switch
+        {
+            FEENALOoFINALE.Models.TaskPriority.Critical => "bg-danger",
+            FEENALOoFINALE.Models.TaskPriority.High => "bg-warning",
+            FEENALOoFINALE.Models.TaskPriority.Medium => "bg-primary",
+            FEENALOoFINALE.Models.TaskPriority.Low => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetStatusBadgeClass(FEENALOoFINALE.Models.MaintenanceStatus status)
+    {
+        return status switch
+        {
+            FEENALOoFINALE.Models.MaintenanceStatus.Pending => "bg-info",
+            FEENALOoFINALE.Models.MaintenanceStatus.InProgress => "bg-warning",
+            FEENALOoFINALE.Models.MaintenanceStatus.Completed => "bg-success",
+            FEENALOoFINALE.Models.MaintenanceStatus.Cancelled => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    int GetOverdueDays(DateTime scheduledDate)
+    {
+        return (DateTime.Now.Date - scheduledDate.Date).Days;
+    }
+
+    int GetDaysUntil(DateTime scheduledDate)
+    {
+        return Math.Max(1, (scheduledDate.Date - DateTime.Now.Date).Days);
+    }
+}
+
+<style>
+    .dropdown-item-form {
+        margin: 0;
+        padding: 0;
+    }
+
+    .dropdown-item-form button {
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+    }
+
+    .text-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+</style>

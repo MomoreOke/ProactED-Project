@@ -1,0 +1,357 @@
+@using FEENALOoFINALE.ViewModels
+@model EquipmentPredictionDashboardViewModel
+@{
+    ViewData["Title"] = "Equipment Failure Prediction";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="fas fa-robot me-2 text-primary"></i>
+            Equipment Failure Prediction
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-primary" onclick="predictBatch()">
+                    <i class="fas fa-magic me-1"></i>
+                    Predict All
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Refresh
+                </button>
+            </div>
+            <a href="@Url.Action("RiskAnalysis")" class="btn btn-primary">
+                <i class="fas fa-chart-line me-1"></i>
+                Risk Analysis
+            </a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.Error as string))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @ViewBag.Error
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Status Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Equipment
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Statistics.TotalEquipment
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cogs fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Predictions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Statistics.PendingPredictions
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-@(Model.Statistics.ApiConnected ? "success" : "danger") shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold @(Model.Statistics.ApiConnected ? "text-success" : "text-danger") text-uppercase mb-1">
+                                API Status
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @(Model.Statistics.ApiConnected ? "Connected" : "Disconnected")
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-@(Model.Statistics.ApiConnected ? "check-circle" : "times-circle") fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Model Accuracy
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.Statistics.ModelAccuracy.ToString("P1")
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-bar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Information -->
+    @if (Model.ModelInfo != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-brain me-2"></i>
+                            ML Model Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Model Version:</strong><br>
+                                <span class="text-muted">@Model.ModelInfo.ModelVersion</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Training Date:</strong><br>
+                                <span class="text-muted">@Model.ModelInfo.TrainingDate.ToString("yyyy-MM-dd")</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Model Accuracy:</strong><br>
+                                <span class="text-muted">@Model.ModelInfo.Accuracy.ToString("P1")</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Features:</strong><br>
+                                <span class="text-muted">@Model.ModelInfo.Features.Count features</span>
+                            </div>
+                        </div>
+                        @if (Model.ModelInfo.Features.Any())
+                        {
+                            <div class="mt-3">
+                                <strong>Model Features:</strong>
+                                <div class="row">
+                                    @foreach (var feature in Model.ModelInfo.Features.Take(8))
+                                    {
+                                        <div class="col-md-3 mb-1">
+                                            <span class="badge bg-primary">@feature</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Equipment List -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list me-2"></i>
+                Equipment Prediction List
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="equipmentTable">
+                    <thead>
+                        <tr>
+                            <th>Equipment ID</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>Age (Months)</th>
+                            <th>Usage (Hrs/Week)</th>
+                            <th>Operating Temp (°C)</th>
+                            <th>Status</th>
+                            <th>Prediction</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var equipment in Model.Equipment)
+                        {
+                            <tr id="equipment-@equipment.EquipmentId">
+                                <td>@equipment.EquipmentId</td>
+                                <td>@equipment.Name</td>
+                                <td>@equipment.Type</td>
+                                <td>@equipment.Location</td>
+                                <td>@equipment.AgeMonths</td>
+                                <td>@equipment.WeeklyUsageHours.ToString("F1")</td>
+                                <td>@equipment.OperatingTemperature.ToString("F1")</td>
+                                <td>
+                                    <span class="badge bg-success">@equipment.Status</span>
+                                </td>
+                                <td id="prediction-@equipment.EquipmentId">
+                                    <span class="text-muted">Not predicted</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="predictSingle(@equipment.EquipmentId)">
+                                        <i class="fas fa-magic me-1"></i>
+                                        Predict
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-3">Processing prediction...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function predictSingle(equipmentId) {
+            // Show loading modal
+            $('#loadingModal').modal('show');
+
+            $.post('@Url.Action("PredictSingle")', { equipmentId: equipmentId })
+                .done(function (data) {
+                    if (data.success) {
+                        updatePredictionDisplay(equipmentId, data.prediction);
+                        showAlert(`Prediction completed for ${data.equipment.name}`, 'success');
+                    } else {
+                        showAlert(`Prediction failed: ${data.message}`, 'danger');
+                    }
+                })
+                .fail(function (xhr) {
+                    showAlert('Error: Unable to complete prediction', 'danger');
+                })
+                .always(function () {
+                    $('#loadingModal').modal('hide');
+                });
+        }
+
+        function predictBatch() {
+            // Show loading modal
+            $('#loadingModal').modal('show');
+
+            $.post('@Url.Action("PredictBatch")')
+                .done(function (data) {
+                    if (data.success) {
+                        // Update all predictions
+                        data.predictions.forEach(function (pred) {
+                            if (pred.success) {
+                                updatePredictionDisplay(pred.equipmentId, pred);
+                            }
+                        });
+                        showAlert(`Batch prediction completed for ${data.processedCount} equipment items`, 'success');
+                    } else {
+                        showAlert(`Batch prediction failed: ${data.message}`, 'danger');
+                    }
+                })
+                .fail(function (xhr) {
+                    showAlert('Error: Unable to complete batch prediction', 'danger');
+                })
+                .always(function () {
+                    $('#loadingModal').modal('hide');
+                });
+        }
+
+        function updatePredictionDisplay(equipmentId, prediction) {
+            const cell = document.getElementById(`prediction-${equipmentId}`);
+            if (cell && prediction) {
+                const riskClass = getRiskClass(prediction.riskLevel);
+                const probability = (prediction.failureProbability * 100).toFixed(1);
+                
+                cell.innerHTML = `
+                    <div>
+                        <span class="badge bg-${riskClass}">${prediction.riskLevel}</span>
+                        <div class="small text-muted">${probability}% risk</div>
+                        <div class="small text-muted">Confidence: ${(prediction.confidenceScore * 100).toFixed(1)}%</div>
+                    </div>
+                `;
+            }
+        }
+
+        function getRiskClass(riskLevel) {
+            switch (riskLevel) {
+                case 'Critical': return 'danger';
+                case 'High': return 'warning';
+                case 'Medium': return 'info';
+                case 'Low': return 'success';
+                default: return 'secondary';
+            }
+        }
+
+        function refreshData() {
+            location.reload();
+        }
+
+        function showAlert(message, type) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Insert alert at the top of the container
+            $('.container-fluid').prepend(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+
+        // Initialize DataTable for better table handling
+        $(document).ready(function() {
+            if ($.fn.DataTable) {
+                $('#equipmentTable').DataTable({
+                    responsive: true,
+                    pageLength: 25,
+                    order: [[0, 'asc']],
+                    columnDefs: [
+                        { targets: [8, 9], orderable: false }
+                    ]
+                });
+            }
+        });
+    </script>
+}
