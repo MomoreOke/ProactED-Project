@@ -69,7 +69,7 @@ namespace FEENALOoFINALE.Services
             }
         }
 
-        private async Task<string> ExtractTextFromPdfAsync(string filePath)
+        private Task<string> ExtractTextFromPdfAsync(string filePath)
         {
             var text = new StringBuilder();
             
@@ -82,7 +82,7 @@ namespace FEENALOoFINALE.Services
                 }
             }
             
-            return text.ToString();
+            return Task.FromResult(text.ToString());
         }
 
         private string ExtractTextFromDocx(string filePath)
@@ -104,7 +104,7 @@ namespace FEENALOoFINALE.Services
             return text.ToString();
         }
 
-        public async Task<List<MaintenanceRecommendation>> ExtractMaintenanceRecommendationsAsync(string text, int equipmentModelId, int? documentId = null)
+        public Task<List<MaintenanceRecommendation>> ExtractMaintenanceRecommendationsAsync(string text, int equipmentModelId, int? documentId = null)
         {
             var recommendations = new List<MaintenanceRecommendation>();
             
@@ -158,7 +158,7 @@ namespace FEENALOoFINALE.Services
                 throw;
             }
 
-            return recommendations;
+            return Task.FromResult(recommendations);
         }
 
         private string? GetMaintenanceType(string text)

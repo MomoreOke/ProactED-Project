@@ -261,8 +261,8 @@ namespace FEENALOoFINALE.Controllers
                 TotalActiveEquipment = totalEquipment,
                 HighRiskEquipmentCount = highRiskEquipment,
                 PredictedFailuresNext30Days = predictedFailures.Count,
+                TotalPredictions = predictedFailures.Count + maintenanceRecommendations.Count,
                 MaintenanceRecommendations = maintenanceRecommendations,
-                ProjectedCostSavings = costSavingsProjection,
                 PredictedFailures = predictedFailures,
                 LastUpdated = DateTime.Now
             };
@@ -333,8 +333,7 @@ namespace FEENALOoFINALE.Controllers
                 RiskFactors = riskFactors,
                 Recommendations = recommendations,
                 NextMaintenanceDue = await CalculateNextMaintenanceDueAsync(equipment),
-                EstimatedFailureDate = CalculateEstimatedFailureDate(riskScore),
-                PredictedCost = CalculatePredictedMaintenanceCost(riskScore, equipment)
+                EstimatedFailureDate = CalculateEstimatedFailureDate(riskScore)
             };
         }
 
@@ -581,8 +580,7 @@ namespace FEENALOoFINALE.Controllers
                         EquipmentName = item.EquipmentModel?.ModelName ?? "Unknown",
                         EquipmentType = item.EquipmentType?.EquipmentTypeName ?? "Unknown",
                         EstimatedFailureDate = riskScore.EstimatedFailureDate,
-                        FailureProbability = riskScore.RiskScore,
-                        EstimatedCost = riskScore.PredictedCost
+                        FailureProbability = riskScore.RiskScore
                     });
                 }
             }
@@ -607,7 +605,6 @@ namespace FEENALOoFINALE.Controllers
                     RecommendationType = priority == "High" ? "Preventive Maintenance" : "Routine Inspection",
                     Priority = priority,
                     Urgency = urgency,
-                    EstimatedCost = risk.PredictedCost,
                     Recommendations = risk.Recommendations
                 });
             }
@@ -619,11 +616,8 @@ namespace FEENALOoFINALE.Controllers
         {
             var recommendations = await GenerateMaintenanceRecommendationsAsync();
             
-            // Estimate cost savings by preventing failures
-            var preventiveCost = recommendations.Sum(r => r.EstimatedCost);
-            var estimatedFailureCost = preventiveCost * 3; // Failure typically costs 3x preventive maintenance
-            
-            return Math.Round((decimal)(estimatedFailureCost - preventiveCost), 2);
+            // Remove cost-related calculations since cost properties are no longer available
+            return 0;
         }
 
         private async Task<List<MaintenancePrediction>> PredictMaintenanceForEquipmentAsync(int equipmentId)
@@ -646,8 +640,7 @@ namespace FEENALOoFINALE.Controllers
                     EquipmentName = equipment.EquipmentModel?.ModelName ?? "Unknown",
                     PredictedMaintenanceDate = riskScore.NextMaintenanceDue ?? DateTime.Now.AddDays(90),
                     MaintenanceType = riskScore.RiskScore >= 0.7 ? "Preventive" : "Routine",
-                    Confidence = Math.Round((1 - riskScore.RiskScore) * 100, 1),
-                    EstimatedCost = riskScore.PredictedCost
+                    Confidence = Math.Round((1 - riskScore.RiskScore) * 100, 1)
                 }
             };
         }
@@ -715,8 +708,7 @@ namespace FEENALOoFINALE.Controllers
                 UpcomingMaintenance = predictions.Where(p => p.PredictedMaintenanceDate <= DateTime.Now.AddDays(30)).ToList(),
                 MaintenanceRecommendations = recommendations,
                 MonthlyPredictions = GenerateMonthlyPredictions(predictions),
-                ResourceRequirements = CalculateResourceRequirements(predictions),
-                BudgetProjections = CalculateBudgetProjections(predictions)
+                ResourceRequirements = CalculateResourceRequirements(predictions)
             };
         }
 
@@ -735,7 +727,6 @@ namespace FEENALOoFINALE.Controllers
             return new Dictionary<string, object>
             {
                 ["TechnicianHours"] = next30Days.Count() * 2, // Estimate 2 hours per task
-                ["EstimatedCost"] = next30Days.Sum(p => p.EstimatedCost),
                 ["TaskCount"] = next30Days.Count()
             };
         }
@@ -751,7 +742,8 @@ namespace FEENALOoFINALE.Controllers
                     p.PredictedMaintenanceDate.Year == DateTime.Now.AddMonths(month - 1).Year &&
                     p.PredictedMaintenanceDate.Month == DateTime.Now.AddMonths(month - 1).Month);
                 
-                result[monthKey] = monthPredictions.Sum(p => p.EstimatedCost);
+                // Remove cost calculation since EstimatedCost property is no longer available
+                result[monthKey] = monthPredictions.Count() * 100; // Estimate based on task count
             }
             
             return result;

@@ -77,21 +77,21 @@ namespace FEENALOoFINALE.Services
             return result;
         }
 
-        public async Task<bool> ValidateTimetableFormatAsync(string pdfFilePath)
+        public Task<bool> ValidateTimetableFormatAsync(string pdfFilePath)
         {
             try
             {
                 using var document = PdfDocument.Open(pdfFilePath);
                 var analysis = AnalyzeDocumentStructure(document);
-                return analysis.Confidence > 0.6; // 60% confidence threshold
+                return Task.FromResult(analysis.Confidence > 0.6); // 60% confidence threshold
             }
             catch
             {
-                return false;
+                return Task.FromResult(false);
             }
         }
 
-        public async Task<List<TimetableFormatOption>> DetectPossibleFormatsAsync(string pdfFilePath)
+        public Task<List<TimetableFormatOption>> DetectPossibleFormatsAsync(string pdfFilePath)
         {
             var options = new List<TimetableFormatOption>();
             
@@ -129,12 +129,12 @@ namespace FEENALOoFINALE.Services
                     Description = "Day-by-day schedule format"
                 });
 
-                return options.OrderByDescending(o => o.Confidence).ToList();
+                return Task.FromResult(options.OrderByDescending(o => o.Confidence).ToList());
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error detecting timetable formats");
-                return options;
+                return Task.FromResult(options);
             }
         }
 
@@ -258,7 +258,7 @@ namespace FEENALOoFINALE.Services
             return Math.Min(score, 1.0);
         }
 
-        private async Task<TimetableExtractionResult> ExtractGridBasedTimetableAsync(PdfDocument document, TimetableExtractionResult result)
+        private Task<TimetableExtractionResult> ExtractGridBasedTimetableAsync(PdfDocument document, TimetableExtractionResult result)
         {
             // Implementation for grid-based extraction
             var text = ExtractAllText(document);
@@ -286,10 +286,10 @@ namespace FEENALOoFINALE.Services
                 }
             }
             
-            return result;
+            return Task.FromResult(result);
         }
 
-        private async Task<TimetableExtractionResult> ExtractListBasedTimetableAsync(PdfDocument document, TimetableExtractionResult result)
+        private Task<TimetableExtractionResult> ExtractListBasedTimetableAsync(PdfDocument document, TimetableExtractionResult result)
         {
             // Implementation for list-based extraction
             var text = ExtractAllText(document);
@@ -319,10 +319,10 @@ namespace FEENALOoFINALE.Services
                 }
             }
             
-            return result;
+            return Task.FromResult(result);
         }
 
-        private async Task<TimetableExtractionResult> ExtractMultiColumnTimetableAsync(PdfDocument document, TimetableExtractionResult result)
+        private Task<TimetableExtractionResult> ExtractMultiColumnTimetableAsync(PdfDocument document, TimetableExtractionResult result)
         {
             // Implementation for multi-column extraction
             var text = ExtractAllText(document);
@@ -362,10 +362,10 @@ namespace FEENALOoFINALE.Services
                 }
             }
             
-            return result;
+            return Task.FromResult(result);
         }
 
-        private async Task<TimetableExtractionResult> ExtractMultiYearTimetableAsync(PdfDocument document, TimetableExtractionResult result)
+        private Task<TimetableExtractionResult> ExtractMultiYearTimetableAsync(PdfDocument document, TimetableExtractionResult result)
         {
             // Implementation for multi-year format
             var text = ExtractAllText(document);
@@ -405,10 +405,10 @@ namespace FEENALOoFINALE.Services
                 }
             }
             
-            return result;
+            return Task.FromResult(result);
         }
 
-        private async Task<TimetableExtractionResult> ExtractDayByDayTimetableAsync(PdfDocument document, TimetableExtractionResult result)
+        private Task<TimetableExtractionResult> ExtractDayByDayTimetableAsync(PdfDocument document, TimetableExtractionResult result)
         {
             // Implementation for day-by-day format
             var text = ExtractAllText(document);
@@ -448,10 +448,10 @@ namespace FEENALOoFINALE.Services
                 }
             }
             
-            return result;
+            return Task.FromResult(result);
         }
 
-        private async Task<TimetableExtractionResult> ExtractGenericTimetableAsync(PdfDocument document, TimetableExtractionResult result)
+        private Task<TimetableExtractionResult> ExtractGenericTimetableAsync(PdfDocument document, TimetableExtractionResult result)
         {
             // Generic fallback extraction
             var text = ExtractAllText(document);
@@ -478,7 +478,7 @@ namespace FEENALOoFINALE.Services
                 });
             }
             
-            return result;
+            return Task.FromResult(result);
         }
 
         private async Task<TimetableExtractionResult> TryFallbackExtractionMethods(PdfDocument document, TimetableExtractionResult result)

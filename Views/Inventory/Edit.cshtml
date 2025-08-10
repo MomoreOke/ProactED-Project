@@ -55,6 +55,8 @@
     <form asp-action="Edit" method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <input type="hidden" asp-for="ItemId" />
+        <input type="hidden" id="updatedStockQuantity" name="UpdatedStockQuantity" value="@(Model.InventoryStocks?.Sum(s => s.Quantity) ?? 0)" />
+        <input type="hidden" id="stockAdjustmentReason" name="StockAdjustmentReason" value="" />
         
         <div class="row">
             <div class="col-md-8">
@@ -104,6 +106,52 @@
                         <h6 class="card-title mb-0"><i class="bi bi-boxes me-2"></i>Stock Management</h6>
                     </div>
                     <div class="card-body">
+                        <!-- Current Stock Adjustment -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Current Stock Adjustment</h6>
+                                    <p class="mb-3">Update the current stock quantity for this item. This will override the calculated stock from individual stock entries.</p>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Current Stock Quantity</label>
+                                            <div class="input-group">
+                                                <input type="number" id="currentStockInput" class="form-control" min="0" 
+                                                       value="@(Model.InventoryStocks?.Sum(s => s.Quantity) ?? 0)" 
+                                                       placeholder="Enter current stock" />
+                                                <button type="button" class="btn btn-outline-primary" onclick="updateCurrentStock()">
+                                                    <i class="bi bi-arrow-clockwise"></i> Update
+                                                </button>
+                                            </div>
+                                            <div class="form-text">Enter the actual current stock quantity</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Quick Adjust</label>
+                                            <div class="btn-group d-block" role="group">
+                                                <button type="button" class="btn btn-outline-success btn-sm" onclick="adjustStock(5)">+5</button>
+                                                <button type="button" class="btn btn-outline-success btn-sm" onclick="adjustStock(10)">+10</button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="adjustStock(-5)">-5</button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="adjustStock(-10)">-10</button>
+                                            </div>
+                                            <div class="form-text">Quick adjustment buttons</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Stock Reason</label>
+                                            <select id="stockReasonSelect" class="form-select">
+                                                <option value="manual_count">Manual Count</option>
+                                                <option value="received_shipment">Received Shipment</option>
+                                                <option value="returned_items">Returned Items</option>
+                                                <option value="damaged_items">Damaged Items</option>
+                                                <option value="lost_items">Lost Items</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                            <div class="form-text">Reason for stock adjustment</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
@@ -282,6 +330,112 @@
             if (!maxLevelInput.value) {
                 maxLevelInput.value = minLevel + (reorderQty * 2); // Min level + 2x reorder quantity
             }
+        });
+
+        // Stock management functions
+        function updateCurrentStock() {
+            const currentStockInput = document.getElementById('currentStockInput');
+            const stockReasonSelect = document.getElementById('stockReasonSelect');
+            const updatedStockHidden = document.getElementById('updatedStockQuantity');
+            const stockReasonHidden = document.getElementById('stockAdjustmentReason');
+            
+            const newStock = parseInt(currentStockInput.value) || 0;
+            const reason = stockReasonSelect.value;
+            
+            if (newStock < 0) {
+                alert('Stock quantity cannot be negative');
+                return;
+            }
+            
+            updatedStockHidden.value = newStock;
+            stockReasonHidden.value = reason;
+            
+            // Update the sidebar display
+            updateSidebarDisplay(newStock);
+            
+            // Show confirmation
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; width: 300px;';
+            toast.innerHTML = `
+                <i class="bi bi-check-circle me-2"></i>
+                Stock updated to ${newStock} (${reason.replace('_', ' ')})
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        function adjustStock(amount) {
+            const currentStockInput = document.getElementById('currentStockInput');
+            const currentValue = parseInt(currentStockInput.value) || 0;
+            const newValue = Math.max(0, currentValue + amount);
+            currentStockInput.value = newValue;
+        }
+
+        function updateSidebarDisplay(newStock) {
+            const currentStockDisplay = document.querySelector('.col-12.mb-3 h3');
+            const minLevel = parseInt(document.querySelector('input[name="MinimumStockLevel"]').value) || 0;
+            const reorderPoint = parseInt(document.querySelector('input[name="ReorderPoint"]').value) || 0;
+            
+            if (currentStockDisplay) {
+                currentStockDisplay.textContent = newStock;
+                
+                // Update status and color
+                const statusDisplay = currentStockDisplay.closest('.col-12').nextElementSibling.querySelector('.fw-bold');
+                const progressBar = document.querySelector('.progress-bar');
+                
+                let statusText, statusClass, progressClass;
+                
+                if (newStock === 0) {
+                    statusText = 'Out of Stock';
+                    statusClass = 'text-danger';
+                    progressClass = 'bg-danger';
+                } else if (newStock < minLevel) {
+                    statusText = 'Low Stock';
+                    statusClass = 'text-warning';
+                    progressClass = 'bg-warning';
+                } else if (newStock <= reorderPoint) {
+                    statusText = 'Reorder Soon';
+                    statusClass = 'text-info';
+                    progressClass = 'bg-info';
+                } else {
+                    statusText = 'Well Stocked';
+                    statusClass = 'text-success';
+                    progressClass = 'bg-success';
+                }
+                
+                // Update status text and color
+                currentStockDisplay.className = statusClass + ' mb-0';
+                if (statusDisplay) {
+                    statusDisplay.textContent = statusText;
+                    statusDisplay.className = statusClass + ' fw-bold';
+                }
+                
+                // Update progress bar
+                if (progressBar) {
+                    const maxLevel = parseInt(document.querySelector('input[name="MaxStockLevel"]').value) || 100;
+                    const progressPercentage = maxLevel > 0 ? (newStock / maxLevel) * 100 : 0;
+                    progressBar.className = 'progress-bar ' + progressClass;
+                    progressBar.style.width = Math.min(progressPercentage, 100) + '%';
+                }
+            }
+        }
+
+        // Update sidebar when stock levels change
+        document.querySelector('input[name="MinimumStockLevel"]').addEventListener('change', function() {
+            const currentStock = parseInt(document.getElementById('currentStockInput').value) || 0;
+            updateSidebarDisplay(currentStock);
+        });
+
+        document.querySelector('input[name="ReorderPoint"]').addEventListener('change', function() {
+            const currentStock = parseInt(document.getElementById('currentStockInput').value) || 0;
+            updateSidebarDisplay(currentStock);
         });
     </script>
 }

@@ -72,19 +72,19 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
-                    <h6 class="card-title text-muted">Total Maintenance Cost</h6>
-                    <div class="h4 text-success">$@Model.TotalMaintenanceCost.ToString("N0")</div>
+                    <h6 class="card-title text-muted">Report Generated</h6>
+                    <div class="h6 text-muted">@Model.GeneratedDate.ToString("MMM dd, yyyy HH:mm")</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
-                    <h6 class="card-title text-muted">Generated Date</h6>
-                    <div class="h6 text-muted">@Model.GeneratedDate.ToString("MMM dd, yyyy HH:mm")</div>
+                    <h6 class="card-title text-muted">Equipment Count</h6>
+                    <div class="h4 text-primary">@Model.EquipmentList?.Count() ?? 0</div>
                 </div>
             </div>
         </div>

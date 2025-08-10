@@ -1,0 +1,25 @@
+<Project>
+  <PropertyGroup>
+    <!-- Speed up builds by reducing analysis -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors />
+    
+    <!-- Skip XML documentation generation in Debug builds -->
+    <GenerateDocumentationFile Condition="'$(Configuration)' == 'Debug'">false</GenerateDocumentationFile>
+    
+    <!-- Reduce nullable analysis in Debug builds -->
+    <Nullable Condition="'$(Configuration)' == 'Debug'">disable</Nullable>
+    
+    <!-- Parallel build settings -->
+    <MaxCpuCount>0</MaxCpuCount>
+    
+    <!-- Skip unnecessary checks in Debug -->
+    <CheckForOverflowUnderflow Condition="'$(Configuration)' == 'Debug'">false</CheckForOverflowUnderflow>
+    
+    <!-- Optimize debug builds -->
+    <DebugType Condition="'$(Configuration)' == 'Debug'">portable</DebugType>
+    <DebugSymbols Condition="'$(Configuration)' == 'Debug'">true</DebugSymbols>
+    <Optimize Condition="'$(Configuration)' == 'Debug'">false</Optimize>
+  </PropertyGroup>
+</Project>

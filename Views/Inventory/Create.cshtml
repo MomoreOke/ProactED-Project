@@ -1,47 +1,579 @@
 @model FEENALOoFINALE.Models.InventoryViewModel
 
+
 @{
     ViewData["Title"] = "Add New Inventory Item";
 }
 
-<h1>Add New Inventory Item</h1>
-
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    
-    <div class="row">
-        <div class="col-md-8">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <div class="form-group">
-                <label asp-for="EquipmentTypeId" class="control-label">Equipment Type</label>
-                <select asp-for="EquipmentTypeId" class="form-control select-chevron" asp-items="ViewBag.EquipmentTypeId">
-                    <option value="">-- Select Equipment Type --</option>
-                </select>
-                <span asp-validation-for="EquipmentTypeId" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="EquipmentModelName" class="control-label">Equipment Model</label>
-                <input asp-for="EquipmentModelName" class="form-control" placeholder="Enter equipment model (e.g., XP-2000, Model ABC-123)" />
-                <small class="form-text text-muted">Type the exact model name/number. If this model doesn't exist, it will be created automatically.</small>
-                <span asp-validation-for="EquipmentModelName" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="InitialStock" class="control-label">Amount to Add</label>
-                <input asp-for="InitialStock" class="form-control" type="number" />
-                <span asp-validation-for="InitialStock" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mt-3">
-                <input type="submit" value="Create" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Dashboard")">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index")">Inventory</a></li>
+                    <li class="breadcrumb-item active">Add New Item</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Add New Inventory Item</h1>
+                    <p class="text-muted mb-0">Create a new inventory item with stock management settings</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-</form>
+
+    <!-- Alerts -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Form -->
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Name" class="form-label">Item Name <span class="text-danger">*</span></label>
+                                    <input asp-for="Name" class="form-control" placeholder="Enter item name" />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Category" class="form-label">Category <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <select asp-for="Category" class="form-select" id="categorySelect">
+                                            <option value="">-- Select Category --</option>
+                                            <option value="Electrical">Electrical</option>
+                                            <option value="Mechanical">Mechanical</option>
+                                            <option value="Consumable">Consumable</option>
+                                            <option value="Safety">Safety</option>
+                                            <option value="Tools">Tools</option>
+                                            <option value="Hardware">Hardware</option>
+                                            <option value="Software">Software</option>
+                                            <option value="Other">Other</option>
+                                            <option value="custom">+ Add New Category</option>
+                                        </select>
+                                        <button type="button" class="btn btn-outline-secondary" id="addCategoryBtn" style="display: none;">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                    <input type="text" id="customCategoryInput" class="form-control mt-2" placeholder="Enter new category name" style="display: none;" />
+                                    <span asp-validation-for="Category" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter item description..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EquipmentTypeId" class="form-label">Equipment Type</label>
+                                    <div class="input-group">
+                                        <select asp-for="EquipmentTypeId" class="form-select" asp-items="ViewBag.EquipmentTypeId" id="equipmentTypeSelect">
+                                            <option value="">-- Select Equipment Type (Optional) --</option>
+                                        </select>
+                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addEquipmentTypeModal">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Link this item to specific equipment if applicable</div>
+                                    <span asp-validation-for="EquipmentTypeId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EquipmentModelName" class="form-label">Equipment Model</label>
+                                    <input asp-for="EquipmentModelName" class="form-control" placeholder="Enter equipment model (e.g., XP-2000, Model ABC-123)" />
+                                    <div class="form-text">Type the exact model name/number. If this model doesn't exist, it will be created automatically.</div>
+                                    <span asp-validation-for="EquipmentModelName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="CompatibleModels" class="form-label">Compatible Equipment Models</label>
+                            <textarea asp-for="CompatibleModels" class="form-control" rows="2" placeholder="Enter compatible equipment models (comma-separated)"></textarea>
+                            <div class="form-text">List equipment models that this item is compatible with, separated by commas</div>
+                            <span asp-validation-for="CompatibleModels" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Management -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0"><i class="bi bi-boxes me-2"></i>Stock Management</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="InitialStock" class="form-label">Initial Stock Quantity <span class="text-danger">*</span></label>
+                                    <input asp-for="InitialStock" class="form-control" type="number" min="0" placeholder="Enter initial stock amount" />
+                                    <div class="form-text">Starting quantity for this item</div>
+                                    <span asp-validation-for="InitialStock" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="MinimumStockLevel" class="form-label">Minimum Stock Level <span class="text-danger">*</span></label>
+                                    <input asp-for="MinimumStockLevel" class="form-control" type="number" min="0" placeholder="Enter minimum stock level" />
+                                    <div class="form-text">Alert will be generated when stock falls below this level</div>
+                                    <span asp-validation-for="MinimumStockLevel" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="MaxStockLevel" class="form-label">Maximum Stock Level</label>
+                                    <input asp-for="MaxStockLevel" class="form-control" type="number" min="0" placeholder="Enter maximum stock level" />
+                                    <div class="form-text">Maximum recommended stock level</div>
+                                    <span asp-validation-for="MaxStockLevel" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ReorderPoint" class="form-label">Reorder Point</label>
+                                    <input asp-for="ReorderPoint" class="form-control" type="number" min="0" placeholder="Enter reorder point" />
+                                    <div class="form-text">Stock level at which reorder should be triggered</div>
+                                    <span asp-validation-for="ReorderPoint" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ReorderQuantity" class="form-label">Reorder Quantity</label>
+                                    <input asp-for="ReorderQuantity" class="form-control" type="number" min="0" placeholder="Enter reorder quantity" />
+                                    <div class="form-text">Recommended quantity to order when restocking</div>
+                                    <span asp-validation-for="ReorderQuantity" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Create Item
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="button" class="btn btn-outline-info" onclick="previewItem()">
+                                <i class="bi bi-eye"></i> Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-md-4">
+                <!-- Quick Setup Guide -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0"><i class="bi bi-lightbulb me-2"></i>Quick Setup Guide</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex align-items-center">
+                                <i class="bi bi-1-circle text-primary me-3"></i>
+                                <div>
+                                    <small class="fw-bold">Basic Info</small>
+                                    <div class="text-muted small">Enter name and category</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center">
+                                <i class="bi bi-2-circle text-primary me-3"></i>
+                                <div>
+                                    <small class="fw-bold">Stock Levels</small>
+                                    <div class="text-muted small">Set minimum and initial stock</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center">
+                                <i class="bi bi-3-circle text-primary me-3"></i>
+                                <div>
+                                    <small class="fw-bold">Equipment Link</small>
+                                    <div class="text-muted small">Link to specific equipment (optional)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Level Preview -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Stock Level Preview</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="stockPreview">
+                            <div class="text-muted text-center py-3">
+                                <i class="bi bi-graph-down opacity-50 fs-1"></i>
+                                <p class="mb-0">Enter stock levels to see preview</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Tips</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Use descriptive names for easy searching</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Set minimum stock level to avoid shortages</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Link to equipment for maintenance tracking</li>
+                            <li class="mb-0"><i class="bi bi-check text-success me-2"></i>Add compatible models for better organization</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Add Equipment Type Modal -->
+<div class="modal fade" id="addEquipmentTypeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Equipment Type</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addEquipmentTypeForm">
+                    <div class="mb-3">
+                        <label class="form-label">Equipment Type Name</label>
+                        <input type="text" id="newEquipmentTypeName" class="form-control" placeholder="Enter equipment type name" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea id="newEquipmentTypeDescription" class="form-control" rows="2" placeholder="Enter description (optional)"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addEquipmentType()">Add Equipment Type</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Category management
+        document.getElementById('categorySelect').addEventListener('change', function() {
+            const customInput = document.getElementById('customCategoryInput');
+            const addBtn = document.getElementById('addCategoryBtn');
+            
+            if (this.value === 'custom') {
+                customInput.style.display = 'block';
+                addBtn.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+                addBtn.style.display = 'none';
+            }
+        });
+
+        document.getElementById('addCategoryBtn').addEventListener('click', function() {
+            const customInput = document.getElementById('customCategoryInput');
+            const categorySelect = document.getElementById('categorySelect');
+            const newCategory = customInput.value.trim();
+            
+            if (newCategory) {
+                // Add new option to select
+                const option = new Option(newCategory, newCategory);
+                categorySelect.insertBefore(option, categorySelect.options[categorySelect.options.length - 1]);
+                
+                // Select the new option
+                categorySelect.value = newCategory;
+                
+                // Hide custom input
+                customInput.style.display = 'none';
+                this.style.display = 'none';
+                customInput.value = '';
+                
+                // Show success message
+                showToast('Category "' + newCategory + '" added successfully!', 'success');
+            }
+        });
+
+        // Equipment Type management
+        function addEquipmentType() {
+            const name = document.getElementById('newEquipmentTypeName').value.trim();
+            const description = document.getElementById('newEquipmentTypeDescription').value.trim();
+            
+            if (!name) {
+                alert('Please enter an equipment type name');
+                return;
+            }
+            
+            // TODO: Make AJAX call to add equipment type
+            // For now, just add to dropdown
+            const equipmentTypeSelect = document.getElementById('equipmentTypeSelect');
+            const option = new Option(name, 'new_' + name); // Prefix with 'new_' to indicate it's a new type
+            equipmentTypeSelect.add(option);
+            equipmentTypeSelect.value = option.value;
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addEquipmentTypeModal'));
+            modal.hide();
+            
+            // Clear form
+            document.getElementById('newEquipmentTypeName').value = '';
+            document.getElementById('newEquipmentTypeDescription').value = '';
+            
+            showToast('Equipment type "' + name + '" added successfully!', 'success');
+        }
+
+        // Stock level calculations and preview
+        function updateStockPreview() {
+            const initialStock = parseInt(document.querySelector('input[name="InitialStock"]').value) || 0;
+            const minLevel = parseInt(document.querySelector('input[name="MinimumStockLevel"]').value) || 0;
+            const maxLevel = parseInt(document.querySelector('input[name="MaxStockLevel"]').value) || 0;
+            const reorderPoint = parseInt(document.querySelector('input[name="ReorderPoint"]').value) || 0;
+            
+            const previewDiv = document.getElementById('stockPreview');
+            
+            if (initialStock === 0 && minLevel === 0) {
+                previewDiv.innerHTML = `
+                    <div class="text-muted text-center py-3">
+                        <i class="bi bi-graph-down opacity-50 fs-1"></i>
+                        <p class="mb-0">Enter stock levels to see preview</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Determine status
+            let status, statusClass, statusIcon;
+            if (initialStock === 0) {
+                status = 'Out of Stock';
+                statusClass = 'text-danger';
+                statusIcon = 'bi-x-circle';
+            } else if (initialStock < minLevel) {
+                status = 'Low Stock';
+                statusClass = 'text-warning';
+                statusIcon = 'bi-exclamation-triangle';
+            } else if (initialStock <= reorderPoint) {
+                status = 'Reorder Soon';
+                statusClass = 'text-info';
+                statusIcon = 'bi-info-circle';
+            } else {
+                status = 'Well Stocked';
+                statusClass = 'text-success';
+                statusIcon = 'bi-check-circle';
+            }
+            
+            // Calculate progress
+            const progressPercentage = maxLevel > 0 ? Math.min((initialStock / maxLevel) * 100, 100) : 0;
+            const progressClass = statusClass.replace('text-', 'bg-');
+            
+            previewDiv.innerHTML = `
+                <div class="text-center mb-3">
+                    <h4 class="${statusClass} mb-0">${initialStock}</h4>
+                    <small class="text-muted">Initial Stock</small>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Status:</span>
+                        <span class="${statusClass} fw-bold">
+                            <i class="${statusIcon}"></i> ${status}
+                        </span>
+                    </div>
+                </div>
+                ${maxLevel > 0 ? `
+                <div class="progress mb-3" style="height: 8px;">
+                    <div class="progress-bar ${progressClass}" style="width: ${progressPercentage}%"></div>
+                </div>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <small class="text-muted">Min</small>
+                        <div class="fw-bold">${minLevel}</div>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted">Reorder</small>
+                        <div class="fw-bold">${reorderPoint}</div>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted">Max</small>
+                        <div class="fw-bold">${maxLevel}</div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+        }
+
+        // Auto-calculations
+        document.querySelector('input[name="MinimumStockLevel"]').addEventListener('input', function() {
+            const minLevel = parseInt(this.value) || 0;
+            const reorderPointInput = document.querySelector('input[name="ReorderPoint"]');
+            const maxLevelInput = document.querySelector('input[name="MaxStockLevel"]');
+            
+            // Auto-set reorder point to 20% above minimum
+            if (!reorderPointInput.value || parseInt(reorderPointInput.value) < minLevel) {
+                reorderPointInput.value = Math.ceil(minLevel * 1.2);
+            }
+            
+            // Auto-set max level if not set
+            if (!maxLevelInput.value) {
+                const reorderQty = parseInt(document.querySelector('input[name="ReorderQuantity"]').value) || minLevel * 2;
+                maxLevelInput.value = minLevel + reorderQty;
+            }
+            
+            updateStockPreview();
+        });
+
+        document.querySelector('input[name="ReorderQuantity"]').addEventListener('input', function() {
+            const reorderQty = parseInt(this.value) || 0;
+            const minLevel = parseInt(document.querySelector('input[name="MinimumStockLevel"]').value) || 0;
+            const maxLevelInput = document.querySelector('input[name="MaxStockLevel"]');
+            
+            if (!maxLevelInput.value && minLevel > 0) {
+                maxLevelInput.value = minLevel + (reorderQty * 2);
+            }
+            
+            updateStockPreview();
+        });
+
+        // Update preview on any stock input change
+        ['InitialStock', 'MinimumStockLevel', 'MaxStockLevel', 'ReorderPoint'].forEach(field => {
+            document.querySelector(`input[name="${field}"]`).addEventListener('input', updateStockPreview);
+        });
+
+        // Preview function
+        function previewItem() {
+            const name = document.querySelector('input[name="Name"]').value;
+            const category = document.querySelector('select[name="Category"]').value;
+            const description = document.querySelector('textarea[name="Description"]').value;
+            const initialStock = document.querySelector('input[name="InitialStock"]').value;
+            
+            if (!name || !category) {
+                alert('Please fill in at least the item name and category to preview');
+                return;
+            }
+            
+            const previewContent = `
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">${name}</h5>
+                        <span class="badge bg-light text-dark">${category}</span>
+                    </div>
+                    <div class="card-body">
+                        <p>${description || 'No description provided'}</p>
+                        <div class="row text-center">
+                            <div class="col">
+                                <h4 class="text-primary">${initialStock || 0}</h4>
+                                <small class="text-muted">Initial Stock</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Create and show preview modal
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Item Preview</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${previewContent}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            const previewModal = new bootstrap.Modal(modal);
+            previewModal.show();
+            
+            // Clean up when modal is hidden
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.removeChild(modal);
+            });
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; width: 300px;';
+            toast.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 4000);
+        }
+
+        // Initialize preview on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStockPreview();
+        });
+    </script>
 }

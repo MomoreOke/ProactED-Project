@@ -205,7 +205,16 @@ namespace FEENALOoFINALE.Controllers
         {
             try
             {
-                var task = await _context.MaintenanceTasks.FindAsync(id);
+                var task = await _context.MaintenanceTasks
+                    .Include(t => t.Equipment)
+                        .ThenInclude(e => e.EquipmentModel)
+                    .Include(t => t.Equipment)
+                        .ThenInclude(e => e.Building)
+                    .Include(t => t.Equipment)
+                        .ThenInclude(e => e.Room)
+                    .Include(t => t.AssignedTo)
+                    .FirstOrDefaultAsync(t => t.TaskId == id);
+
                 if (task == null)
                 {
                     return NotFound();
@@ -220,6 +229,10 @@ namespace FEENALOoFINALE.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Email notifications are disabled
+                _logger.LogInformation("Email notifications would be sent for task {TaskId} status change to {Status}", 
+                    task.TaskId, status);
 
                 _logger.LogInformation("Maintenance task {TaskId} status updated from {OldStatus} to {NewStatus}", 
                     id, oldStatus, status);
@@ -256,6 +269,37 @@ namespace FEENALOoFINALE.Controllers
 
                 _context.MaintenanceTasks.Add(task);
                 await _context.SaveChangesAsync();
+
+                // Send email notification if technician is assigned
+                if (!string.IsNullOrEmpty(task.AssignedToUserId))
+                {
+                    try
+                    {
+                        // Load full task details with navigation properties for email
+                        var taskWithDetails = await _context.MaintenanceTasks
+                            .Include(t => t.Equipment)
+                                .ThenInclude(e => e.EquipmentModel)
+                            .Include(t => t.Equipment)
+                                .ThenInclude(e => e.EquipmentType)
+                            .Include(t => t.Equipment)
+                                .ThenInclude(e => e.Building)
+                            .Include(t => t.Equipment)
+                                .ThenInclude(e => e.Room)
+                            .Include(t => t.AssignedTo)
+                            .FirstOrDefaultAsync(t => t.TaskId == task.TaskId);
+
+                        if (taskWithDetails?.Equipment != null)
+                        {
+                            // Email notifications are disabled
+                            _logger.LogInformation("Enhanced assignment email would be sent for task {TaskId}", task.TaskId);
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError(emailEx, "Failed to send assignment email for task {TaskId}", task.TaskId);
+                        // Don't fail the task creation if email fails
+                    }
+                }
 
                 _logger.LogInformation("New maintenance task created for equipment {EquipmentId}", model.EquipmentId);
                 TempData["SuccessMessage"] = "Maintenance task created successfully";

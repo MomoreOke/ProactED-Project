@@ -130,6 +130,65 @@ namespace FEENALOoFINALE.Models
         public string? ErrorMessage { get; set; }
 
         /// <summary>
+        /// Calculate estimated days until failure based on probability
+        /// </summary>
+        public int DaysToFailure
+        {
+            get
+            {
+                return FailureProbability switch
+                {
+                    >= 0.8 => 7,    // Critical: 1 week
+                    >= 0.6 => 30,   // High: 1 month
+                    >= 0.4 => 90,   // Medium: 3 months
+                    >= 0.2 => 180,  // Low-Medium: 6 months
+                    _ => 365        // Low: 1 year
+                };
+            }
+        }
+
+        /// <summary>
+        /// Get estimated failure date
+        /// </summary>
+        public DateTime EstimatedFailureDate => DateTime.Now.AddDays(DaysToFailure);
+
+        /// <summary>
+        /// Get formatted days to failure display
+        /// </summary>
+        public string DaysToFailureDisplay
+        {
+            get
+            {
+                var days = DaysToFailure;
+                return days switch
+                {
+                    <= 7 => $"🚨 {days} days",
+                    <= 30 => $"⚠️ {days} days",
+                    <= 90 => $"📅 {days} days ({days/30:F0} months)",
+                    <= 180 => $"📅 {days} days ({days/30:F0} months)",
+                    _ => $"📅 {days} days ({days/365:F1} years)"
+                };
+            }
+        }
+
+        /// <summary>
+        /// Get maintenance urgency level
+        /// </summary>
+        public string MaintenanceUrgency
+        {
+            get
+            {
+                return DaysToFailure switch
+                {
+                    <= 7 => "URGENT",
+                    <= 30 => "High Priority",
+                    <= 90 => "Medium Priority",
+                    _ => "Low Priority"
+                };
+            }
+        }
+
+        /// <summary>
         /// Convert to FailurePrediction entity for database storage
         /// </summary>
         public FailurePrediction ToFailurePrediction(int equipmentId)

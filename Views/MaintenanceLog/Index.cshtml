@@ -108,7 +108,6 @@
                         <th>Type</th>
                         <th>Technician</th>
                         <th>Downtime (hrs)</th>
-                        <th>Cost</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -134,7 +133,6 @@
                             <td>@item.MaintenanceType</td>
                             <td>@item.Technician</td>
                             <td>@(item.DowntimeHours?.ToString("F1") ?? "N/A") hours</td>
-                            <td>@item.Cost.ToString("C")</td>
                             <td>
                                 <a asp-action="Details" asp-route-id="@item.LogId" class="btn btn-info btn-sm">Details</a>
                                 <span class="badge bg-success">Completed</span>

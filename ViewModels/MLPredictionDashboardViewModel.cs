@@ -48,6 +48,7 @@ namespace FEENALOoFINALE.ViewModels
         
         public string RiskLevelDisplay => Prediction?.RiskLevel switch
         {
+            "Critical" => "🔴 Critical Risk",
             "High" => "🔴 High Risk",
             "Medium" => "🟡 Medium Risk", 
             "Low" => "🟢 Low Risk",
@@ -61,6 +62,37 @@ namespace FEENALOoFINALE.ViewModels
         public string ConfidenceDisplay => Prediction != null 
             ? $"{Prediction.ConfidenceScore:P1}" 
             : "N/A";
+
+        /// <summary>
+        /// Days until predicted failure
+        /// </summary>
+        public int DaysToFailure => Prediction?.DaysToFailure ?? 365;
+
+        /// <summary>
+        /// Formatted display of days to failure
+        /// </summary>
+        public string DaysToFailureDisplay => Prediction?.DaysToFailureDisplay ?? "📅 365+ days";
+
+        /// <summary>
+        /// Maintenance urgency level
+        /// </summary>
+        public string MaintenanceUrgency => Prediction?.MaintenanceUrgency ?? "Low Priority";
+
+        /// <summary>
+        /// Estimated failure date
+        /// </summary>
+        public DateTime EstimatedFailureDate => Prediction?.EstimatedFailureDate ?? DateTime.Now.AddYears(1);
+
+        /// <summary>
+        /// CSS class for urgency styling
+        /// </summary>
+        public string UrgencyClass => DaysToFailure switch
+        {
+            <= 7 => "text-danger fw-bold",
+            <= 30 => "text-warning fw-bold",
+            <= 90 => "text-info",
+            _ => "text-muted"
+        };
     }
 
     public class ChartDataPoint

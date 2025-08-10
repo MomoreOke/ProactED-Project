@@ -161,18 +161,18 @@ namespace FEENALOoFINALE.Controllers
             return View();
         }
 
-        // POST: Equipment/
+        // POST: Equipment/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EquipmentId,EquipmentTypeId,EquipmentModelName,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
+        public async Task<IActionResult> Create([Bind("EquipmentId,EquipmentTypeId,EquipmentModelId,BuildingId,RoomId,InstallationDate,ExpectedLifespanMonths,Status,Notes")] Equipment equipment)
         {
             // Track performance if service is available
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
             // Enhanced validation with user-friendly messages
-            if (string.IsNullOrWhiteSpace(equipment.EquipmentModelName))
+            if (equipment.EquipmentModelId <= 0)
             {
-                ModelState.AddModelError("EquipmentModelName", "Equipment model name is required. Please enter a descriptive name for this equipment.");
+                ModelState.AddModelError("EquipmentModelId", "Equipment model is required. Please select a valid equipment model from the dropdown.");
             }
 
             if (equipment.EquipmentTypeId <= 0)
@@ -206,12 +206,20 @@ namespace FEENALOoFINALE.Controllers
                 {
                     // Verify references exist
                     var equipmentTypeExists = await _context.EquipmentTypes.AnyAsync(et => et.EquipmentTypeId == equipment.EquipmentTypeId);
+                    var equipmentModelExists = await _context.EquipmentModels.AnyAsync(em => em.EquipmentModelId == equipment.EquipmentModelId);
                     var buildingExists = await _context.Buildings.AnyAsync(b => b.BuildingId == equipment.BuildingId);
                     var roomExists = await _context.Rooms.AnyAsync(r => r.RoomId == equipment.RoomId && r.BuildingId == equipment.BuildingId);
 
                     if (!equipmentTypeExists)
                     {
                         ModelState.AddModelError("EquipmentTypeId", "The selected equipment type is no longer available. Please refresh the page and try again.");
+                        await PopulateDropdowns();
+                        return View(equipment);
+                    }
+
+                    if (!equipmentModelExists)
+                    {
+                        ModelState.AddModelError("EquipmentModelId", "The selected equipment model is no longer available. Please refresh the page and try again.");
                         await PopulateDropdowns();
                         return View(equipment);
                     }
@@ -228,11 +236,13 @@ namespace FEENALOoFINALE.Controllers
                         ModelState.AddModelError("RoomId", "The selected room is not available in the chosen building. Please select a different room or building.");
                         await PopulateDropdowns();
                         return View(equipment);
-                    }            // Set default values
-            equipment.Status = equipment.Status == 0 ? EquipmentStatus.Active : equipment.Status;
+                    }
 
-            _context.Add(equipment);
-            await _context.SaveChangesAsync();
+                    // Set default values
+                    equipment.Status = equipment.Status == 0 ? EquipmentStatus.Active : equipment.Status;
+
+                    _context.Add(equipment);
+                    await _context.SaveChangesAsync();
 
                     // 🤖 Auto-register new equipment in ML prediction system
                     try
@@ -255,13 +265,19 @@ namespace FEENALOoFINALE.Controllers
 
                     // Clear cache
                     await _cacheService.RemoveAsync("equipment_list");
-                    await _cacheService.RemoveAsync("dashboard_equipment_metrics");            TempData["SuccessMessage"] = $"Equipment '{equipment.EquipmentModelName}' has been successfully added to {await GetBuildingName(equipment.BuildingId)}.";
+                    await _cacheService.RemoveAsync("dashboard_equipment_metrics");
+
+                    // Get equipment model name for success message
+                    var equipmentModel = await _context.EquipmentModels.FindAsync(equipment.EquipmentModelId);
+                    var equipmentModelName = equipmentModel?.ModelName ?? "Unknown Model";
+
+                    TempData["SuccessMessage"] = $"Equipment '{equipmentModelName}' has been successfully added to {await GetBuildingName(equipment.BuildingId)}.";
             
-            // Track performance
-            stopwatch.Stop();
-            _performanceMonitor?.TrackOperation("Equipment.Create", stopwatch.Elapsed, true);
+                    // Track performance
+                    stopwatch.Stop();
+                    _performanceMonitor?.TrackOperation("Equipment.Create", stopwatch.Elapsed, true);
             
-            return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateException ex)
                 {
@@ -284,6 +300,10 @@ namespace FEENALOoFINALE.Controllers
             ViewData["EquipmentTypeId"] = new SelectList(await _cacheService.GetOrSetAsync("equipment_types", 
                 async () => await _context.EquipmentTypes.ToListAsync(), TimeSpan.FromMinutes(30)), 
                 "EquipmentTypeId", "EquipmentTypeName");
+            
+            ViewData["EquipmentModelId"] = new SelectList(await _cacheService.GetOrSetAsync("equipment_models", 
+                async () => await _context.EquipmentModels.ToListAsync(), TimeSpan.FromMinutes(30)), 
+                "EquipmentModelId", "ModelName");
             
             ViewData["BuildingId"] = new SelectList(await _cacheService.GetOrSetAsync("buildings", 
                 async () => await _context.Buildings.ToListAsync(), TimeSpan.FromMinutes(30)), 

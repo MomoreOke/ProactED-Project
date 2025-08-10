@@ -248,12 +248,15 @@
                                             <th>Equipment</th>
                                             <th>Location</th>
                                             <th>Total Semester Hours</th>
-                                            <th>Usage Level</th>
+                                            <th>Weekly Average</th>
+                                            <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach (var usage in Model.EquipmentUsage.OrderByDescending(u => u.TotalSemesterHours))
                                         {
+                                            var weeklyAverage = Model.ProgressInfo.WeeksElapsed > 0 ? usage.TotalSemesterHours / Model.ProgressInfo.WeeksElapsed : 0;
+                                            var isHighUsage = usage.TotalSemesterHours > 40; // Consider high usage if more than 40 hours
                                             <tr>
                                                 <td>
                                                     <strong>@usage.EquipmentName</strong>
@@ -266,7 +269,25 @@
                                                     <strong>@usage.TotalSemesterHours.ToString("F0")h</strong>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-secondary">N/A</span>
+                                                    <span class="text-muted">@weeklyAverage.ToString("F1")h/week</span>
+                                                </td>
+                                                <td>
+                                                    @if (isHighUsage)
+                                                    {
+                                                        <span class="badge bg-warning">High Usage</span>
+                                                    }
+                                                    else if (usage.TotalSemesterHours > 20)
+                                                    {
+                                                        <span class="badge bg-info">Moderate Usage</span>
+                                                    }
+                                                    else if (usage.TotalSemesterHours > 0)
+                                                    {
+                                                        <span class="badge bg-success">Light Usage</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Unused</span>
+                                                    }
                                                 </td>
                                             </tr>
                                         }
@@ -287,40 +308,71 @@
             </div>
         </div>
 
-        <!-- Weekly Progress Chart -->
+        <!-- Semester Timeline -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="bi bi-bar-chart"></i> Weekly Progress
+                            <i class="bi bi-calendar-event"></i> Semester Timeline
                         </h5>
                     </div>
                     <div class="card-body">
-                        @if (Model.WeeklyProgress.Any())
-                        {
-                            <div class="row">
-                                @foreach (var week in Model.WeeklyProgress)
-                                {
-                                    <div class="col-md-2 col-sm-4 col-6 mb-3">
-                                        <div class="card h-100">
-                                            <div class="card-body text-center p-2">
-                                                <h6 class="card-title mb-1">Week @week.WeekNumber</h6>
-                                                <!-- Add more here if you have other properties -->
-                                            </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Important Dates</h6>
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-play-circle text-success me-2"></i>
+                                            <strong>Semester Start</strong>
                                         </div>
+                                        <span class="badge bg-success">@Model.CurrentSemester.StartDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-calendar-check text-primary me-2"></i>
+                                            <strong>Current Date</strong>
+                                        </div>
+                                        <span class="badge bg-primary">@DateTime.Now.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-stop-circle text-warning me-2"></i>
+                                            <strong>Semester End</strong>
+                                        </div>
+                                        <span class="badge bg-warning">@Model.CurrentSemester.EndDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Progress Breakdown</h6>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small>Weeks Completed</small>
+                                        <small>@Model.ProgressInfo.WeeksElapsed / @Model.CurrentSemester.NumberOfWeeks</small>
+                                    </div>
+                                    <div class="progress mb-2" style="height: 8px;">
+                                        <div class="progress-bar bg-success" style="width: @((Model.ProgressInfo.WeeksElapsed / (double)Model.CurrentSemester.NumberOfWeeks) * 100)%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small>Days Elapsed</small>
+                                        <small>@((DateTime.Now - Model.CurrentSemester.StartDate).Days) days</small>
+                                    </div>
+                                    <div class="progress mb-2" style="height: 8px;">
+                                        <div class="progress-bar bg-info" style="width: @Model.ProgressInfo.ProgressPercentage%"></div>
+                                    </div>
+                                </div>
+                                @if (Model.ProgressInfo.DaysRemaining > 0)
+                                {
+                                    <div class="alert alert-info py-2">
+                                        <small><i class="bi bi-info-circle me-1"></i> @Model.ProgressInfo.DaysRemaining days remaining in semester</small>
                                     </div>
                                 }
                             </div>
-                        }
-                        else
-                        {
-                            <div class="text-center py-4">
-                                <i class="bi bi-calendar-x display-4 text-muted mb-3"></i>
-                                <h5>No Weekly Progress Data</h5>
-                                <p class="text-muted">Weekly progress data will be available once the semester begins.</p>
-                            </div>
-                        }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -359,7 +411,6 @@
                                                 </ul>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <small class="text-muted">Urgency: @recommendation.Urgency</small>
-                                                    <small class="text-muted">Est. Cost: $@recommendation.EstimatedCost</small>
                                                 </div>
                                             </div>
                                         </div>

@@ -36,9 +36,7 @@ builder.Services.AddDefaultIdentity<User>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Register Email Service
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddScoped<IEmailService, EmailService>();
+// Email Service is disabled
 
 // Register Export Service
 builder.Services.AddScoped<IExportService, ExportService>();
@@ -99,6 +97,10 @@ builder.Services.AddScoped<IFormRecognizerService>(sp =>
 
 // Register ML Prediction Service
 builder.Services.AddHttpClient<IEquipmentPredictionService, EquipmentPredictionService>();
+
+// Register ML API Startup Service (ensures ML API is running before app starts)
+builder.Services.AddHttpClient<MLApiStartupService>();
+builder.Services.AddHostedService<MLApiStartupService>();
 
 // Register Prediction Metrics Service for ML monitoring
 builder.Services.AddSingleton<PredictionMetricsService>();

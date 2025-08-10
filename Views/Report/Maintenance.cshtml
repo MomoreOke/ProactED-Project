@@ -81,51 +81,15 @@
         </div>
     </div>
 
-    <!-- Cost Analysis -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="card-title text-muted">Total Cost</h6>
-                    <div class="h4 text-primary">$@Model.TotalCost.ToString("N0")</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="card-title text-muted">Preventive Cost</h6>
-                    <div class="h4 text-success">$@Model.PreventiveCost.ToString("N0")</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="card-title text-muted">Reactive Cost</h6>
-                    <div class="h4 text-warning">$@Model.ReactiveCost.ToString("N0")</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Performance Metrics -->
     @if (Model.AverageCompletionTime > 0)
     {
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center">
                         <h6 class="card-title text-muted">Average Completion Time</h6>
                         <div class="h4 text-info">@Math.Round(Model.AverageCompletionTime, 1) days</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <h6 class="card-title text-muted">Average Cost Per Task</h6>
-                        <div class="h4 text-success">$@Math.Round(Model.AverageCostPerTask, 0)</div>
                     </div>
                 </div>
             </div>
@@ -219,7 +183,6 @@
                                         <th>Priority</th>
                                         <th>Status</th>
                                         <th>Date</th>
-                                        <th>Cost</th>
                                         <th>Assigned To</th>
                                         <th>Actions</th>
                                     </tr>
@@ -278,9 +241,6 @@
                                             <td>
                                                 @maintenance.LogDate.ToString("MMM dd, yyyy")
                                                 <br><small class="text-muted">@maintenance.LogDate.ToString("HH:mm")</small>
-                                            </td>
-                                            <td>
-                                                <strong>$@maintenance.Cost.ToString("N0")</strong>
                                             </td>
                                             <td>
                                                 @if (!string.IsNullOrEmpty(maintenance.Technician))

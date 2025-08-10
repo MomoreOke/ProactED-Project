@@ -135,6 +135,13 @@ namespace FEENALOoFINALE.Services
                 return null; // No technicians available
             }
 
+            // FOR TESTING: Prioritize technician with email noahjamal303@gmail.com
+            var preferredTechnician = technicians.FirstOrDefault(t => t.Email == "noahjamal303@gmail.com");
+            if (preferredTechnician != null)
+            {
+                return preferredTechnician.Id;
+            }
+
             // Get workload for each technician (active tasks)
             var technicianWorkloads = new List<(User Technician, int ActiveTasks, int OverdueTasks)>();
 

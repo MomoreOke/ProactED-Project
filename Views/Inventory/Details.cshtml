@@ -131,8 +131,6 @@
                                     <tr>
                                         <th>Date Received</th>
                                         <th>Quantity</th>
-                                        <th>Unit Cost</th>
-                                        <th>Total Value</th>
                                         <th>Batch Number</th>
                                         <th>Status</th>
                                     </tr>
@@ -140,14 +138,11 @@
                                 <tbody>
                                     @foreach (var stock in Model.InventoryStocks.OrderByDescending(s => s.DateReceived))
                                     {
-                                        var totalValue = stock.Quantity * stock.UnitCost;
                                         <tr>
                                             <td>@stock.DateReceived.ToString("MMM dd, yyyy")</td>
                                             <td>
                                                 <span class="badge bg-light text-dark">@stock.Quantity</span>
                                             </td>
-                                            <td>@stock.UnitCost.ToString("C")</td>
-                                            <td>@totalValue.ToString("C")</td>
                                             <td>
                                                 @if (!string.IsNullOrEmpty(stock.BatchNumber))
                                                 {
@@ -317,42 +312,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Financial Summary -->
-            @if (Model.InventoryStocks != null && Model.InventoryStocks.Any())
-            {
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0"><i class="bi bi-currency-dollar me-2"></i>Financial Summary</h6>
-                    </div>
-                    <div class="card-body">
-                        @{
-                            var totalValue = Model.InventoryStocks.Sum(s => s.Quantity * s.UnitCost);
-                            var averageCost = Model.InventoryStocks.Average(s => s.UnitCost);
-                            var lastCost = Model.InventoryStocks.OrderByDescending(s => s.DateReceived).FirstOrDefault()?.UnitCost ?? 0;
-                        }
-                        <div class="row text-center">
-                            <div class="col-12 mb-2">
-                                <h5 class="text-success mb-0">@totalValue.ToString("C")</h5>
-                                <small class="text-muted">Total Value</small>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between">
-                                <span>Average Cost:</span>
-                                <span>@averageCost.ToString("C")</span>
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between">
-                                <span>Last Cost:</span>
-                                <span>@lastCost.ToString("C")</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
 
             <!-- Alerts -->
             @if (Model.Alerts != null && Model.Alerts.Any())

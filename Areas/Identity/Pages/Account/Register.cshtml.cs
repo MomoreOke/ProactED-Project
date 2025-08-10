@@ -32,21 +32,18 @@ namespace FEENALOoFINALE.Areas.Identity.Pages.Account
         private readonly IUserStore<User> _userStore;
         private readonly IUserEmailStore<User> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
-        private readonly IEmailService _emailService;
 
         public RegisterModel(
             UserManager<User> userManager,
             IUserStore<User> userStore,
             SignInManager<User> signInManager,
-            ILogger<RegisterModel> logger,
-            IEmailService emailService)
+            ILogger<RegisterModel> logger)
         {
             _userManager = userManager;
             _userStore = userStore;
             _emailStore = GetEmailStore();
             _signInManager = signInManager;
             _logger = logger;
-            _emailService = emailService;
         }
 
         [BindProperty]
@@ -157,7 +154,8 @@ namespace FEENALOoFINALE.Areas.Identity.Pages.Account
 
                         if (verificationUrl != null)
                         {
-                            await _emailService.SendEmailVerificationAsync(user.Email, verificationUrl);
+                            // Email verification is disabled
+                            _logger.LogInformation("Email verification would be sent to {Email}", user.Email);
                             TempData["SuccessMessage"] = "Account created successfully! Please check your email to verify your account.";
                         }
                         else

@@ -33,15 +33,15 @@ class EquipmentData:
 MODEL_SYSTEM = None
 
 def load_trained_model():
-    """Load the trained Random Forest model from the Predictive Model directory"""
+    """Load the trained Random Forest model from the ml_api directory"""
     global MODEL_SYSTEM
     try:
-        # Path to the trained model
-        model_path = os.path.join('..', 'Predictive Model', 'complete_equipment_failure_prediction_system.pkl')
+        # Path to the trained model (in the same directory as this script)
+        model_path = 'complete_equipment_failure_prediction_system.pkl'
         
         # Alternative paths in case the structure is different
         alternative_paths = [
-            'complete_equipment_failure_prediction_system.pkl',
+            os.path.join('..', 'Predictive Model', 'complete_equipment_failure_prediction_system.pkl'),
             '../Predictive Model/equipment_failure_model_deployment.pkl',
             'equipment_failure_model_deployment.pkl'
         ]
@@ -429,20 +429,25 @@ def internal_error(error):
     }), 500
 
 if __name__ == '__main__':
-    print("🤖 Starting ProactED Production ML API with REAL Trained Random Forest Model")
-    print("📡 API Endpoints:")
+    print("Starting ProactED Production ML API with REAL Trained Random Forest Model")
+    print("API Endpoints:")
     print("   GET  /api/health                    - Health check")
     print("   GET  /api/model/info                - Model information")
     print("   POST /api/equipment/predict         - Single equipment prediction")
     print("   POST /api/equipment/batch-predict   - Batch equipment predictions")
     print("   POST /model/retrain                 - Simulate model retraining")
-    print("🚀 Server starting on http://localhost:5002")
-    print("🧠 Using REAL trained Random Forest model (91% R² accuracy, 8 features)")
-    print("🔗 Ready for .NET ProactED integration with production model!")
+    print("Server starting on http://localhost:5001")
+    print("Using REAL trained Random Forest model (91% R2 accuracy, 8 features)")
+    print("Ready for .NET ProactED integration with production model!")
     print("")
     
     # Initialize the trained model
-    initialize_model()
-    
-    print("🔗 Starting Flask server...")
-    app.run(host='127.0.0.1', port=5002, debug=False, use_reloader=False, threaded=True)
+    try:
+        initialize_model()
+        print("Starting Flask server...")
+        # Use a more stable Flask configuration
+        app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False, threaded=True, processes=1)
+    except Exception as e:
+        print(f"Error starting Flask server: {e}")
+        import traceback
+        traceback.print_exc()

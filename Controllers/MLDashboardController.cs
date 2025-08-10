@@ -34,7 +34,7 @@ namespace FEENALOoFINALE.Controllers
             _aiInsightService = aiInsightService;
         }
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
             try
             {
@@ -42,7 +42,7 @@ namespace FEENALOoFINALE.Controllers
                 
                 // Return the view immediately with no model to show loading screen
                 // The actual data will be loaded via AJAX call to GetDashboardData
-                return View((MLDashboardViewModel)null);
+                return View((MLDashboardViewModel?)null);
             }
             catch (Exception ex)
             {
@@ -51,12 +51,12 @@ namespace FEENALOoFINALE.Controllers
             }
         }
 
-        public async Task<IActionResult> DirectTest()
+        public IActionResult DirectTest()
         {
             try
             {
                 _logger.LogInformation("DirectTest action called - Testing direct dashboard loading");
-                return View((MLDashboardViewModel)null);
+                return View((MLDashboardViewModel?)null);
             }
             catch (Exception ex)
             {
@@ -65,12 +65,12 @@ namespace FEENALOoFINALE.Controllers
             }
         }
 
-        public async Task<IActionResult> NoJS()
+        public IActionResult NoJS()
         {
             try
             {
                 _logger.LogInformation("NoJS action called - Loading static dashboard");
-                return View((MLDashboardViewModel)null);
+                return View((MLDashboardViewModel?)null);
             }
             catch (Exception ex)
             {
@@ -302,7 +302,10 @@ namespace FEENALOoFINALE.Controllers
                                     predictionTimestamp = DateTime.Now,
                                     modelVersion = prediction.ModelVersion ?? "Random Forest (Production)",
                                     riskColor = GetRiskColor(prediction.RiskLevel),
-                                    riskIcon = GetRiskIcon(prediction.RiskLevel)
+                                    riskIcon = GetRiskIcon(prediction.RiskLevel),
+                                    daysToFailure = CalculateDaysToFailure(prediction.FailureProbability),
+                                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(prediction.FailureProbability)),
+                                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(prediction.FailureProbability))
                                 });
                             }
 
@@ -322,7 +325,10 @@ namespace FEENALOoFINALE.Controllers
                                     predictionTimestamp = DateTime.Now,
                                     modelVersion = prediction.ModelVersion ?? "Random Forest (Production)",
                                     riskColor = GetRiskColor(prediction.RiskLevel),
-                                    riskIcon = GetRiskIcon(prediction.RiskLevel)
+                                    riskIcon = GetRiskIcon(prediction.RiskLevel),
+                                    daysToFailure = CalculateDaysToFailure(prediction.FailureProbability),
+                                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(prediction.FailureProbability)),
+                                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(prediction.FailureProbability))
                                 });
                             }
 
@@ -387,7 +393,10 @@ namespace FEENALOoFINALE.Controllers
                     room = "PB201",
                     riskLevel = "Critical",
                     failureProbability = 0.862,
-                    confidenceScore = 0.942
+                    confidenceScore = 0.942,
+                    daysToFailure = CalculateDaysToFailure(0.862),
+                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(0.862)),
+                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(0.862))
                 },
                 new {
                     equipmentId = 52,
@@ -397,7 +406,10 @@ namespace FEENALOoFINALE.Controllers
                     room = "PB014",
                     riskLevel = "Critical",
                     failureProbability = 0.861,
-                    confidenceScore = 0.918
+                    confidenceScore = 0.918,
+                    daysToFailure = CalculateDaysToFailure(0.861),
+                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(0.861)),
+                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(0.861))
                 },
                 new {
                     equipmentId = 56,
@@ -407,7 +419,10 @@ namespace FEENALOoFINALE.Controllers
                     room = "PB208",
                     riskLevel = "Critical",
                     failureProbability = 0.850,
-                    confidenceScore = 0.913
+                    confidenceScore = 0.913,
+                    daysToFailure = CalculateDaysToFailure(0.850),
+                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(0.850)),
+                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(0.850))
                 },
                 new {
                     equipmentId = 100,
@@ -417,7 +432,10 @@ namespace FEENALOoFINALE.Controllers
                     room = "PB001",
                     riskLevel = "Critical",
                     failureProbability = 0.890,
-                    confidenceScore = 0.941
+                    confidenceScore = 0.941,
+                    daysToFailure = CalculateDaysToFailure(0.890),
+                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(0.890)),
+                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(0.890))
                 },
                 new {
                     equipmentId = 108,
@@ -427,7 +445,10 @@ namespace FEENALOoFINALE.Controllers
                     room = "PB012", 
                     riskLevel = "Critical",
                     failureProbability = 0.812,
-                    confidenceScore = 0.980
+                    confidenceScore = 0.980,
+                    daysToFailure = CalculateDaysToFailure(0.812),
+                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(0.812)),
+                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(0.812))
                 }
             };
         }
@@ -448,7 +469,10 @@ namespace FEENALOoFINALE.Controllers
                     predictionTimestamp = DateTime.Now.AddMinutes(-5),
                     modelVersion = "Random Forest (Production)-v1.0",
                     riskColor = "#dc3545",
-                    riskIcon = "fas fa-exclamation-triangle"
+                    riskIcon = "fas fa-exclamation-triangle",
+                    daysToFailure = CalculateDaysToFailure(0.862),
+                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(0.862)),
+                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(0.862))
                 },
                 new {
                     equipmentId = 57,
@@ -462,7 +486,10 @@ namespace FEENALOoFINALE.Controllers
                     predictionTimestamp = DateTime.Now.AddMinutes(-3),
                     modelVersion = "Random Forest (Production)-v1.0",
                     riskColor = "#fd7e14",
-                    riskIcon = "fas fa-exclamation"
+                    riskIcon = "fas fa-exclamation",
+                    daysToFailure = CalculateDaysToFailure(0.676),
+                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(0.676)),
+                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(0.676))
                 },
                 new {
                     equipmentId = 112,
@@ -476,12 +503,15 @@ namespace FEENALOoFINALE.Controllers
                     predictionTimestamp = DateTime.Now.AddMinutes(-1),
                     modelVersion = "Random Forest (Production)-v1.0",
                     riskColor = "#dc3545",
-                    riskIcon = "fas fa-exclamation-triangle"
+                    riskIcon = "fas fa-exclamation-triangle",
+                    daysToFailure = CalculateDaysToFailure(0.889),
+                    daysToFailureDisplay = FormatDaysToFailure(CalculateDaysToFailure(0.889)),
+                    maintenanceUrgency = GetMaintenanceUrgency(CalculateDaysToFailure(0.889))
                 }
             };
         }
 
-        private async Task<List<object>> GetSimpleHighRiskEquipmentListWithoutEF()
+        private Task<List<object>> GetSimpleHighRiskEquipmentListWithoutEF()
         {
             try
             {
@@ -521,12 +551,12 @@ namespace FEENALOoFINALE.Controllers
                 };
 
                 _logger.LogInformation($"✅ Generated {mockHighRiskEquipment.Count} mock high-risk equipment items");
-                return mockHighRiskEquipment;
+                return Task.FromResult(mockHighRiskEquipment);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating mock high-risk equipment list");
-                return new List<object>();
+                return Task.FromResult(new List<object>());
             }
         }
 
@@ -968,7 +998,7 @@ namespace FEENALOoFINALE.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Simple()
+        public IActionResult Simple()
         {
             var simple = new { message = "Simple ML Dashboard - Ready", timestamp = DateTime.Now };
             return Json(simple);
@@ -1261,7 +1291,7 @@ namespace FEENALOoFINALE.Controllers
                 // First try to find the exact equipment
                 var equipment = await _context.Equipment
                     .Include(e => e.EquipmentModel)
-                        .ThenInclude(em => em.EquipmentType)
+                        .ThenInclude(em => em!.EquipmentType)
                     .Include(e => e.Building)
                     .Include(e => e.Room)
                     .Include(e => e.MaintenanceLogs)
@@ -1275,7 +1305,7 @@ namespace FEENALOoFINALE.Controllers
                     {
                         equipment = await _context.Equipment
                             .Include(e => e.EquipmentModel)
-                                .ThenInclude(em => em.EquipmentType)
+                                .ThenInclude(em => em!.EquipmentType)
                             .Include(e => e.Building)
                             .Include(e => e.Room)
                             .Include(e => e.MaintenanceLogs)
@@ -1314,7 +1344,7 @@ namespace FEENALOoFINALE.Controllers
             }
         }
 
-        private async Task<object> GenerateAIInsight(Equipment equipment, PredictionResult prediction)
+        private Task<object> GenerateAIInsight(Equipment equipment, PredictionResult prediction)
         {
             var equipmentType = equipment.EquipmentModel?.EquipmentType?.EquipmentTypeName ?? "Unknown";
             var modelName = equipment.EquipmentModel?.ModelName ?? "Unknown Model";
@@ -1382,7 +1412,7 @@ namespace FEENALOoFINALE.Controllers
                 insights.Add($"🔧 Recent maintenance: {recentMaintenanceLogs.Count} logs, avg cost: ${avgCost:F2}");
             }
 
-            return new
+            return Task.FromResult((object)new
             {
                 equipmentId = equipment.EquipmentId,
                 equipmentType = equipmentType,
@@ -1404,7 +1434,7 @@ namespace FEENALOoFINALE.Controllers
                 }),
                 analysisTimestamp = DateTime.Now,
                 modelVersion = prediction.ModelVersion
-            };
+            });
         }
 
         [HttpGet]
@@ -1831,6 +1861,50 @@ namespace FEENALOoFINALE.Controllers
                 .FirstOrDefaultAsync();
                 
             return rangeEquipmentId == 0 ? null : rangeEquipmentId;
+        }
+
+        /// <summary>
+        /// Calculate estimated days until failure based on failure probability
+        /// </summary>
+        private static int CalculateDaysToFailure(double failureProbability)
+        {
+            return failureProbability switch
+            {
+                >= 0.8 => 7,    // Critical: 1 week
+                >= 0.6 => 30,   // High: 1 month
+                >= 0.4 => 90,   // Medium: 3 months
+                >= 0.2 => 180,  // Low-Medium: 6 months
+                _ => 365        // Low: 1 year
+            };
+        }
+
+        /// <summary>
+        /// Format days to failure for display
+        /// </summary>
+        private static string FormatDaysToFailure(int days)
+        {
+            return days switch
+            {
+                <= 7 => $"🚨 {days} days",
+                <= 30 => $"⚠️ {days} days",
+                <= 90 => $"📅 {days} days ({days/30:F0} months)",
+                <= 180 => $"📅 {days} days ({days/30:F0} months)",
+                _ => $"📅 {days} days ({days/365:F1} years)"
+            };
+        }
+
+        /// <summary>
+        /// Get maintenance urgency level
+        /// </summary>
+        private static string GetMaintenanceUrgency(int days)
+        {
+            return days switch
+            {
+                <= 7 => "URGENT",
+                <= 30 => "High Priority",
+                <= 90 => "Medium Priority",
+                _ => "Low Priority"
+            };
         }
     }
 

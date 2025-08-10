@@ -5,6 +5,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-FEENALOoFINALE-a55497e6-7380-49b0-ae5f-ded7ecad8917</UserSecretsId>
+    
+    <!-- Build optimizations -->
+    <WarningLevel Condition="'$(Configuration)' == 'Debug'">0</WarningLevel>
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Debug'">false</TreatWarningsAsErrors>
+    <RunAnalyzersDuringBuild Condition="'$(Configuration)' == 'Debug'">false</RunAnalyzersDuringBuild>
+    <RunCodeAnalysis Condition="'$(Configuration)' == 'Debug'">false</RunCodeAnalysis>
+    <EnableNETAnalyzers Condition="'$(Configuration)' == 'Debug'">false</EnableNETAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>

@@ -554,10 +554,6 @@ namespace FEENALOoFINALE.Controllers
             statistics.LowStockItems = inventoryItems.Count(i => (i.InventoryStocks?.Sum(s => s.Quantity) ?? 0) <= i.MinimumStockLevel && (i.InventoryStocks?.Sum(s => s.Quantity) ?? 0) > 0);
             statistics.OutOfStockItems = inventoryItems.Count(i => (i.InventoryStocks?.Sum(s => s.Quantity) ?? 0) == 0);
 
-            // Financial metrics
-            statistics.TotalAssetValue = inventoryItems.Sum(i => (i.InventoryStocks?.Sum(s => s.Quantity * s.UnitCost) ?? 0));
-            statistics.MonthlyMaintenanceCost = 0; // Would need to calculate from maintenance logs
-
             // Performance metrics
             statistics.EquipmentUptime = statistics.TotalEquipment > 0 ? (double)statistics.OperationalEquipment / statistics.TotalEquipment * 100 : 0;
             statistics.MaintenanceTasksCompleted = await _context.MaintenanceLogs.CountAsync(ml => ml.LogDate >= DateTime.Now.AddMonths(-1));

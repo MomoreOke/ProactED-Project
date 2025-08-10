@@ -1,13 +1,13 @@
 namespace FEENALOoFINALE.ViewModels
 {
-    // View Models for Predictive Maintenance
+    // View Models for Predictive Maintenance - Updated for cost removal
     public class PredictiveMaintenanceViewModel
     {
         public int TotalActiveEquipment { get; set; }
         public int HighRiskEquipmentCount { get; set; }
         public int PredictedFailuresNext30Days { get; set; }
+        public int TotalPredictions { get; set; }
         public List<MaintenanceRecommendation> MaintenanceRecommendations { get; set; } = new();
-        public decimal ProjectedCostSavings { get; set; }
         public List<PredictedFailure> PredictedFailures { get; set; } = new();
         public DateTime LastUpdated { get; set; }
     }
@@ -24,7 +24,6 @@ namespace FEENALOoFINALE.ViewModels
         public List<string> Recommendations { get; set; } = new();
         public DateTime? NextMaintenanceDue { get; set; }
         public DateTime EstimatedFailureDate { get; set; }
-        public decimal PredictedCost { get; set; }
     }
 
     public class PredictedFailure
@@ -34,7 +33,6 @@ namespace FEENALOoFINALE.ViewModels
         public string EquipmentType { get; set; } = string.Empty;
         public DateTime EstimatedFailureDate { get; set; }
         public double FailureProbability { get; set; }
-        public decimal EstimatedCost { get; set; }
     }
 
     public class MaintenanceRecommendation
@@ -44,7 +42,6 @@ namespace FEENALOoFINALE.ViewModels
         public string RecommendationType { get; set; } = string.Empty;
         public string Priority { get; set; } = string.Empty;
         public string Urgency { get; set; } = string.Empty;
-        public decimal EstimatedCost { get; set; }
         public List<string> Recommendations { get; set; } = new();
     }
 
@@ -55,7 +52,6 @@ namespace FEENALOoFINALE.ViewModels
         public DateTime PredictedMaintenanceDate { get; set; }
         public string MaintenanceType { get; set; } = string.Empty;
         public double Confidence { get; set; }
-        public decimal EstimatedCost { get; set; }
     }
 
     public class MaintenancePlanningData
@@ -64,6 +60,5 @@ namespace FEENALOoFINALE.ViewModels
         public List<MaintenanceRecommendation> MaintenanceRecommendations { get; set; } = new();
         public Dictionary<string, int> MonthlyPredictions { get; set; } = new();
         public Dictionary<string, object> ResourceRequirements { get; set; } = new();
-        public Dictionary<string, decimal> BudgetProjections { get; set; } = new();
     }
 }

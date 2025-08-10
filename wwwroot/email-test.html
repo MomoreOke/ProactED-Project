@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .button:hover { background: #0056b3; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 ProactED Email Service Test</h1>
+        
+        <div class="info">
+            <h3>📧 Current Configuration</h3>
+            <p><strong>Sender:</strong> jamalnabila3709@gmail.com</p>
+            <p><strong>Test Recipient:</strong> noahjamal303@gmail.com</p>
+            <p><strong>Test Mode:</strong> ✅ Enabled (Safe Testing)</p>
+            <p><strong>Email Service:</strong> ✅ Enabled</p>
+        </div>
+
+        <h2>🧪 Email Tests</h2>
+        
+        <div>
+            <h3>Basic Email Test</h3>
+            <button class="button" onclick="testBasicEmail()">Send Basic Test Email</button>
+        </div>
+
+        <div>
+            <h3>Maintenance Email Tests</h3>
+            <button class="button" onclick="testMaintenanceAssignment()">Test Assignment Email</button>
+            <button class="button" onclick="testMaintenanceStatusUpdate()">Test Status Update Email</button>
+            <button class="button" onclick="testMaintenanceReminder()">Test Reminder Email</button>
+            <button class="button" onclick="testMaintenanceCompletion()">Test Completion Email</button>
+        </div>
+
+        <div id="result"></div>
+
+        <div class="info">
+            <h3>📋 Instructions</h3>
+            <ol>
+                <li>Click any test button above</li>
+                <li>Check the email inbox for <strong>noahjamal303@gmail.com</strong></li>
+                <li>All emails will have "[TEST MODE]" in the subject line</li>
+                <li>Email body will show the original intended recipient</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        async function testBasicEmail() {
+            showResult('⏳ Sending basic test email...', 'info');
+            try {
+                const response = await fetch('/EmailTest/TestBasicEmail', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    showResult('✅ Basic test email sent successfully! Check noahjamal303@gmail.com inbox.', 'success');
+                } else {
+                    showResult(`❌ Failed to send email. Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMaintenanceAssignment() {
+            showResult('⏳ Sending maintenance assignment email...', 'info');
+            try {
+                const response = await fetch('/EmailTest/TestMaintenanceAssignment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    showResult('✅ Maintenance assignment email sent successfully! Check noahjamal303@gmail.com inbox.', 'success');
+                } else {
+                    showResult(`❌ Failed to send email. Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMaintenanceStatusUpdate() {
+            showResult('⏳ Sending maintenance status update email...', 'info');
+            try {
+                const response = await fetch('/EmailTest/TestMaintenanceStatusUpdate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    showResult('✅ Maintenance status update email sent successfully! Check noahjamal303@gmail.com inbox.', 'success');
+                } else {
+                    showResult(`❌ Failed to send email. Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMaintenanceReminder() {
+            showResult('⏳ Sending maintenance reminder email...', 'info');
+            try {
+                const response = await fetch('/EmailTest/TestMaintenanceReminder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    showResult('✅ Maintenance reminder email sent successfully! Check noahjamal303@gmail.com inbox.', 'success');
+                } else {
+                    showResult(`❌ Failed to send email. Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMaintenanceCompletion() {
+            showResult('⏳ Sending maintenance completion email...', 'info');
+            try {
+                const response = await fetch('/EmailTest/TestMaintenanceCompletion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    showResult('✅ Maintenance completion email sent successfully! Check noahjamal303@gmail.com inbox.', 'success');
+                } else {
+                    showResult(`❌ Failed to send email. Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

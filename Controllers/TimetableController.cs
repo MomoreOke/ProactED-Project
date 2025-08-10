@@ -1124,7 +1124,6 @@ namespace FEENALOoFINALE.Controllers
                         RecommendationType = "Preventive Maintenance",
                         Priority = daysSinceLastMaintenance > 180 ? "High" : "Medium",
                         Urgency = daysSinceLastMaintenance > 180 ? "Immediate" : "Within 30 days",
-                        EstimatedCost = CalculateMaintenanceCost(usage.WeeklyUsageHours),
                         Recommendations = new List<string>
                         {
                             $"Equipment has high usage ({usage.WeeklyUsageHours:F1} hours/week)",

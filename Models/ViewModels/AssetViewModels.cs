@@ -190,12 +190,6 @@ namespace FEENALOoFINALE.Models.ViewModels
         public int OutOfStockItems { get; set; }
         public int CriticalInventoryItems { get; set; }
         
-        // Financial Metrics
-        public decimal TotalAssetValue { get; set; }
-        public decimal MonthlyMaintenanceCost { get; set; }
-        public decimal YearlyMaintenanceCost { get; set; }
-        public decimal InventoryValue { get; set; }
-        
         // Performance Metrics
         public double EquipmentUptime { get; set; }
         public double MaintenanceEfficiency { get; set; }
@@ -204,7 +198,6 @@ namespace FEENALOoFINALE.Models.ViewModels
         
         // Trend Data
         public List<TrendDataPoint> AssetGrowthTrend { get; set; } = new();
-        public List<TrendDataPoint> MaintenanceCostTrend { get; set; } = new();
         public List<TrendDataPoint> UptimeTrend { get; set; } = new();
     }
 

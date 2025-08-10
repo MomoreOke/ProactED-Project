@@ -24,6 +24,112 @@
         </div>
     </div>
 
+    <!-- Timetable Management Integration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow border-left-info">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-info">📅 Semester Timetable Management</h6>
+                    @if (ViewBag.HasActiveSemester)
+                    {
+                        <span class="badge badge-success">Active Semester</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-warning">No Active Semester</span>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.HasActiveSemester && ViewBag.CurrentSemester != null)
+                    {
+                        var currentSemester = ViewBag.CurrentSemester as FEENALOoFINALE.Models.Semester;
+                        if (currentSemester != null)
+                        {
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="mb-1">@currentSemester.SemesterName</h5>
+                                <p class="text-muted mb-2">
+                                    @currentSemester.StartDate.ToString("MMM dd, yyyy") - @currentSemester.EndDate.ToString("MMM dd, yyyy")
+                                    <span class="badge badge-info ms-2">Week @currentSemester.CurrentWeek of @currentSemester.NumberOfWeeks</span>
+                                </p>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: @currentSemester.ProgressPercentage%"></div>
+                                </div>
+                                <small class="text-muted">@currentSemester.ProgressPercentage.ToString("F1")% complete</small>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="btn-group" role="group">
+                                    <a href="@Url.Action("Progress", "Timetable", new { id = currentSemester.SemesterId })" class="btn btn-info">
+                                        <i class="bi bi-graph-up"></i> View Progress
+                                    </a>
+                                    <a href="@Url.Action("Index", "Timetable")" class="btn btn-primary">
+                                        <i class="bi bi-calendar-week"></i> Manage Timetables
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="mb-1">No Active Semester</h5>
+                                <p class="text-muted mb-0">
+                                    Upload a semester timetable to enable equipment usage tracking and enhanced predictive maintenance analytics. 
+                                    The timetable system provides comprehensive semester management with automatic progress tracking and completion detection.
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="btn-group" role="group">
+                                    <a href="@Url.Action("Upload", "Timetable")" class="btn btn-success">
+                                        <i class="bi bi-upload"></i> Upload Semester Timetable
+                                    </a>
+                                    <a href="@Url.Action("Index", "Timetable")" class="btn btn-outline-primary">
+                                        <i class="bi bi-calendar-week"></i> Timetable Management
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    
+                    <hr class="mt-3 mb-3">
+                    
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="text-info">
+                                <i class="bi bi-calendar-check display-6"></i>
+                                <h6 class="mt-2">Semester Tracking</h6>
+                                <small class="text-muted">Track equipment usage across academic semesters</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-success">
+                                <i class="bi bi-graph-up-arrow display-6"></i>
+                                <h6 class="mt-2">Usage Analytics</h6>
+                                <small class="text-muted">Analyze equipment utilization patterns</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-warning">
+                                <i class="bi bi-exclamation-triangle display-6"></i>
+                                <h6 class="mt-2">Predictive Insights</h6>
+                                <small class="text-muted">Enhanced predictions based on usage data</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-primary">
+                                <i class="bi bi-wrench display-6"></i>
+                                <h6 class="mt-2">Smart Maintenance</h6>
+                                <small class="text-muted">Optimize maintenance schedules</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Key Metrics Cards -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
@@ -86,12 +192,11 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Projected Savings
+                                Predictions Generated
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">$@Model.ProjectedCostSavings.ToString("N2")</div>
                         </div>
                         <div class="col-auto">
-                            <i class="bi bi-piggy-bank-fill text-gray-300" style="font-size: 2rem;"></i>
+                            <i class="bi bi-graph-up text-gray-300" style="font-size: 2rem;"></i>
                         </div>
                     </div>
                 </div>
@@ -166,7 +271,6 @@
                                                 <th>Type</th>
                                                 <th>Priority</th>
                                                 <th>Urgency</th>
-                                                <th>Est. Cost</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -182,7 +286,6 @@
                                                         </span>
                                                     </td>
                                                     <td>@recommendation.Urgency</td>
-                                                    <td>$@recommendation.EstimatedCost.ToString("N2")</td>
                                                     <td>
                                                         <div class="btn-group" role="group">
                                                             <button class="btn btn-sm btn-primary" onclick="scheduleTask(@recommendation.EquipmentId)" title="Schedule Maintenance">
@@ -466,112 +569,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Timetable Management Integration -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow border-left-info">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-info">📅 Semester Timetable Management</h6>
-                    @if (ViewBag.HasActiveSemester)
-                    {
-                        <span class="badge badge-success">Active Semester</span>
-                    }
-                    else
-                    {
-                        <span class="badge badge-warning">No Active Semester</span>
-                    }
-                </div>
-                <div class="card-body">
-                    @if (ViewBag.HasActiveSemester && ViewBag.CurrentSemester != null)
-                    {
-                        var currentSemester = ViewBag.CurrentSemester as FEENALOoFINALE.Models.Semester;
-                        if (currentSemester != null)
-                        {
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h5 class="mb-1">@currentSemester.SemesterName</h5>
-                                <p class="text-muted mb-2">
-                                    @currentSemester.StartDate.ToString("MMM dd, yyyy") - @currentSemester.EndDate.ToString("MMM dd, yyyy")
-                                    <span class="badge badge-info ms-2">Week @currentSemester.CurrentWeek of @currentSemester.NumberOfWeeks</span>
-                                </p>
-                                <div class="progress mb-2" style="height: 8px;">
-                                    <div class="progress-bar bg-info" role="progressbar" style="width: @currentSemester.ProgressPercentage%"></div>
-                                </div>
-                                <small class="text-muted">@currentSemester.ProgressPercentage.ToString("F1")% complete</small>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <div class="btn-group" role="group">
-                                    <a href="@Url.Action("Progress", "Timetable", new { id = currentSemester.SemesterId })" class="btn btn-info">
-                                        <i class="bi bi-graph-up"></i> View Progress
-                                    </a>
-                                    <a href="@Url.Action("Index", "Timetable")" class="btn btn-primary">
-                                        <i class="bi bi-calendar-week"></i> Manage Timetables
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h5 class="mb-1">No Active Semester</h5>
-                                <p class="text-muted mb-0">
-                                    Upload a semester timetable to enable equipment usage tracking and enhanced predictive maintenance analytics. 
-                                    The timetable system provides comprehensive semester management with automatic progress tracking and completion detection.
-                                </p>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <div class="btn-group" role="group">
-                                    <a href="@Url.Action("Upload", "Timetable")" class="btn btn-success">
-                                        <i class="bi bi-upload"></i> Upload Semester Timetable
-                                    </a>
-                                    <a href="@Url.Action("Index", "Timetable")" class="btn btn-outline-primary">
-                                        <i class="bi bi-calendar-week"></i> Timetable Management
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                    
-                    <hr class="mt-3 mb-3">
-                    
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <div class="text-info">
-                                <i class="bi bi-calendar-check display-6"></i>
-                                <h6 class="mt-2">Semester Tracking</h6>
-                                <small class="text-muted">Track equipment usage across academic semesters</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-success">
-                                <i class="bi bi-graph-up-arrow display-6"></i>
-                                <h6 class="mt-2">Usage Analytics</h6>
-                                <small class="text-muted">Analyze equipment utilization patterns</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-warning">
-                                <i class="bi bi-exclamation-triangle display-6"></i>
-                                <h6 class="mt-2">Predictive Insights</h6>
-                                <small class="text-muted">Enhanced predictions based on usage data</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-primary">
-                                <i class="bi bi-wrench display-6"></i>
-                                <h6 class="mt-2">Smart Maintenance</h6>
-                                <small class="text-muted">Optimize maintenance schedules</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 @section Scripts {
@@ -688,7 +685,7 @@
 
         function displayPredictions(predictions) {
             let html = '<div class="table-responsive"><table class="table table-bordered"><thead><tr>' +
-                '<th>Equipment</th><th>Predicted Date</th><th>Type</th><th>Confidence</th><th>Est. Cost</th><th>Actions</th>' +
+                '<th>Equipment</th><th>Predicted Date</th><th>Type</th><th>Confidence</th><th>Actions</th>' +
                 '</tr></thead><tbody>';
             
             predictions.forEach(item => {
@@ -698,7 +695,6 @@
                     <td>${date}</td>
                     <td>${item.maintenanceType}</td>
                     <td>${item.confidence.toFixed(1)}%</td>
-                    <td>$${item.estimatedCost.toFixed(2)}</td>
                     <td>
                         <div class="btn-group" role="group">
                             <button class="btn btn-sm btn-primary" onclick="scheduleTask(${item.equipmentId})" title="Schedule Maintenance">

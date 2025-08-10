@@ -218,13 +218,21 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="newEquipmentModelName" class="form-label">Equipment Model Name</label>
-                    <input type="text" class="form-control" id="newEquipmentModelName">
+                    <label for="newEquipmentModelName" class="form-label">Equipment Model Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="newEquipmentModelName" placeholder="e.g., Dell OptiPlex 7070, Carrier 19XR Series" maxlength="100" required>
+                    <div class="form-text">Enter a descriptive name for this equipment model (minimum 2 characters).</div>
+                    <div class="invalid-feedback" id="equipmentModelNameError"></div>
+                </div>
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Selected Equipment Type:</strong> <span id="selectedEquipmentTypeName">None selected</span>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveNewEquipmentModel">Save</button>
+                <button type="button" class="btn btn-primary" id="saveNewEquipmentModel">
+                    <i class="bi bi-plus-circle me-1"></i>Save Equipment Model
+                </button>
             </div>
         </div>
     </div>
@@ -298,12 +306,44 @@
             $('#EquipmentTypeId').change(function() {
                 console.log('Equipment type changed:', $(this).val());
                 const equipmentTypeId = $(this).val();
+                const equipmentTypeName = $(this).find('option:selected').text();
+                
                 loadModelsForEquipmentType(equipmentTypeId);
+                
+                // Update the equipment type display in the modal
+                if (equipmentTypeId && equipmentTypeId !== '') {
+                    $('#selectedEquipmentTypeName').text(equipmentTypeName);
+                } else {
+                    $('#selectedEquipmentTypeName').text('None selected');
+                }
                 
                 // Clear model selection when type changes
                 if (!equipmentTypeId) {
                     $('#EquipmentModelId').val('');
                 }
+            });
+
+            // Add real-time validation to equipment model name input
+            $('#newEquipmentModelName').on('input blur', function() {
+                validateEquipmentModelName();
+            });
+
+            // Show equipment type info when opening equipment model modal
+            $('#addEquipmentModelModal').on('show.bs.modal', function() {
+                const equipmentTypeId = $('#EquipmentTypeId').val();
+                const equipmentTypeName = $('#EquipmentTypeId').find('option:selected').text();
+                
+                if (!equipmentTypeId || equipmentTypeId === '') {
+                    $('#selectedEquipmentTypeName').text('⚠️ Please select an equipment type first');
+                    $('#selectedEquipmentTypeName').parent().removeClass('alert-info').addClass('alert-warning');
+                } else {
+                    $('#selectedEquipmentTypeName').text(equipmentTypeName);
+                    $('#selectedEquipmentTypeName').parent().removeClass('alert-warning').addClass('alert-info');
+                }
+                
+                // Clear any previous input
+                $('#newEquipmentModelName').val('').removeClass('is-invalid');
+                $('#equipmentModelNameError').text('');
             });
 
             // Add New Equipment Type
@@ -315,7 +355,7 @@
                 }
                 
                 $.ajax({
-                    url: '@Url.Action("CreateEquipmentType", "Equipment")',
+                    url: '@Url.Action("AddEquipmentType", "Equipment")',
                     type: 'POST',
                     data: { name: typeName },
                     success: function(response) {
@@ -323,7 +363,7 @@
                             // Add new option to select
                             var $select = $('#EquipmentTypeId');
                             $select.append($('<option>', {
-                                value: response.id,
+                                value: response.newId,
                                 text: typeName,
                                 selected: true
                             }));
@@ -346,53 +386,76 @@
 
             // Add New Equipment Model
             $('#saveNewEquipmentModel').click(function() {
-                var modelName = $('#newEquipmentModelName').val().trim();
+                var modelName = $('#newEquipmentModelName').val();
                 var equipmentTypeId = $('#EquipmentTypeId').val();
                 
-                if (!modelName) {
-                    alert('Please enter an equipment model name');
+                // Enhanced validation
+                if (!validateEquipmentModelName()) {
+                    $('#newEquipmentModelName').focus();
                     return;
                 }
                 
-                if (!equipmentTypeId || equipmentTypeId === '') {
-                    alert('Please select an equipment type first');
+                if (!equipmentTypeId || equipmentTypeId === '' || equipmentTypeId === '0') {
+                    alert('Please select an equipment type first before adding a model.');
+                    $('#EquipmentTypeId').focus();
+                    $('#addEquipmentModelModal').modal('hide');
                     return;
                 }
+                
+                // Trim the model name
+                modelName = modelName.trim();
+                
+                console.log('Creating equipment model:', { name: modelName, equipmentTypeId: equipmentTypeId });
+                
+                // Disable save button to prevent double submission
+                const saveBtn = $('#saveNewEquipmentModel');
+                const originalText = saveBtn.text();
+                saveBtn.prop('disabled', true).text('Saving...');
                 
                 $.ajax({
-                    url: '@Url.Action("CreateEquipmentModel", "Equipment")',
+                    url: '@Url.Action("AddEquipmentModel", "Equipment")',
                     type: 'POST',
                     data: { 
                         name: modelName,
-                        equipmentTypeId: equipmentTypeId
+                        equipmentTypeId: parseInt(equipmentTypeId)
                     },
                     success: function(response) {
+                        console.log('Equipment model creation response:', response);
+                        
                         if (response.success) {
                             // Add new option to select
                             var $select = $('#EquipmentModelId');
                             $select.append($('<option>', {
-                                value: response.id,
-                                text: modelName,
+                                value: response.newId,
+                                text: response.text || modelName,
                                 selected: true
                             }));
                             
                             // Close modal and clear input
                             $('#addEquipmentModelModal').modal('hide');
-                            $('#newEquipmentModelName').val('');
+                            $('#newEquipmentModelName').val('').removeClass('is-valid is-invalid');
+                            $('#equipmentModelNameError').text('');
                             
                             // Show success message
-                            showSuccessMessage('Equipment model added successfully!');
+                            showSuccessMessage('Equipment model "' + modelName + '" added successfully!');
                         } else {
                             alert('Error: ' + (response.message || 'Failed to create equipment model'));
                         }
                     },
                     error: function(xhr, status, error) {
-                        console.error('AJAX Error:', error);
-                        if (xhr.status === 400) {
-                            alert('Please make sure you have selected an equipment type first.');
+                        console.error('AJAX Error:', { xhr: xhr, status: status, error: error });
+                        
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            alert('Error: ' + xhr.responseJSON.message);
+                        } else if (xhr.status === 400) {
+                            alert('Please make sure you have selected an equipment type and entered a valid model name.');
                         } else {
                             alert('Error connecting to server. Please try again.');
                         }
+                    },
+                    complete: function() {
+                        // Re-enable save button
+                        saveBtn.prop('disabled', false).text(originalText);
                     }
                 });
             });
@@ -406,7 +469,7 @@
                 }
                 
                 $.ajax({
-                    url: '@Url.Action("CreateBuilding", "Equipment")',
+                    url: '@Url.Action("AddBuilding", "Equipment")',
                     type: 'POST',
                     data: { name: buildingName },
                     success: function(response) {
@@ -414,7 +477,7 @@
                             // Add new option to select
                             var $select = $('#BuildingId');
                             $select.append($('<option>', {
-                                value: response.id,
+                                value: response.newId,
                                 text: buildingName,
                                 selected: true
                             }));
@@ -453,7 +516,7 @@
                 }
                 
                 $.ajax({
-                    url: '@Url.Action("CreateRoom", "Equipment")',
+                    url: '@Url.Action("AddRoom", "Equipment")',
                     type: 'POST',
                     data: { name: roomName, buildingId: buildingId },
                     success: function(response) {
@@ -461,7 +524,7 @@
                             // Add new option to select
                             var $select = $('#RoomId');
                             $select.append($('<option>', {
-                                value: response.id,
+                                value: response.newId,
                                 text: roomName,
                                 selected: true
                             }));
@@ -620,6 +683,38 @@
             setTimeout(function() {
                 alert.alert('close');
             }, 3000);
+        }
+
+        // Equipment model name validation function
+        function validateEquipmentModelName() {
+            const modelName = $('#newEquipmentModelName').val().trim();
+            const input = $('#newEquipmentModelName');
+            const errorDiv = $('#equipmentModelNameError');
+            
+            // Clear previous validation state
+            input.removeClass('is-invalid is-valid');
+            errorDiv.text('');
+            
+            if (!modelName) {
+                input.addClass('is-invalid');
+                errorDiv.text('Equipment model name is required.');
+                return false;
+            }
+            
+            if (modelName.length < 2) {
+                input.addClass('is-invalid');
+                errorDiv.text('Equipment model name must be at least 2 characters long.');
+                return false;
+            }
+            
+            if (modelName.length > 100) {
+                input.addClass('is-invalid');
+                errorDiv.text('Equipment model name must be less than 100 characters.');
+                return false;
+            }
+            
+            input.addClass('is-valid');
+            return true;
         }
     </script>
 }

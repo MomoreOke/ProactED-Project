@@ -78,7 +78,7 @@ namespace FEENALOoFINALE.Services
             }
         }
 
-        private async Task<List<string>> AnalyzePrimaryRiskFactors(Equipment equipment, PredictionResult prediction)
+        private Task<List<string>> AnalyzePrimaryRiskFactors(Equipment equipment, PredictionResult prediction)
         {
             var riskFactors = new List<string>();
 
@@ -119,7 +119,7 @@ namespace FEENALOoFINALE.Services
             }
 
             // Analyze equipment type-specific risks
-            var equipmentType = equipment.EquipmentType?.EquipmentTypeName?.ToLower();
+            var equipmentType = equipment.EquipmentType?.EquipmentTypeName?.ToLower() ?? "unknown";
             switch (equipmentType)
             {
                 case var type when type.Contains("projector"):
@@ -151,10 +151,10 @@ namespace FEENALOoFINALE.Services
                 riskFactors.Add($"Model confidence is moderate ({prediction.ConfidenceScore:P1}) - may require additional monitoring");
             }
 
-            return riskFactors.Any() ? riskFactors : new List<string> { "Analysis indicates standard wear patterns for equipment of this age and type" };
+            return Task.FromResult(riskFactors.Any() ? riskFactors : new List<string> { "Analysis indicates standard wear patterns for equipment of this age and type" });
         }
 
-        private async Task<List<string>> GenerateImmediateActions(Equipment equipment, PredictionResult prediction)
+        private Task<List<string>> GenerateImmediateActions(Equipment equipment, PredictionResult prediction)
         {
             var actions = new List<string>();
 
@@ -183,7 +183,7 @@ namespace FEENALOoFINALE.Services
             }
 
             // Add equipment-type specific actions
-            var equipmentType = equipment.EquipmentType?.EquipmentTypeName?.ToLower();
+            var equipmentType = equipment.EquipmentType?.EquipmentTypeName?.ToLower() ?? "unknown";
             switch (equipmentType)
             {
                 case var type when type.Contains("projector"):
@@ -200,10 +200,10 @@ namespace FEENALOoFINALE.Services
                     break;
             }
 
-            return actions;
+            return Task.FromResult(actions);
         }
 
-        private async Task<List<string>> GenerateShortTermRecommendations(Equipment equipment, PredictionResult prediction)
+        private Task<List<string>> GenerateShortTermRecommendations(Equipment equipment, PredictionResult prediction)
         {
             var recommendations = new List<string>();
 
@@ -223,10 +223,10 @@ namespace FEENALOoFINALE.Services
             recommendations.Add("⚡ Check electrical connections and power quality");
             recommendations.Add("📋 Update equipment documentation and maintenance records");
 
-            return recommendations;
+            return Task.FromResult(recommendations);
         }
 
-        private async Task<List<string>> GenerateLongTermPlan(Equipment equipment, PredictionResult prediction)
+        private Task<List<string>> GenerateLongTermPlan(Equipment equipment, PredictionResult prediction)
         {
             var plans = new List<string>();
 
@@ -251,7 +251,7 @@ namespace FEENALOoFINALE.Services
                 plans.Add("🔧 Consider upgrading to more reliable equipment model");
             }
 
-            return plans;
+            return Task.FromResult(plans);
         }
 
         private int CalculateEstimatedDaysToFailure(double failureProbability)
@@ -281,7 +281,8 @@ namespace FEENALOoFINALE.Services
 
         private decimal EstimateRepairCost(Equipment equipment, PredictionResult prediction)
         {
-            var baseCost = equipment.EquipmentType?.EquipmentTypeName?.ToLower() switch
+            var equipmentTypeName = equipment.EquipmentType?.EquipmentTypeName?.ToLower() ?? "unknown";
+            var baseCost = equipmentTypeName switch
             {
                 var type when type.Contains("projector") => 800m,
                 var type when type.Contains("computer") => 600m,

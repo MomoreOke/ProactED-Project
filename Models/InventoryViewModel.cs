@@ -16,8 +16,24 @@ namespace FEENALOoFINALE.Models
         [Range(0, int.MaxValue, ErrorMessage = "Initial stock must be non-negative.")]
         public int InitialStock { get; set; }
 
-        // Added to fix missing properties for Create.cshtml
+        // Equipment linking properties
         public int? EquipmentTypeId { get; set; }
-        public string EquipmentModelName { get; set; }
+        public string EquipmentModelName { get; set; } = string.Empty;
+        
+        // Stock management properties - Updated for cost removal
+        public string? CompatibleModels { get; set; }
+        
+        [Required]
+        [Range(0, int.MaxValue, ErrorMessage = "Minimum stock level must be non-negative.")]
+        public int MinimumStockLevel { get; set; }
+        
+        [Range(0, int.MaxValue, ErrorMessage = "Maximum stock level must be non-negative.")]
+        public int? MaxStockLevel { get; set; }
+        
+        [Range(0, int.MaxValue, ErrorMessage = "Reorder point must be non-negative.")]
+        public int? ReorderPoint { get; set; }
+        
+        [Range(0, int.MaxValue, ErrorMessage = "Reorder quantity must be non-negative.")]
+        public int? ReorderQuantity { get; set; }
     }
 }

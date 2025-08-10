@@ -16,7 +16,6 @@ namespace FEENALOoFINALE.Controllers
         private readonly ApplicationDbContext _context;
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
-        private readonly IEmailService _emailService;
         private readonly ILogger<UserController> _logger;
         private readonly IConfiguration _configuration;
 
@@ -24,14 +23,12 @@ namespace FEENALOoFINALE.Controllers
             ApplicationDbContext context, 
             SignInManager<User> signInManager, 
             UserManager<User> userManager,
-            IEmailService emailService,
             ILogger<UserController> logger,
             IConfiguration configuration)
         {
             _context = context;
             _signInManager = signInManager;
             _userManager = userManager;
-            _emailService = emailService;
             _logger = logger;
             _configuration = configuration;
         }
@@ -308,7 +305,7 @@ namespace FEENALOoFINALE.Controllers
                 try
                 {
                     // Validate email format
-                    if (!_emailService.IsValidEmail(model.Email))
+                    if (!IsValidEmail(model.Email))
                     {
                         ModelState.AddModelError("Email", "Please enter a valid email address.");
                         return View(model);
@@ -365,7 +362,8 @@ namespace FEENALOoFINALE.Controllers
                                 new { userId = user.Id, token = user.EmailVerificationToken }, 
                                 Request.Scheme);
 
-                            await _emailService.SendEmailVerificationAsync(user.Email!, verificationUrl!);
+                            // Email verification is disabled
+                            _logger.LogInformation("Email verification would be sent to {Email}", user.Email);
 
                             // Check if we're in development environment
                             var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
@@ -727,7 +725,8 @@ namespace FEENALOoFINALE.Controllers
                         new { userId = user.Id, token = user.EmailVerificationToken },
                         Request.Scheme);
 
-                    await _emailService.SendEmailVerificationAsync(user.Email!, verificationUrl!);
+                    // Email verification is disabled
+                    _logger.LogInformation("Email verification would be sent to {Email}", user.Email);
                     TempData["SuccessMessage"] = "Verification email sent successfully!";
                 }
                 catch (Exception ex)
@@ -773,7 +772,7 @@ namespace FEENALOoFINALE.Controllers
             }
 
             // First validate email format
-            bool isValidFormat = _emailService.IsValidEmail(email);
+            bool isValidFormat = IsValidEmail(email);
             if (!isValidFormat)
             {
                 return Json(new { exists = false, isValid = false, message = "Invalid email format" });
@@ -1077,6 +1076,19 @@ namespace FEENALOoFINALE.Controllers
             }
 
             return BadRequest("Unsupported export format.");
+        }
+
+        private static bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

@@ -22,7 +22,7 @@ if (Test-Path "venv") {
     pip install -r requirements.txt
 }
 
-Write-Host "🌐 Starting Flask API on http://localhost:5000..." -ForegroundColor Cyan
+Write-Host "🌐 Starting Flask API on http://localhost:5001..." -ForegroundColor Cyan
 Write-Host "🔗 Ready for .NET integration testing!" -ForegroundColor Green
 Write-Host "" 
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow

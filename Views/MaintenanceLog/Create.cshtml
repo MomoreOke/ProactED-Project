@@ -4,92 +4,574 @@
     ViewData["Title"] = "Create Maintenance Log";
 }
 
-<h1>Create Maintenance Log</h1>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Dashboard")">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index")">Maintenance Logs</a></li>
+                    <li class="breadcrumb-item active">Create Log</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Create Maintenance Log</h1>
+                    <p class="text-muted mb-0">Record maintenance activities and equipment status updates</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div class="row">
-    <div class="col-md-8">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
+    <div class="row">
+        <div class="col-lg-8">
+            @{await Html.RenderPartialAsync("_ValidationErrors", ViewData.ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToArray());}
+            
             @if (ViewBag.AlertId != null)
             {
-                <input type="hidden" name="AlertId" value="@ViewBag.AlertId" />
-                <div class="alert alert-info">
-                    This maintenance log will resolve Alert #@ViewBag.AlertId.
+                <div class="alert alert-warning border-start border-warning border-4 mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-3 text-warning fs-4"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1">Resolving Alert</h6>
+                            <p class="mb-0">This maintenance log will resolve <strong>Alert #@ViewBag.AlertId</strong></p>
+                        </div>
+                    </div>
                 </div>
             }
-            
-            <div class="form-group">
-                <label asp-for="EquipmentId" class="control-label">Equipment</label>
-                <select asp-for="EquipmentId" class="form-control" required>
-                    <option value="">-- Select Equipment --</option>
-                    @if (ViewBag.Equipment != null)
-                    {
-                        @foreach (var equipment in (List<FEENALOoFINALE.Models.Equipment>)ViewBag.Equipment)
-                        {
-                            var displayText = $"{equipment.EquipmentModel?.ModelName ?? "Unknown Model"} - {equipment.Building?.BuildingName ?? "Unknown Building"} ({equipment.Room?.RoomName ?? "Unknown Room"})";
-                            <option value="@equipment.EquipmentId" selected="@(ViewBag.EquipmentId != null && ViewBag.EquipmentId.Equals(equipment.EquipmentId))">
-                                @displayText
-                            </option>
-                        }
-                    }
-                    else
-                    {
-                        <option value="">No equipment available</option>
-                    }
-                </select>
-                <span asp-validation-for="EquipmentId" class="text-danger"></span>
+
+            <form asp-action="Create" class="loading-enabled" id="maintenanceLogForm">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                @if (ViewBag.AlertId != null)
+                {
+                    <input type="hidden" name="AlertId" value="@ViewBag.AlertId" />
+                }
+
+                <!-- Equipment Selection Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-gear-fill me-2"></i>Equipment Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EquipmentId" class="form-label">Select Equipment <span class="text-danger">*</span></label>
+                                    <select asp-for="EquipmentId" class="form-control form-select" id="equipmentSelect" required>
+                                        <option value="">-- Select Equipment --</option>
+                                        @if (ViewBag.Equipment != null)
+                                        {
+                                            @foreach (var equipment in (List<FEENALOoFINALE.Models.Equipment>)ViewBag.Equipment)
+                                            {
+                                                var displayText = $"{equipment.EquipmentModel?.ModelName ?? "Unknown Model"} - {equipment.Building?.BuildingName ?? "Unknown Building"} ({equipment.Room?.RoomName ?? "Unknown Room"})";
+                                                <option value="@equipment.EquipmentId" 
+                                                        data-type="@equipment.EquipmentModel?.EquipmentType?.EquipmentTypeName"
+                                                        data-model="@equipment.EquipmentModel?.ModelName"
+                                                        data-location="@equipment.Building?.BuildingName - @equipment.Room?.RoomName"
+                                                        data-status="@equipment.Status"
+                                                        selected="@(ViewBag.EquipmentId != null && ViewBag.EquipmentId.Equals(equipment.EquipmentId))">
+                                                    @displayText
+                                                </option>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <option value="">No equipment available</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="EquipmentId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Equipment Info Display -->
+                        <div id="equipmentInfo" class="d-none">
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="bg-light p-3 rounded">
+                                        <h6 class="fw-bold text-primary mb-2">Equipment Details</h6>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">Type:</small><br>
+                                                <span id="equipmentType" class="fw-semibold">-</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Model:</small><br>
+                                                <span id="equipmentModel" class="fw-semibold">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-light p-3 rounded">
+                                        <h6 class="fw-bold text-primary mb-2">Location & Status</h6>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">Location:</small><br>
+                                                <span id="equipmentLocation" class="fw-semibold">-</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Status:</small><br>
+                                                <span id="equipmentStatus" class="badge">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maintenance Details Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-wrench me-2"></i>Maintenance Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="LogDate" class="form-label">Maintenance Date <span class="text-danger">*</span></label>
+                                    <input asp-for="LogDate" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                                    <span asp-validation-for="LogDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="MaintenanceType" class="form-label">Maintenance Type <span class="text-danger">*</span></label>
+                                    <select asp-for="MaintenanceType" class="form-control form-select" id="maintenanceTypeSelect" required>
+                                        <option value="">-- Select Type --</option>
+                                        <option value="Preventive" data-icon="bi-shield-check" data-color="success">Preventive Maintenance</option>
+                                        <option value="Corrective" data-icon="bi-tools" data-color="warning">Corrective Maintenance</option>
+                                        <option value="Inspection" data-icon="bi-search" data-color="info">Inspection</option>
+                                        <option value="Emergency" data-icon="bi-exclamation-triangle" data-color="danger">Emergency Repair</option>
+                                    </select>
+                                    <span asp-validation-for="MaintenanceType" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Technician" class="form-label">Technician <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-person-fill"></i>
+                                        </span>
+                                        <input asp-for="Technician" class="form-control" value="@(User?.Identity?.Name ?? "")" placeholder="Enter technician name" required />
+                                    </div>
+                                    <span asp-validation-for="Technician" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="DowntimeHours" class="form-label">Downtime Duration</label>
+                                    <div class="input-group">
+                                        <input asp-for="DowntimeHours" class="form-control" type="number" step="0.1" min="0" placeholder="0.0" />
+                                        <span class="input-group-text">hours</span>
+                                    </div>
+                                    <small class="form-text text-muted">Leave blank or 0 if no downtime occurred</small>
+                                    <span asp-validation-for="DowntimeHours" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label">Description <span class="text-danger">*</span></label>
+                            <textarea asp-for="Description" class="form-control" rows="4" 
+                                     placeholder="Describe the maintenance work performed, parts replaced, issues found, etc..." required></textarea>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Provide detailed information about the work performed, any issues discovered, and actions taken.
+                            </div>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cost and Additional Information Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-cash-coin me-2"></i>Cost & Additional Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Cost" class="form-label">Maintenance Cost</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input asp-for="Cost" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                                    </div>
+                                    <small class="form-text text-muted">Include labor, parts, and other related costs</small>
+                                    <span asp-validation-for="Cost" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Status" class="form-label">Log Status</label>
+                                    <select asp-for="Status" class="form-control form-select">
+                                        <option value="2" selected>Completed</option>
+                                        <option value="1">In Progress</option>
+                                        <option value="0">Pending</option>
+                                        <option value="3">Cancelled</option>
+                                    </select>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card">
+                    <div class="card-body d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="bi bi-check-circle"></i> Create Maintenance Log
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-lg ms-2">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            All fields marked with <span class="text-danger">*</span> are required
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Information Sidebar -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>Maintenance Log Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-primary">Best Practices:</h6>
+                        <ul class="mb-0 small">
+                            <li>Select the correct equipment before starting</li>
+                            <li>Choose appropriate maintenance type</li>
+                            <li>Provide detailed description of work performed</li>
+                            <li>Record accurate downtime if applicable</li>
+                            <li>Include all costs for proper tracking</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="LogDate" class="control-label">Date</label>
-                <input asp-for="LogDate" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
-                <span asp-validation-for="LogDate" class="text-danger"></span>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-tags me-2"></i>Maintenance Types
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <span class="badge bg-success me-1">Preventive</span>
+                            <small class="text-muted">Scheduled maintenance</small>
+                        </div>
+                        <div class="col-12">
+                            <span class="badge bg-warning me-1">Corrective</span>
+                            <small class="text-muted">Fix known issues</small>
+                        </div>
+                        <div class="col-12">
+                            <span class="badge bg-info me-1">Inspection</span>
+                            <small class="text-muted">Assessment only</small>
+                        </div>
+                        <div class="col-12">
+                            <span class="badge bg-danger me-1">Emergency</span>
+                            <small class="text-muted">Urgent repairs</small>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label asp-for="MaintenanceType" class="control-label">Type</label>
-                <select asp-for="MaintenanceType" class="form-control" required>
-                    <option value="">-- Select Type --</option>
-                    <option value="Preventive">Preventive</option>
-                    <option value="Corrective">Corrective</option>
-                    <option value="Inspection">Inspection</option>
-                </select>
-                <span asp-validation-for="MaintenanceType" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter maintenance description..."></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Technician" class="control-label"></label>
-                <input asp-for="Technician" class="form-control" value="@(User?.Identity?.Name ?? "")" required />
-                <span asp-validation-for="Technician" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="DowntimeHours" class="control-label">Downtime Hours</label>
-                <input asp-for="DowntimeHours" class="form-control" type="number" step="0.1" min="0" />
-                <span asp-validation-for="DowntimeHours" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Cost" class="control-label">Cost ($)</label>
-                <input asp-for="Cost" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
-                <span asp-validation-for="Cost" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mt-3">
-                <input type="submit" value="Create" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            console.log('Maintenance Log form initialized');
+            
+            // Initialize form validation and interactions
+            initializeFormValidation();
+            initializeEquipmentSelection();
+            initializeMaintenanceTypeIcons();
+            
+            // Equipment selection handler
+            $('#equipmentSelect').change(function() {
+                const selectedOption = $(this).find('option:selected');
+                const equipmentId = $(this).val();
+                
+                if (equipmentId && equipmentId !== '') {
+                    showEquipmentInfo(selectedOption);
+                } else {
+                    hideEquipmentInfo();
+                }
+            });
+
+            // Maintenance type change handler
+            $('#maintenanceTypeSelect').change(function() {
+                const selectedOption = $(this).find('option:selected');
+                updateMaintenanceTypeDisplay(selectedOption);
+            });
+
+            // Auto-save form data to localStorage
+            $('#maintenanceLogForm input, #maintenanceLogForm select, #maintenanceLogForm textarea').on('change input', function() {
+                saveFormData();
+            });
+
+            // Load saved form data
+            loadFormData();
+
+            // Form submission handler
+            $('#maintenanceLogForm').on('submit', function(e) {
+                if (validateForm()) {
+                    // Clear saved data on successful submission
+                    clearSavedFormData();
+                } else {
+                    e.preventDefault();
+                    showValidationErrors();
+                }
+            });
+
+            // Initial equipment info display if pre-selected
+            if ($('#equipmentSelect').val()) {
+                $('#equipmentSelect').trigger('change');
+            }
+        });
+
+        function initializeFormValidation() {
+            // Add custom validation styling
+            $('#maintenanceLogForm input, #maintenanceLogForm select, #maintenanceLogForm textarea').on('blur', function() {
+                validateField($(this));
+            });
+        }
+
+        function initializeEquipmentSelection() {
+            // Add search functionality to equipment select
+            $('#equipmentSelect').select2({
+                placeholder: "Search and select equipment...",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        function initializeMaintenanceTypeIcons() {
+            // Add icons to maintenance type options
+            $('#maintenanceTypeSelect option').each(function() {
+                const icon = $(this).data('icon');
+                const color = $(this).data('color');
+                if (icon && color) {
+                    const text = $(this).text();
+                    $(this).text(`${text}`);
+                }
+            });
+        }
+
+        function showEquipmentInfo(selectedOption) {
+            const type = selectedOption.data('type') || 'Unknown';
+            const model = selectedOption.data('model') || 'Unknown';
+            const location = selectedOption.data('location') || 'Unknown';
+            const status = selectedOption.data('status') || 'Unknown';
+            
+            $('#equipmentType').text(type);
+            $('#equipmentModel').text(model);
+            $('#equipmentLocation').text(location);
+            
+            // Set status badge color
+            const statusBadge = $('#equipmentStatus');
+            statusBadge.removeClass('bg-success bg-warning bg-danger bg-secondary');
+            
+            switch(status.toString()) {
+                case '0': // Active
+                    statusBadge.addClass('bg-success').text('Active');
+                    break;
+                case '1': // Maintenance
+                    statusBadge.addClass('bg-warning').text('Maintenance');
+                    break;
+                case '2': // Out of Service
+                    statusBadge.addClass('bg-danger').text('Out of Service');
+                    break;
+                default:
+                    statusBadge.addClass('bg-secondary').text('Unknown');
+            }
+            
+            $('#equipmentInfo').removeClass('d-none').hide().fadeIn(300);
+        }
+
+        function hideEquipmentInfo() {
+            $('#equipmentInfo').fadeOut(300, function() {
+                $(this).addClass('d-none');
+            });
+        }
+
+        function updateMaintenanceTypeDisplay(selectedOption) {
+            const icon = selectedOption.data('icon');
+            const color = selectedOption.data('color');
+            
+            if (icon && color) {
+                // Could add visual indicators here if needed
+                console.log(`Selected maintenance type: ${selectedOption.text()} with icon ${icon} and color ${color}`);
+            }
+        }
+
+        function validateField(field) {
+            const value = field.val();
+            const isRequired = field.prop('required');
+            
+            if (isRequired && (!value || value.trim() === '')) {
+                field.removeClass('is-valid').addClass('is-invalid');
+                return false;
+            } else if (value && value.trim() !== '') {
+                field.removeClass('is-invalid').addClass('is-valid');
+                return true;
+            } else {
+                field.removeClass('is-invalid is-valid');
+                return true;
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = ['EquipmentId', 'LogDate', 'MaintenanceType', 'Description', 'Technician'];
+            
+            requiredFields.forEach(fieldName => {
+                const field = $(`#${fieldName}, [name="${fieldName}"]`);
+                if (!validateField(field)) {
+                    isValid = false;
+                }
+            });
+            
+            // Additional custom validations
+            const logDate = new Date($('#LogDate').val());
+            const today = new Date();
+            const futureLimit = new Date();
+            futureLimit.setDate(today.getDate() + 30);
+            
+            if (logDate > futureLimit) {
+                $('#LogDate').addClass('is-invalid');
+                showErrorMessage('Maintenance date cannot be more than 30 days in the future.');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+
+        function showValidationErrors() {
+            const errorAlert = $(`
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Please correct the highlighted fields before submitting the maintenance log.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+            $('.container-fluid').prepend(errorAlert);
+            $('html, body').animate({ scrollTop: 0 }, 500);
+        }
+
+        function showErrorMessage(message) {
+            const errorAlert = $(`
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+            $('.container-fluid').prepend(errorAlert);
+        }
+
+        function saveFormData() {
+            const formData = {
+                equipmentId: $('#EquipmentId').val(),
+                logDate: $('#LogDate').val(),
+                maintenanceType: $('#MaintenanceType').val(),
+                description: $('#Description').val(),
+                technician: $('#Technician').val(),
+                downtimeHours: $('#DowntimeHours').val(),
+                cost: $('#Cost').val(),
+                status: $('#Status').val()
+            };
+            
+            localStorage.setItem('maintenanceLogDraft', JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem('maintenanceLogDraft');
+            if (savedData) {
+                try {
+                    const formData = JSON.parse(savedData);
+                    
+                    // Only load if form is empty (to avoid overwriting pre-filled data)
+                    if (!$('#EquipmentId').val() && formData.equipmentId) {
+                        $('#EquipmentId').val(formData.equipmentId).trigger('change');
+                    }
+                    if (!$('#LogDate').val() && formData.logDate) {
+                        $('#LogDate').val(formData.logDate);
+                    }
+                    if (!$('#MaintenanceType').val() && formData.maintenanceType) {
+                        $('#MaintenanceType').val(formData.maintenanceType);
+                    }
+                    if (!$('#Description').val() && formData.description) {
+                        $('#Description').val(formData.description);
+                    }
+                    if (!$('#Technician').val() && formData.technician) {
+                        $('#Technician').val(formData.technician);
+                    }
+                    if (formData.downtimeHours) {
+                        $('#DowntimeHours').val(formData.downtimeHours);
+                    }
+                    if (formData.cost) {
+                        $('#Cost').val(formData.cost);
+                    }
+                    if (formData.status) {
+                        $('#Status').val(formData.status);
+                    }
+                } catch (e) {
+                    console.error('Error loading saved form data:', e);
+                }
+            }
+        }
+
+        function clearSavedFormData() {
+            localStorage.removeItem('maintenanceLogDraft');
+        }
+
+        // Utility functions
+        function showSuccessMessage(message) {
+            const alert = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                '<i class="bi bi-check-circle me-2"></i>' + message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                '</div>');
+            
+            $('.container-fluid').prepend(alert);
+            
+            setTimeout(function() {
+                alert.alert('close');
+            }, 3000);
+        }
+    </script>
 }

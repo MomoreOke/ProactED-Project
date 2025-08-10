@@ -60,15 +60,6 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <i class="bi bi-currency-dollar text-primary" style="font-size: 2rem;"></i>
-                    <h5 class="card-title mt-2">@Model.Sum(i => i.InventoryStocks?.Sum(s => s.Quantity * s.UnitCost) ?? 0).ToString("C")</h5>
-                    <p class="card-text text-muted">Total Value</p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Inventory Table -->
@@ -105,7 +96,7 @@
                                         <th>Current Stock</th>
                                         <th>Min Level</th>
                                         <th>Stock Status</th>
-                                        <th>Total Value</th>
+                                        <!-- Total Value column removed -->
                                         <th>Compatible Models</th>
                                         <th>Actions</th>
                                     </tr>
@@ -144,7 +135,7 @@
                                                     @(isLowStock ? "Low Stock" : "Good")
                                                 </span>
                                             </td>
-                                            <td>@totalValue.ToString("C")</td>
+                                            <!-- Removed totalValue display -->
                                             <td>
                                                 @if (!string.IsNullOrEmpty(item.CompatibleModels))
                                                 {

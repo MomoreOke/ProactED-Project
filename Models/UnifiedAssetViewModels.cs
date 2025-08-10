@@ -21,10 +21,6 @@ namespace FEENALOoFINALE.Models
         public List<UnifiedAssetViewModel> LowStockAssets { get; set; } = new();
         public List<UnifiedAssetViewModel> RecentAssets { get; set; } = new();
 
-        // Financial metrics
-        public decimal TotalAssetValue { get; set; }
-        public decimal MonthlyMaintenanceCost { get; set; }
-
         // Analytics
         public Dictionary<string, int> AssetsByCategory { get; set; } = new();
     }
@@ -59,8 +55,6 @@ namespace FEENALOoFINALE.Models
         public int TotalAssets { get; set; }
         public int EquipmentCount { get; set; }
         public int InventoryItemCount { get; set; }
-        public decimal TotalAssetValue { get; set; }
-        public decimal MaintenanceCostThisMonth { get; set; }
         public Dictionary<string, int> AssetsByCategory { get; set; } = new();
         public Dictionary<string, int> EquipmentByStatus { get; set; } = new();
         public Dictionary<string, int> InventoryByStatus { get; set; } = new();

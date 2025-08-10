@@ -694,12 +694,6 @@
             padding: 20px 0;
         }
         
-        .app-footer {
-            flex-shrink: 0;
-            position: relative;
-            z-index: 1020;
-        }
-        
         /* Ensure proper spacing for content */
         .content-wrapper {
             min-height: 100%;
@@ -756,24 +750,6 @@
             
             .dropdown-menu {
                 min-width: 250px;
-            }
-            
-            .app-footer {
-                padding: 8px 0 !important;
-            }
-            
-            .app-footer .row {
-                flex-direction: column;
-                gap: 4px;
-            }
-            
-            .app-footer .brand-icon {
-                width: 20px !important;
-                height: 20px !important;
-            }
-            
-            .app-footer .brand-icon i {
-                font-size: 10px !important;
             }
         }
         
@@ -1006,41 +982,7 @@
             </div>
         </main>
 
-        <!-- Compact Footer -->
-        <footer class="app-footer text-white text-center py-2 shadow-sm" style="background: linear-gradient(135deg, #0d47a1 0%, #1976d2 50%, #42a5f5 100%);">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-1 mb-md-0">
-                        <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                            <div class="brand-icon me-2" style="width: 24px; height: 24px;">
-                                <i class="bi bi-cpu-fill" style="font-size: 12px;"></i>
-                            </div>
-                            <div>
-                                <span style="font-size: 14px; font-weight: 600;">ProactED</span>
-                                <small style="font-size: 12px; opacity: 0.8;"> - KNUST</small>
-                                <span style="font-size: 11px; opacity: 0.7; margin-left: 8px;">&copy; @DateTime.Now.Year</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-center justify-content-md-end align-items-center gap-2">
-                            <a href="#" class="text-white-50 text-decoration-none d-flex align-items-center" style="font-size: 11px;">
-                                <i class="bi bi-shield-check me-1" style="font-size: 12px;"></i>
-                                <span>Privacy</span>
-                            </a>
-                            <a href="#" class="text-white-50 text-decoration-none d-flex align-items-center" style="font-size: 11px;">
-                                <i class="bi bi-file-text me-1" style="font-size: 12px;"></i>
-                                <span>Terms</span>
-                            </a>
-                            <a href="#" class="text-white-50 text-decoration-none d-flex align-items-center" style="font-size: 11px;">
-                                <i class="bi bi-question-circle me-1" style="font-size: 12px;"></i>
-                                <span>Help</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </footer>
+     
     </div>
 
     <!-- Scripts -->
